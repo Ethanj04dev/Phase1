@@ -1,4 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Platform } from 'react-native';
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 
 /**
@@ -15,6 +16,34 @@ import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 
 const url = process.env.EXPO_PUBLIC_SUPABASE_URL;
 const anonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
+
+/**
+ * Storage is unavailable while Expo prerenders web routes in Node: AsyncStorage
+ * reaches for `window.localStorage` there and `window` does not exist.
+ */
+function storageAvailable(): boolean {
+  return Platform.OS !== 'web' || typeof window !== 'undefined';
+}
+
+/**
+ * Session storage that tolerates having no storage at all.
+ *
+ * Supabase reads the persisted session the moment the auth client is created,
+ * which during a web prerender happens inside Node. Without this guard that
+ * read throws ReferenceError and takes the entire web build down on boot.
+ *
+ * Returning null during prerender is correct rather than merely safe: there is
+ * no signed-in user on a server that has never met the athlete, so "no stored
+ * session" is the honest answer. The real session loads on the client.
+ */
+const sessionStorage = {
+  getItem: (key: string): Promise<string | null> =>
+    storageAvailable() ? AsyncStorage.getItem(key) : Promise.resolve(null),
+  setItem: (key: string, value: string): Promise<void> =>
+    storageAvailable() ? AsyncStorage.setItem(key, value) : Promise.resolve(),
+  removeItem: (key: string): Promise<void> =>
+    storageAvailable() ? AsyncStorage.removeItem(key) : Promise.resolve(),
+};
 
 /**
  * Whether a backend is configured at all.
@@ -37,7 +66,7 @@ export function getSupabaseClient(): SupabaseClient | null {
 
   client = createClient(url, anonKey, {
     auth: {
-      storage: AsyncStorage,
+      storage: sessionStorage,
       // The session must survive the app being closed; an athlete signing in
       // every launch is a broken product.
       persistSession: true,
