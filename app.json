@@ -7,8 +7,8 @@
     "icon": "./assets/icon.png",
     "scheme": "phase1",
     "userInterfaceStyle": "dark",
-    "backgroundColor": "#0C0E0D",
-    "primaryColor": "#7C9A5E",
+    "backgroundColor": "#0C0E12",
+    "primaryColor": "#5B8FD6",
     "assetBundlePatterns": ["**/*"],
     "ios": {
       "supportsTablet": false,
@@ -20,7 +20,7 @@
     "android": {
       "package": "com.phaseone.app",
       "adaptiveIcon": {
-        "backgroundColor": "#0C0E0D",
+        "backgroundColor": "#0C0E12",
         "foregroundImage": "./assets/android-icon-foreground.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
@@ -39,7 +39,7 @@
           "image": "./assets/splash-icon.png",
           "imageWidth": 200,
           "resizeMode": "contain",
-          "backgroundColor": "#0C0E0D"
+          "backgroundColor": "#0C0E12"
         }
       ],
       "expo-font"

@@ -26,14 +26,14 @@ export const darkColors = {
   textOnAccent: palette.black900,
 
   // Brand accent.
-  accent: palette.green400,
-  accentPressed: palette.green500,
-  accentStrong: palette.green300,
-  accentBorder: palette.green600,
-  accentSurface: palette.green100,
+  accent: palette.blue400,
+  accentPressed: palette.blue500,
+  accentStrong: palette.blue300,
+  accentBorder: palette.blue600,
+  accentSurface: palette.blue100,
 
-  // Status. Positive deliberately reuses the accent family — one green in
-  // the product, not two competing ones.
+  // Status. Positive is a green distinct from the blue accent, so "on target"
+  // carries meaning rather than just reading as a branded element.
   statusOnTarget: palette.green400,
   statusOnTargetSurface: palette.green100,
   statusCaution: palette.amber400,

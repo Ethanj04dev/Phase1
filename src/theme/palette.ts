@@ -7,26 +7,32 @@
  * `background` and `surface` tokens for WCAG AA (>= 4.5:1 at body size).
  */
 export const palette = {
-  // Neutrals — near-black through off-white.
-  black900: '#090B0A',
-  black800: '#0C0E0D',
-  black700: '#151816',
-  black600: '#1C201E',
-  black500: '#252A27',
-  black400: '#333935',
-  grey500: '#4A524C',
-  grey400: '#7B837C',
-  grey300: '#9AA29B',
-  white100: '#F2F3EF',
+  // Neutrals — near-black through off-white, very slightly cool. The tint is
+  // deliberate: a warm or green-cast charcoal under a blue accent reads muddy.
+  black900: '#080A0D',
+  black800: '#0C0E12',
+  black700: '#151821',
+  black600: '#1C2029',
+  black500: '#252A34',
+  black400: '#333944',
+  grey500: '#4A505C',
+  grey400: '#7B8290',
+  grey300: '#99A0AE',
+  white100: '#F0F2F5',
 
-  // Field green — the single brand accent. Muted on purpose: never neon.
-  green600: '#4A5940',
-  green500: '#6A8550',
-  green400: '#7C9A5E',
-  green300: '#9AB57D',
-  green100: '#1A2016',
+  // Signal blue — the single brand accent. Restrained on purpose: never neon,
+  // never a saturated "tech" blue. 5.9:1 against the background.
+  blue600: '#2C4570',
+  blue500: '#4A79C0',
+  blue400: '#5B8FD6',
+  blue300: '#8AB2E8',
+  blue100: '#111827',
 
   // Status. Restrained; used as small indicators, never as screen washes.
+  // Positive is its own green rather than the accent, so "on target" never
+  // reads as merely "branded".
+  green400: '#6FA96F',
+  green100: '#101A11',
   amber400: '#C7A03C',
   amber100: '#241D0C',
   red400: '#CC6B54',
