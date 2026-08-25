@@ -68,6 +68,10 @@ export const localWorkoutRepository: WorkoutRepository = {
       durationSeconds,
       rpe: session.rpe,
       notes: session.notes.trim().length > 0 ? session.notes.trim() : null,
+      distanceMeters: session.entries.reduce(
+        (total, entry) => total + (entry.distanceMeters ?? 0),
+        0,
+      ),
     };
 
     const exerciseRows: ExerciseResult[] = session.entries.map((entry) => ({

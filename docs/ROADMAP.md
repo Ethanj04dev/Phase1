@@ -3,7 +3,7 @@
 Single source of truth for what gets built next. Update the status line when a
 milestone lands.
 
-**Current position:** M5 complete. M6 next.
+**Current position:** M6 complete. M7 next.
 
 ---
 
@@ -165,7 +165,7 @@ halfway, and resumed without data loss.
 
 ---
 
-## M6 — Progress
+## M6 — Progress *(complete)*
 
 **Goal:** the "am I improving" answer, with evidence.
 

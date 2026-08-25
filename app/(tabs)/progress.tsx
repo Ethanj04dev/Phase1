@@ -2,6 +2,8 @@ import { router, useFocusEffect } from 'expo-router';
 import { useCallback } from 'react';
 import { View } from 'react-native';
 
+import { BarChart } from '@/components/charts/BarChart';
+import { LineChart } from '@/components/charts/LineChart';
 import { DeltaBadge } from '@/components/data-display/DeltaBadge';
 import { AsyncBoundary } from '@/components/feedback/AsyncBoundary';
 import { Screen } from '@/components/layout/Screen';
@@ -13,7 +15,8 @@ import { Text } from '@/components/primitives/Text';
 import { formatEventValue } from '@/features/assessment/display';
 import { EventProgressRow } from '@/features/progress/EventProgressRow';
 import { useProgressOverview } from '@/features/progress/useProgressOverview';
-import { formatDateStamp } from '@/lib/format';
+import { PERFORMANCE_CATEGORY_LABELS } from '@/domain/types';
+import { formatDateStamp, formatDistance } from '@/lib/format';
 import { useTheme } from '@/theme';
 
 export default function ProgressScreen() {
@@ -83,6 +86,77 @@ export default function ProgressScreen() {
                 </Text>
               )}
             </Card>
+
+            {data.readinessHistory.length > 1 ? (
+              <View>
+                <SectionHeader title="Readiness Over Time" />
+                <Card>
+                  <LineChart
+                    values={data.readinessHistory.map((snapshot) => snapshot.overall)}
+                    formatValue={(value) => String(Math.round(value))}
+                    accessibilityLabel={`Readiness across ${data.readinessHistory.length} assessments, currently ${data.readiness?.overall ?? 0}`}
+                  />
+                </Card>
+              </View>
+            ) : null}
+
+            {data.gain || data.decline ? (
+              <View>
+                <SectionHeader title="Last 30 Days" />
+                <Card padded={false}>
+                  {data.gain ? (
+                    <View style={{ padding: theme.spacing.lg, gap: theme.spacing.xxs }}>
+                      <Text variant="labelSm" color="statusOnTarget">
+                        Biggest gain
+                      </Text>
+                      <Text variant="headline">
+                        {`${PERFORMANCE_CATEGORY_LABELS[data.gain.category]}  +${data.gain.delta ?? 0}`}
+                      </Text>
+                    </View>
+                  ) : null}
+                  {data.gain && data.decline ? <Divider /> : null}
+                  {/* Declines are shown, not hidden. An athlete whose swim has
+                      slipped needs telling while it is still a small gap. */}
+                  {data.decline ? (
+                    <View style={{ padding: theme.spacing.lg, gap: theme.spacing.xxs }}>
+                      <Text variant="labelSm" color="statusOffTarget">
+                        Slipped
+                      </Text>
+                      <Text variant="headline">
+                        {`${PERFORMANCE_CATEGORY_LABELS[data.decline.category]}  ${data.decline.delta ?? 0}`}
+                      </Text>
+                      <Text variant="caption" color="textTertiary">
+                        Worth a session before it becomes a gap.
+                      </Text>
+                    </View>
+                  ) : null}
+                </Card>
+              </View>
+            ) : null}
+
+            {data.volume.length > 0 ? (
+              <View>
+                <SectionHeader
+                  title="Weekly Volume"
+                  trailing={
+                    <Text variant="labelSm" color="textTertiary">
+                      BY PROGRAMME WEEK
+                    </Text>
+                  }
+                />
+                <Card>
+                  <BarChart
+                    data={data.volume.map((week) => ({
+                      label: String(week.weekNumber).padStart(2, '0'),
+                      value: week.distanceMeters,
+                      highlight: week.weekNumber === data.position?.weekNumber,
+                    }))}
+                    formatValue={(value) => formatDistance(value)}
+                    accessibilityLabel={`Weekly training volume across ${data.volume.length} programme weeks`}
+                  />
+                </Card>
+              </View>
+            ) : null}
 
             {data.records.length === 0 ? (
               <Card style={{ gap: theme.spacing.sm }}>

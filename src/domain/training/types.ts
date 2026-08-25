@@ -209,6 +209,18 @@ export interface WorkoutResult {
   /** Session-level perceived effort, 1-10. */
   rpe: number | null;
   notes: string | null;
+  /**
+   * Total metres logged in this session.
+   *
+   * Deliberately denormalised. Personal records are derived because deriving
+   * them is cheap, but weekly volume would otherwise mean joining every
+   * exercise row of every workout in the athlete's history just to draw one
+   * chart. This is computed once at write time from data already in hand.
+   *
+   * Optional because records written before this field existed do not carry
+   * it; readers treat a missing value as zero rather than forcing a migration.
+   */
+  distanceMeters?: number;
 }
 
 export interface ExerciseResult {

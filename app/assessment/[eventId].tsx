@@ -1,6 +1,7 @@
 import { Stack, useLocalSearchParams } from 'expo-router';
 import { View } from 'react-native';
 
+import { LineChart } from '@/components/charts/LineChart';
 import { AsyncBoundary } from '@/components/feedback/AsyncBoundary';
 import { Screen } from '@/components/layout/Screen';
 import { SectionHeader } from '@/components/layout/SectionHeader';
@@ -43,7 +44,7 @@ export default function EventHistoryScreen() {
         }}
       >
         {(progress) => {
-          const { event, latest, improvement, best, history } = progress;
+          const { event, first, latest, improvement, best, history } = progress;
           const improved = improvement !== null && improvement > 0;
           const declined = improvement !== null && improvement < 0;
 
@@ -82,6 +83,26 @@ export default function EventHistoryScreen() {
                   </Text>
                 )}
               </View>
+
+              {history.length > 1 ? (
+                <View>
+                  <SectionHeader title="Trend" />
+                  <Card>
+                    <LineChart
+                      values={history.map((entry) => entry.value)}
+                      /*
+                       * Time events plot inverted so a faster result rises.
+                       * Without this, improving would send the line downward
+                       * and read as decline at a glance.
+                       */
+                      invert={event.direction === 'lower_is_better'}
+                      formatValue={(value) => formatEventValue(event, value)}
+                      tone={improved ? 'onTarget' : 'accent'}
+                      accessibilityLabel={`${event.name} across ${history.length} tests, from ${formatEventValue(event, first?.value ?? 0)} to ${formatEventValue(event, latest?.value ?? 0)}`}
+                    />
+                  </Card>
+                </View>
+              ) : null}
 
               <Card style={{ gap: theme.spacing.sm }}>
                 <Text variant="labelSm" color="textTertiary">
