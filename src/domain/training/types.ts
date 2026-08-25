@@ -43,10 +43,13 @@ export const MODALITY_CATEGORY: Record<SessionModality, PerformanceCategory | nu
  * has actually run or swum, so two athletes on the same session get different
  * numbers.
  */
+/**
+ * Each basis maps to an assessment event the athlete can actually test. A
+ * basis with no measurable source would produce targets derived from nothing.
+ */
 export type PaceBasis =
   | 'mile_time'
   | 'one_and_half_mile_time'
-  | 'five_mile_time'
   | 'swim_500_time'
   | 'ruck_pace';
 
@@ -169,7 +172,11 @@ export interface ProgramWeek {
 export interface WorkoutDay {
   id: Uuid;
   programWeekId: Uuid;
-  /** 1 = Monday through 7 = Sunday. */
+  /**
+   * Position within the programme week, 1-7. Not a weekday: the programme
+   * starts on the day the athlete starts it, so day 1 is their first day
+   * rather than a Monday they may have missed.
+   */
   dayNumber: number;
   title: string;
   description: string;

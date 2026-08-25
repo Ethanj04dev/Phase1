@@ -8,21 +8,17 @@ import { ok, type Result } from '@/domain/types';
 import type {
   AssessmentRepository,
   AthleteRepository,
-  ProgramPosition,
   ReadinessRepository,
   Repositories,
   TrainingRepository,
 } from '@/data/repositories/types';
 
+import { createContentTrainingRepository } from '@/data/content/trainingRepository';
 import {
   demoAssessmentDates,
   demoAssessmentResults,
   demoNow,
   demoProfile,
-  demoProgramPosition,
-  demoStreakDays,
-  demoToday,
-  demoWeeklyCompletion,
 } from './demoAthlete';
 
 /**
@@ -138,12 +134,11 @@ const readiness: ReadinessRepository = {
     }),
 };
 
-const training: TrainingRepository = {
-  getToday: () => delayed(demoToday),
-  getPosition: () => delayed<ProgramPosition | null>({ ...demoProgramPosition }),
-  getWeeklyCompletion: () => delayed(demoWeeklyCompletion),
-  getStreakDays: () => delayed(demoStreakDays),
-};
+// Programme content is authored and shared by every implementation; only the
+// athlete's position in it differs. There is no mock version to maintain.
+const training: TrainingRepository = createContentTrainingRepository(() =>
+  delayed<AthleteProfile | null>(profile),
+);
 
 export const mockRepositories: Repositories = {
   athlete,

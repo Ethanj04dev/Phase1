@@ -6,7 +6,7 @@ import { calculateTrend } from '@/domain/readiness/score';
 import type { ReadinessCalculation, ReadinessSnapshot } from '@/domain/readiness/types';
 import { err, ok, type Result, type Uuid } from '@/domain/types';
 
-import { mockRepositories } from '@/data/mock/mockRepositories';
+import { createContentTrainingRepository } from '@/data/content/trainingRepository';
 import type {
   AssessmentRepository,
   AthleteRepository,
@@ -200,18 +200,7 @@ export const localRepositories: Repositories = {
   athlete,
   assessment,
   readiness,
-  training: {
-    // Programme content is authored, not user data, so it is bundled rather
-    // than stored per device. It keeps coming from the content module until M4
-    // builds the real programmes and a proper content repository.
-    getToday: mockRepositories.training.getToday,
-    getPosition: mockRepositories.training.getPosition,
-
-    // Streak and completion describe what this athlete actually did, so they
-    // must not come from demo content. Until workout logging lands in M5 there
-    // is genuinely nothing to count, and zero is the honest answer. Showing a
-    // new athlete an 11 day streak would be a fabricated claim about them.
-    getStreakDays: () => Promise.resolve(ok(0)),
-    getWeeklyCompletion: () => Promise.resolve(ok(0)),
-  },
+  // Programme content is authored and ships with the app; only the athlete's
+  // position in it is personal, and that is derived from their start date.
+  training: createContentTrainingRepository(loadProfile),
 };

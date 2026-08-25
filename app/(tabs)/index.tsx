@@ -1,3 +1,4 @@
+import { router } from 'expo-router';
 import { View } from 'react-native';
 
 import { MetricTile } from '@/components/data-display/MetricTile';
@@ -47,7 +48,12 @@ export default function TodayScreen() {
             size="lg"
             accessibilityHint="Starts the first session of today"
             onPress={() => {
-              // Active workout flow lands in the next milestone.
+              if (dashboard?.today) {
+                router.push({
+                  pathname: '/workout/[dayId]',
+                  params: { dayId: dashboard.today.id },
+                });
+              }
             }}
           />
         ) : undefined

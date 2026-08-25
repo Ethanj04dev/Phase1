@@ -30,16 +30,44 @@ export function describeBlock(block: WorkoutBlock): string {
   }
 }
 
+/** Prescribed distance for a block, or 0 when it is not distance-based. */
+function blockDistance(block: WorkoutBlock): number {
+  switch (block.kind) {
+    case 'interval':
+    case 'swim':
+      return block.distanceMeters * block.reps;
+    case 'steady':
+      return block.distanceMeters ?? 0;
+    case 'ruck':
+      return block.distanceMeters;
+    default:
+      return 0;
+  }
+}
+
 /**
  * Headline work of a session. Picks the block that defines the session rather
  * than listing warm-ups, so the dashboard reads "6 x 800m" not "Warm-up".
+ *
+ * A carried pace target is the strongest signal: warm-ups and cool-downs are
+ * prescribed by effort, while the work that defines the session is the piece
+ * with a time to hit. Falling back to the longest block catches sessions that
+ * are all effort-based, such as an easy swim.
  */
 export function describeSession(session: WorkoutSession): string {
-  const defining =
-    session.blocks.find((block) => block.kind === 'interval' || block.kind === 'swim') ??
-    session.blocks.find((block) => block.kind !== 'recovery') ??
-    session.blocks[0];
+  const targeted = session.blocks.find((block) => 'target' in block && block.target);
+  if (targeted) {
+    return describeBlock(targeted);
+  }
 
+  const working = session.blocks.filter((block) => block.kind !== 'recovery');
+  const longest = working.reduce<WorkoutBlock | null>(
+    (best, block) =>
+      best === null || blockDistance(block) > blockDistance(best) ? block : best,
+    null,
+  );
+
+  const defining = longest ?? session.blocks[0];
   return defining ? describeBlock(defining) : '';
 }
 

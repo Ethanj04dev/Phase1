@@ -3,7 +3,7 @@
 Single source of truth for what gets built next. Update the status line when a
 milestone lands.
 
-**Current position:** M3 complete. M4 next.
+**Current position:** M4 complete. M5 next.
 
 ---
 
@@ -125,7 +125,7 @@ history shows the trend.
 
 ---
 
-## M4 — Training program and navigation
+## M4 — Training program and navigation *(complete)*
 
 **Goal:** the athlete can see the plan and what any given session asks of them.
 

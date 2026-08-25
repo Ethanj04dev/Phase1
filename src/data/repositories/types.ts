@@ -5,7 +5,7 @@ import type {
   ReadinessSnapshot,
   ReadinessTrend,
 } from '@/domain/readiness/types';
-import type { ResolvedWorkoutDay } from '@/domain/training/types';
+import type { Program, ResolvedWorkoutDay } from '@/domain/training/types';
 import type { IsoDate, Result, Uuid } from '@/domain/types';
 
 /**
@@ -56,9 +56,23 @@ export interface ProgramPosition {
   weekFocus: string;
 }
 
+/** The athlete's programme with enough metadata to render a week selector. */
+export interface ProgramSummary {
+  program: Program;
+  /** Week number to editorial focus. */
+  weekFocus: ReadonlyMap<number, string>;
+}
+
 export interface TrainingRepository {
   getToday(athleteId: Uuid): Promise<Result<ResolvedWorkoutDay | null>>;
   getPosition(athleteId: Uuid): Promise<Result<ProgramPosition | null>>;
+  getProgram(athleteId: Uuid): Promise<Result<ProgramSummary | null>>;
+  /** Every day of one programme week, in order. */
+  getWeek(
+    athleteId: Uuid,
+    weekNumber: number,
+  ): Promise<Result<readonly ResolvedWorkoutDay[]>>;
+  getDay(athleteId: Uuid, dayId: string): Promise<Result<ResolvedWorkoutDay | null>>;
   /** Fraction of this week completed, 0-1. */
   getWeeklyCompletion(athleteId: Uuid): Promise<Result<number>>;
   getStreakDays(athleteId: Uuid): Promise<Result<number>>;
