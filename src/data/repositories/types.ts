@@ -1,3 +1,4 @@
+import type { AssessmentResult } from '@/domain/assessment/types';
 import type { AthleteProfile } from '@/domain/athlete/types';
 import type { ReadinessSnapshot, ReadinessTrend } from '@/domain/readiness/types';
 import type { ResolvedWorkoutDay } from '@/domain/training/types';
@@ -44,8 +45,21 @@ export interface TrainingRepository {
   getStreakDays(athleteId: Uuid): Promise<Result<number>>;
 }
 
+export interface AssessmentRepository {
+  /**
+   * Every recorded performance for the athlete. Append-only history, so this
+   * grows without bound and gains paging options before it reaches the UI in
+   * anger.
+   */
+  listResults(
+    athleteId: Uuid,
+    options?: { limit?: number; before?: IsoDate },
+  ): Promise<Result<readonly AssessmentResult[]>>;
+}
+
 export interface Repositories {
   athlete: AthleteRepository;
+  assessment: AssessmentRepository;
   readiness: ReadinessRepository;
   training: TrainingRepository;
 }

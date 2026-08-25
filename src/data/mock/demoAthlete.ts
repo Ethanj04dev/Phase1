@@ -1,5 +1,5 @@
+import type { AssessmentEventId, AssessmentResult } from '@/domain/assessment/types';
 import type { AthleteProfile } from '@/domain/athlete/types';
-import type { ReadinessSnapshot, ReadinessTrend } from '@/domain/readiness/types';
 import type { ResolvedWorkoutDay } from '@/domain/training/types';
 
 /**
@@ -26,28 +26,67 @@ export const demoProfile: AthleteProfile = {
   updatedAt: '2026-08-25T08:00:00.000Z',
 };
 
-export const demoReadiness: ReadinessSnapshot = {
-  id: 'demo-readiness-0007',
-  athleteId: DEMO_ATHLETE_ID,
-  recordedAt: '2026-08-25T08:00:00.000Z',
-  overall: 72,
-  categories: {
-    running: 76,
-    swimming: 61,
-    calisthenics: 84,
-    rucking: 69,
-    strength: 70,
-  },
-  strongestCategory: 'calisthenics',
-  priorityCategory: 'swimming',
-  coverage: 0.86,
+/**
+ * Three rounds of testing across roughly ten weeks.
+ *
+ * Readiness is no longer written down here as a number. These raw performances
+ * are the only input, and the mock repository runs them through the real
+ * scoring engine, so the demo dashboard exercises the same code path an actual
+ * athlete will.
+ *
+ * The athlete is a competent runner and a weak swimmer, which is what makes
+ * swimming surface as the priority for a Pararescue goal.
+ */
+const DEMO_TEST_DATES = [
+  '2026-06-15T08:00:00.000Z',
+  '2026-07-28T08:00:00.000Z',
+  '2026-08-18T08:00:00.000Z',
+] as const;
+
+/** Raw values per event, in the same order as DEMO_TEST_DATES. */
+const DEMO_PERFORMANCES: Record<AssessmentEventId, readonly number[]> = {
+  pull_ups: [11, 14, 16],
+  push_ups: [48, 55, 60],
+  sit_ups: [58, 64, 68],
+  run_1_mile: [438, 420, 408],
+  run_1_5_mile: [690, 648, 624],
+  swim_500m: [690, 645, 618],
+  ruck_3_mile: [2970, 2850, 2760],
 };
 
-export const demoReadinessTrend: ReadinessTrend = {
-  delta: 4,
-  windowDays: 30,
-  comparedTo: '2026-07-26T08:00:00.000Z',
-};
+function buildDemoResults(): AssessmentResult[] {
+  const results: AssessmentResult[] = [];
+
+  DEMO_TEST_DATES.forEach((recordedAt, round) => {
+    for (const [eventId, values] of Object.entries(DEMO_PERFORMANCES)) {
+      const value = values[round];
+      if (value === undefined) {
+        continue;
+      }
+      results.push({
+        id: `demo-result-${eventId}-${round}`,
+        athleteId: DEMO_ATHLETE_ID,
+        eventId: eventId as AssessmentEventId,
+        value,
+        recordedAt,
+        notes: null,
+      });
+    }
+  });
+
+  return results;
+}
+
+export const demoAssessmentResults: readonly AssessmentResult[] = buildDemoResults();
+
+/** Test dates, oldest first. Used to build the readiness history. */
+export const demoAssessmentDates: readonly string[] = DEMO_TEST_DATES;
+
+/**
+ * Fixed "now" for the demo so the trend window is stable regardless of when the
+ * app is opened during development.
+ */
+export const demoNow = '2026-08-25T08:00:00.000Z';
 
 /** Position in the program, shown as WEEK 04 / DAY 03. */
 export const demoProgramPosition = {
