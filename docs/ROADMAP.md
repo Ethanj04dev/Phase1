@@ -3,7 +3,7 @@
 Single source of truth for what gets built next. Update the status line when a
 milestone lands.
 
-**Current position:** M6 complete. M7 next.
+**Current position:** M7 complete. M8 next.
 
 ---
 
@@ -178,16 +178,24 @@ halfway, and resumed without data loss.
 
 ---
 
-## M7 — Profile and settings
+## M7 — Profile and settings *(complete)*
 
 **Goal:** the athlete can change what they told us.
 
 **Deliverables**
 - Edit goal, track, training days, experience levels. Changing a goal
   recomputes readiness because emphasis weights change.
-- Units preference.
+- ~~Units preference~~ — deferred. See note below.
 - Disclaimers and about (already present, formalised).
 - Reset local data, for development and for testing onboarding repeatedly.
+
+**Units deferred, deliberately.** A metric/imperial toggle would have to reach
+into `describeBlock`, which is pure domain code that currently returns a
+formatted string. Threading a user preference into the domain layer to serve a
+US-focused audience -- who already train in the mixed convention the app uses,
+metres in the pool, miles on the road, pounds on the back -- is the wrong trade.
+Revisit if the product goes beyond the US, and fix the underlying smell then by
+moving formatting out of the domain layer.
 
 ---
 
