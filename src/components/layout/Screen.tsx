@@ -1,5 +1,13 @@
 import type { ReactNode } from 'react';
-import { ScrollView, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
+import {
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  View,
+  type StyleProp,
+  type ViewStyle,
+} from 'react-native';
 import { SafeAreaView, useSafeAreaInsets, type Edge } from 'react-native-safe-area-context';
 
 import { useTheme } from '@/theme';
@@ -15,6 +23,12 @@ export interface ScreenProps {
   footer?: ReactNode;
   sunken?: boolean;
   contentContainerStyle?: StyleProp<ViewStyle>;
+  /**
+   * Lifts content and the pinned footer clear of the keyboard. Required on any
+   * screen with a text input, or the field being typed into can end up hidden
+   * behind the keyboard.
+   */
+  avoidKeyboard?: boolean;
   testID?: string;
 }
 
@@ -26,6 +40,7 @@ export function Screen({
   footer,
   sunken = false,
   contentContainerStyle,
+  avoidKeyboard = false,
   testID,
 }: ScreenProps) {
   const theme = useTheme();
@@ -49,17 +64,8 @@ export function Screen({
     <View style={[styles.flex, padding, contentContainerStyle]}>{children}</View>
   );
 
-  return (
-    <SafeAreaView
-      edges={edges}
-      testID={testID}
-      style={[
-        styles.flex,
-        {
-          backgroundColor: sunken ? theme.colors.backgroundSunken : theme.colors.background,
-        },
-      ]}
-    >
+  const content = (
+    <>
       {body}
       {footer ? (
         <View
@@ -77,6 +83,32 @@ export function Screen({
           {footer}
         </View>
       ) : null}
+    </>
+  );
+
+  return (
+    <SafeAreaView
+      edges={edges}
+      testID={testID}
+      style={[
+        styles.flex,
+        {
+          backgroundColor: sunken ? theme.colors.backgroundSunken : theme.colors.background,
+        },
+      ]}
+    >
+      {avoidKeyboard ? (
+        <KeyboardAvoidingView
+          // iOS insets the view; Android already resizes the window, so
+          // applying padding there would double-count the keyboard.
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+          style={styles.flex}
+        >
+          {content}
+        </KeyboardAvoidingView>
+      ) : (
+        content
+      )}
     </SafeAreaView>
   );
 }

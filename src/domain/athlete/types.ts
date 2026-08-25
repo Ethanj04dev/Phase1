@@ -1,3 +1,4 @@
+import type { AssessmentEventId } from '@/domain/assessment/types';
 import type { GoalId } from '@/domain/goals/types';
 import type { ExperienceLevel, IsoDateTime, Uuid } from '@/domain/types';
 
@@ -81,21 +82,33 @@ export interface AthleteProfile {
   updatedAt: IsoDateTime;
 }
 
-/** Everything onboarding collects, before a profile row exists. */
+/**
+ * Baseline performances entered during onboarding, keyed by event. Every entry
+ * is optional: an athlete can defer any test and still finish onboarding.
+ */
+export type BaselineEntries = Partial<Record<AssessmentEventId, number>>;
+
+/**
+ * Everything onboarding collects, before a profile row exists.
+ *
+ * There is no `trackId` here. The track is derived from the athlete's baseline
+ * and experience rather than asked as a sixth question, which removes a
+ * decision the athlete is not yet equipped to make.
+ */
 export interface OnboardingDraft {
   goalId: GoalId | null;
-  trackId: TrainingTrackId | null;
   runningExperience: ExperienceLevel | null;
   swimmingExperience: ExperienceLevel | null;
   ruckingExperience: ExperienceLevel | null;
   trainingDaysPerWeek: number | null;
+  baseline: BaselineEntries;
 }
 
 export const EMPTY_ONBOARDING_DRAFT: OnboardingDraft = {
   goalId: null,
-  trackId: null,
   runningExperience: null,
   swimmingExperience: null,
   ruckingExperience: null,
   trainingDaysPerWeek: null,
+  baseline: {},
 };

@@ -43,8 +43,20 @@ function delayed<T>(value: T): Promise<Result<T>> {
 /** Mutable copy so profile updates persist for the life of the session. */
 let profile: AthleteProfile = { ...demoProfile };
 
+let extraResults: AssessmentResult[] = [];
+
 const athlete: AthleteRepository = {
   getCurrentProfile: () => delayed<AthleteProfile | null>(profile),
+  createProfile: (input) => {
+    profile = {
+      ...input,
+      id: profile.id,
+      userId: profile.userId,
+      createdAt: profile.createdAt,
+      updatedAt: new Date().toISOString(),
+    };
+    return delayed(profile);
+  },
   updateProfile: (id, patch) => {
     profile = {
       ...profile,
@@ -57,7 +69,20 @@ const athlete: AthleteRepository = {
 };
 
 const assessment: AssessmentRepository = {
-  listResults: () => delayed(demoAssessmentResults),
+  listResults: () => delayed([...demoAssessmentResults, ...extraResults]),
+  recordResults: (athleteId, entries) => {
+    const recordedAt = new Date().toISOString();
+    const created: AssessmentResult[] = entries.map((entry, index) => ({
+      id: `mock-result-${extraResults.length + index}`,
+      athleteId,
+      eventId: entry.eventId,
+      value: entry.value,
+      recordedAt,
+      notes: entry.notes ?? null,
+    }));
+    extraResults = [...extraResults, ...created];
+    return delayed(created);
+  },
 };
 
 /**
@@ -102,6 +127,15 @@ const readiness: ReadinessRepository = {
     const history = buildHistory().reverse();
     return delayed(history.slice(0, options?.limit ?? 30));
   },
+  record: (athleteId, calculation) =>
+    // The mock derives history from demo results rather than storing it, so
+    // this returns a stamped snapshot without persisting anything.
+    delayed({
+      ...calculation,
+      id: 'mock-readiness-recorded',
+      athleteId,
+      recordedAt: new Date().toISOString(),
+    }),
 };
 
 const training: TrainingRepository = {
@@ -121,4 +155,5 @@ export const mockRepositories: Repositories = {
 /** Restores demo state. Used by tests and by the developer reset action. */
 export function resetMockRepositories(): void {
   profile = { ...demoProfile };
+  extraResults = [];
 }

@@ -1,14 +1,16 @@
 import { createContext, useContext, type ReactNode } from 'react';
 
-import { mockRepositories } from './mock/mockRepositories';
+import { localRepositories } from './local/localRepositories';
 import type { Repositories } from './repositories/types';
 
 /**
- * Repository injection point. The app currently runs on mock repositories;
- * swapping in Supabase means changing the default passed here, and nothing
- * else. Tests override it per-render.
+ * Repository injection point.
+ *
+ * The app runs on locally persisted repositories. Swapping in Supabase means
+ * changing the default passed here, and nothing else. Tests and stories
+ * override it per-render with the mock implementation.
  */
-const RepositoryContext = createContext<Repositories>(mockRepositories);
+const RepositoryContext = createContext<Repositories>(localRepositories);
 
 interface RepositoryProviderProps {
   repositories?: Repositories;
@@ -16,7 +18,7 @@ interface RepositoryProviderProps {
 }
 
 export function RepositoryProvider({
-  repositories = mockRepositories,
+  repositories = localRepositories,
   children,
 }: RepositoryProviderProps) {
   return (

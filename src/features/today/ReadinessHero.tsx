@@ -43,9 +43,18 @@ export function ReadinessHero({ readiness, trend }: ReadinessHeroProps) {
         >
           {readiness.overall}
         </Text>
-        {trend ? (
+        {/*
+          Only shown once there is something to compare against. A brand-new
+          athlete has a single snapshot, and rendering "0 LAST 30 DAYS" would
+          state a fact about progress they have not had the chance to make.
+        */}
+        {trend && trend.comparedTo !== null ? (
           <DeltaBadge delta={trend.delta} caption={`LAST ${trend.windowDays} DAYS`} />
-        ) : null}
+        ) : (
+          <Text variant="labelSm" color="textTertiary">
+            FIRST BASELINE
+          </Text>
+        )}
         {readiness.coverage < LOW_COVERAGE_THRESHOLD ? (
           <Text variant="caption" color="textTertiary" style={{ marginTop: theme.spacing.sm }}>
             Based on partial data. Complete an assessment for a fuller picture.

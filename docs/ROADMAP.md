@@ -3,7 +3,7 @@
 Single source of truth for what gets built next. Update the status line when a
 milestone lands.
 
-**Current position:** M1 complete. M2 next.
+**Current position:** M2 complete. M3 next.
 
 ---
 
@@ -84,7 +84,7 @@ computed score instead of a hardcoded snapshot.
 
 ---
 
-## M2 — Onboarding and local persistence
+## M2 — Onboarding and local persistence *(complete)*
 
 **Goal:** a new athlete can install, set up, and have that survive a restart.
 

@@ -1,6 +1,10 @@
-import type { AssessmentResult } from '@/domain/assessment/types';
+import type { AssessmentEventId, AssessmentResult } from '@/domain/assessment/types';
 import type { AthleteProfile } from '@/domain/athlete/types';
-import type { ReadinessSnapshot, ReadinessTrend } from '@/domain/readiness/types';
+import type {
+  ReadinessCalculation,
+  ReadinessSnapshot,
+  ReadinessTrend,
+} from '@/domain/readiness/types';
 import type { ResolvedWorkoutDay } from '@/domain/training/types';
 import type { IsoDate, Result, Uuid } from '@/domain/types';
 
@@ -13,8 +17,15 @@ import type { IsoDate, Result, Uuid } from '@/domain/types';
  * site to handle the failure path explicitly.
  */
 
+/** Fields onboarding supplies. Identity and timestamps are the repository's job. */
+export type NewAthleteProfile = Omit<
+  AthleteProfile,
+  'id' | 'userId' | 'createdAt' | 'updatedAt'
+>;
+
 export interface AthleteRepository {
   getCurrentProfile(): Promise<Result<AthleteProfile | null>>;
+  createProfile(input: NewAthleteProfile): Promise<Result<AthleteProfile>>;
   updateProfile(
     id: Uuid,
     patch: Partial<Omit<AthleteProfile, 'id' | 'userId' | 'createdAt'>>,
@@ -29,6 +40,14 @@ export interface ReadinessRepository {
     athleteId: Uuid,
     options?: { limit?: number; before?: IsoDate },
   ): Promise<Result<readonly ReadinessSnapshot[]>>;
+  /**
+   * Appends a snapshot. Takes a finished calculation rather than raw results:
+   * scoring is the domain layer's job, storage is the repository's.
+   */
+  record(
+    athleteId: Uuid,
+    calculation: ReadinessCalculation,
+  ): Promise<Result<ReadinessSnapshot>>;
 }
 
 export interface ProgramPosition {
@@ -55,6 +74,22 @@ export interface AssessmentRepository {
     athleteId: Uuid,
     options?: { limit?: number; before?: IsoDate },
   ): Promise<Result<readonly AssessmentResult[]>>;
+  /**
+   * Appends a batch of results recorded at the same sitting. A batch rather
+   * than one call per event, so a baseline test is a single atomic write and
+   * cannot half-succeed.
+   */
+  recordResults(
+    athleteId: Uuid,
+    entries: readonly NewAssessmentResult[],
+  ): Promise<Result<readonly AssessmentResult[]>>;
+}
+
+/** One measured performance, before it has an id or a timestamp. */
+export interface NewAssessmentResult {
+  eventId: AssessmentEventId;
+  value: number;
+  notes?: string | null;
 }
 
 export interface Repositories {
