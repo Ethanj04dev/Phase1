@@ -17,6 +17,7 @@ import type {
 } from '@/data/repositories/types';
 
 import { readRecord, StorageKeys, writeRecord } from './storage';
+import { localWorkoutRepository } from './workoutRepository';
 
 /**
  * Repositories backed by durable local storage.
@@ -202,5 +203,6 @@ export const localRepositories: Repositories = {
   readiness,
   // Programme content is authored and ships with the app; only the athlete's
   // position in it is personal, and that is derived from their start date.
-  training: createContentTrainingRepository(loadProfile),
+  training: createContentTrainingRepository(loadProfile, localWorkoutRepository),
+  workout: localWorkoutRepository,
 };

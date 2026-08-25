@@ -18,6 +18,11 @@ export default function WorkoutLayout() {
       }}
     >
       <Stack.Screen name="[dayId]" options={{ title: 'Session' }} />
+      <Stack.Screen name="active" options={{ title: 'Session', headerBackVisible: false }} />
+      <Stack.Screen
+        name="complete"
+        options={{ title: 'Complete', headerBackVisible: false, gestureEnabled: false }}
+      />
     </Stack>
   );
 }

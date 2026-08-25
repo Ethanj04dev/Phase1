@@ -50,7 +50,7 @@ export default function TodayScreen() {
             onPress={() => {
               if (dashboard?.today) {
                 router.push({
-                  pathname: '/workout/[dayId]',
+                  pathname: '/workout/active',
                   params: { dayId: dashboard.today.id },
                 });
               }

@@ -5,7 +5,13 @@ import type {
   ReadinessSnapshot,
   ReadinessTrend,
 } from '@/domain/readiness/types';
-import type { Program, ResolvedWorkoutDay } from '@/domain/training/types';
+import type {
+  ActiveSession,
+  ExerciseResult,
+  Program,
+  ResolvedWorkoutDay,
+  WorkoutResult,
+} from '@/domain/training/types';
 import type { IsoDate, Result, Uuid } from '@/domain/types';
 
 /**
@@ -106,9 +112,35 @@ export interface NewAssessmentResult {
   notes?: string | null;
 }
 
+export interface WorkoutRepository {
+  /**
+   * The single session in progress, if any.
+   *
+   * There is deliberately at most one: an athlete is doing one workout at a
+   * time, and allowing several would mean reconciling conflicting timers.
+   */
+  getActive(athleteId: Uuid): Promise<Result<ActiveSession | null>>;
+  /** Persists the whole session. Called on every change, not just at the end. */
+  saveActive(session: ActiveSession): Promise<Result<ActiveSession>>;
+  discardActive(athleteId: Uuid): Promise<Result<void>>;
+  /** Writes the finished session and its per-rep rows, then clears the draft. */
+  complete(
+    session: ActiveSession,
+    durationSeconds: number,
+  ): Promise<Result<WorkoutResult>>;
+  listResults(
+    athleteId: Uuid,
+    options?: { limit?: number },
+  ): Promise<Result<readonly WorkoutResult[]>>;
+  listExerciseResults(
+    workoutResultId: Uuid,
+  ): Promise<Result<readonly ExerciseResult[]>>;
+}
+
 export interface Repositories {
   athlete: AthleteRepository;
   assessment: AssessmentRepository;
   readiness: ReadinessRepository;
   training: TrainingRepository;
+  workout: WorkoutRepository;
 }

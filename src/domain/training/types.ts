@@ -223,3 +223,48 @@ export interface ExerciseResult {
   loadPounds?: number;
   rpe?: number;
 }
+
+// --- Session in progress -----------------------------------------------------
+
+/**
+ * One run of the clock. Storing start and end instants rather than an
+ * accumulated count is what lets elapsed time survive the app being
+ * backgrounded, killed or restored -- a ticking counter would simply stop.
+ */
+export interface TimerSegment {
+  startedAt: IsoDateTime;
+  /** Null while this segment is still running. */
+  endedAt: IsoDateTime | null;
+}
+
+/** One logged repetition or set, before the session is finished. */
+export interface ActiveEntry {
+  blockId: Uuid;
+  /** 1-based position within the block. */
+  repIndex: number;
+  durationSeconds?: number;
+  distanceMeters?: number;
+  reps?: number;
+  loadPounds?: number;
+  rpe?: number;
+  recordedAt: IsoDateTime;
+}
+
+/**
+ * A workout in progress.
+ *
+ * Persisted on every change rather than at the end. The athlete is outdoors,
+ * mid-effort, and iOS can evict the app at any moment; losing forty minutes of
+ * logged intervals to a phone call would be unforgivable.
+ */
+export interface ActiveSession {
+  id: Uuid;
+  athleteId: Uuid;
+  workoutDayId: Uuid;
+  startedAt: IsoDateTime;
+  segments: readonly TimerSegment[];
+  entries: readonly ActiveEntry[];
+  /** Session-level perceived effort, set on the completion screen. */
+  rpe: number | null;
+  notes: string;
+}

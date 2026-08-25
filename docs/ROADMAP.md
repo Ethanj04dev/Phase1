@@ -3,7 +3,7 @@
 Single source of truth for what gets built next. Update the status line when a
 milestone lands.
 
-**Current position:** M4 complete. M5 next.
+**Current position:** M5 complete. M6 next.
 
 ---
 
@@ -144,7 +144,7 @@ session and see different target windows.
 
 ---
 
-## M5 — Active workout
+## M5 — Active workout *(complete)*
 
 **Goal:** the interactive session. The hardest screen in the product.
 

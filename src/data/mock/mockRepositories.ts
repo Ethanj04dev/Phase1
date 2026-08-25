@@ -11,9 +11,11 @@ import type {
   ReadinessRepository,
   Repositories,
   TrainingRepository,
+  WorkoutRepository,
 } from '@/data/repositories/types';
 
 import { createContentTrainingRepository } from '@/data/content/trainingRepository';
+import { createInMemoryWorkoutRepository } from './inMemoryWorkoutRepository';
 import {
   demoAssessmentDates,
   demoAssessmentResults,
@@ -136,8 +138,11 @@ const readiness: ReadinessRepository = {
 
 // Programme content is authored and shared by every implementation; only the
 // athlete's position in it differs. There is no mock version to maintain.
-const training: TrainingRepository = createContentTrainingRepository(() =>
-  delayed<AthleteProfile | null>(profile),
+const workout: WorkoutRepository = createInMemoryWorkoutRepository();
+
+const training: TrainingRepository = createContentTrainingRepository(
+  () => delayed<AthleteProfile | null>(profile),
+  workout,
 );
 
 export const mockRepositories: Repositories = {
@@ -145,6 +150,7 @@ export const mockRepositories: Repositories = {
   assessment,
   readiness,
   training,
+  workout,
 };
 
 /** Restores demo state. Used by tests and by the developer reset action. */

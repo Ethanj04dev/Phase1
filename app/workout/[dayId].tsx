@@ -1,4 +1,4 @@
-import { Stack, useLocalSearchParams } from 'expo-router';
+import { router, Stack, useLocalSearchParams } from 'expo-router';
 import { View } from 'react-native';
 
 import { AsyncBoundary } from '@/components/feedback/AsyncBoundary';
@@ -36,10 +36,9 @@ export default function WorkoutOverviewScreen() {
             label="Begin Session"
             size="lg"
             accessibilityHint="Starts logging this session"
-            onPress={() => {
-              // The active workout lands in M5. Until then this screen is the
-              // prescription, not the logger.
-            }}
+            onPress={() =>
+              router.push({ pathname: '/workout/active', params: { dayId } })
+            }
             testID="begin-session"
           />
         ) : undefined
