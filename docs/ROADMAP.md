@@ -3,7 +3,7 @@
 Single source of truth for what gets built next. Update the status line when a
 milestone lands.
 
-**Current position:** M2 complete. M3 next.
+**Current position:** M3 complete. M4 next.
 
 ---
 
@@ -104,7 +104,7 @@ reopened, and it lands on the dashboard with the athlete's real data.
 
 ---
 
-## M3 — Assessment system
+## M3 — Assessment system *(complete)*
 
 **Goal:** athletes can test, log, and see improvement.
 

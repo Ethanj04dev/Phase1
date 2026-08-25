@@ -9,7 +9,7 @@ import { Divider } from '@/components/primitives/Divider';
 import { Text } from '@/components/primitives/Text';
 import { ASSESSMENT_EVENTS } from '@/domain/assessment/types';
 import { PERFORMANCE_CATEGORY_LABELS, type PerformanceCategory } from '@/domain/types';
-import { AssessmentField } from '@/features/onboarding/AssessmentField';
+import { AssessmentField } from '@/features/assessment/AssessmentField';
 import { useOnboarding } from '@/features/onboarding/OnboardingProvider';
 import { formatPercent } from '@/lib/format';
 import { useTheme } from '@/theme';
