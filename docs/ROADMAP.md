@@ -3,7 +3,7 @@
 Single source of truth for what gets built next. Update the status line when a
 milestone lands.
 
-**Current position:** M0 complete. M1 not started.
+**Current position:** M1 complete. M2 next.
 
 ---
 
@@ -52,7 +52,7 @@ mock data, Today dashboard, branding and icon set.
 
 ---
 
-## M1 — Readiness engine
+## M1 — Readiness engine *(complete)*
 
 **Goal:** a deterministic, transparent, unit-tested scoring system.
 
