@@ -39,3 +39,14 @@ yarn-error.*
 # generated native folders
 /ios
 /android
+
+# Expo Router / typed routes
+.expo/types/
+
+# Env
+.env
+.env.local
+
+# EAS
+/eas.json.local
+.expo-verify/
