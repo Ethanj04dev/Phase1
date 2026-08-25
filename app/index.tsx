@@ -5,32 +5,52 @@ import { View } from 'react-native';
 
 import { Text } from '@/components/primitives/Text';
 import { useRepositories } from '@/data/repositoryContext';
+import { useAuth } from '@/features/auth/AuthProvider';
 import { useAsyncResource } from '@/lib/useAsyncResource';
 import { useTheme } from '@/theme';
 
 /**
  * Boot gate.
  *
- * The single place that decides where a launch lands. Keeping it a route
- * rather than logic inside the root layout means the decision happens once,
- * with a real loading state, and the auth stack can slot in here in M8 without
- * restructuring anything.
+ * The single place that decides where a launch lands, in this order:
+ *
+ *   auth still resolving  -> hold the splash
+ *   no backend configured -> local storage, straight to the profile check
+ *   signed out            -> sign in
+ *   signed in             -> profile check, then onboarding or the app
+ *
+ * Keeping it a route rather than logic in the root layout means the decision
+ * happens once, with a real loading state, and the auth step slotted in here
+ * without restructuring anything.
  */
 export default function BootScreen() {
   const theme = useTheme();
+  const { status } = useAuth();
   const { athlete } = useRepositories();
+
+  // Only meaningful once auth has settled; until then the repositories may
+  // still be the local set and the answer would be about the wrong athlete.
+  const ready = status === 'signed_in' || status === 'disabled';
 
   const fetcher = useCallback(() => athlete.getCurrentProfile(), [athlete]);
   const { state, reload } = useAsyncResource(fetcher);
 
-  // The native splash stays up until the destination is known, so the athlete
-  // never sees an empty frame or a flash of the wrong screen. It is hidden on
-  // failure too -- a stuck splash would be worse than a visible error.
+  const resolving = status === 'loading' || (ready && state.status === 'loading');
+
+  // Hidden on failure too: a stuck splash is worse than a visible error.
   useEffect(() => {
-    if (state.status !== 'loading') {
+    if (!resolving) {
       void SplashScreen.hideAsync();
     }
-  }, [state.status]);
+  }, [resolving]);
+
+  if (status === 'loading') {
+    return <View style={{ flex: 1, backgroundColor: theme.colors.background }} />;
+  }
+
+  if (status === 'signed_out') {
+    return <Redirect href="/auth/sign-in" />;
+  }
 
   if (state.status === 'loading') {
     return <View style={{ flex: 1, backgroundColor: theme.colors.background }} />;

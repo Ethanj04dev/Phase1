@@ -37,7 +37,9 @@ export function DeltaBadge({
 
   const sign = unchanged ? '' : delta > 0 ? '+' : '-';
   const magnitude = format(Math.abs(delta));
-  const readable = unchanged ? 'No change' : `${improved ? 'Improved by' : 'Down by'} ${magnitude}`;
+  const readable = unchanged
+    ? 'No change'
+    : `${improved ? 'Improved by' : 'Down by'} ${magnitude}`;
 
   return (
     <View

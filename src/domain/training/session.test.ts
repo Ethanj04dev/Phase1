@@ -22,7 +22,11 @@ import type {
 const T = (minutes: number, seconds = 0): string =>
   new Date(Date.UTC(2026, 7, 25, 10, minutes, seconds)).toISOString();
 
-function entry(blockId: string, repIndex: number, overrides: Partial<ActiveEntry> = {}): ActiveEntry {
+function entry(
+  blockId: string,
+  repIndex: number,
+  overrides: Partial<ActiveEntry> = {},
+): ActiveEntry {
   return { blockId, repIndex, recordedAt: T(0), ...overrides };
 }
 
@@ -130,8 +134,13 @@ describe('entries', () => {
 
   it('returns one block’s entries in rep order', () => {
     const session: ActiveSession = {
-      id: 'a', athleteId: 'ath', workoutDayId: 'd1', startedAt: T(0),
-      segments: [], rpe: null, notes: '',
+      id: 'a',
+      athleteId: 'ath',
+      workoutDayId: 'd1',
+      startedAt: T(0),
+      segments: [],
+      rpe: null,
+      notes: '',
       entries: [entry('b1', 3), entry('b2', 1), entry('b1', 1), entry('b1', 2)],
     };
     expect(entriesForBlock(session, 'b1').map((e) => e.repIndex)).toEqual([1, 2, 3]);
@@ -141,15 +150,30 @@ describe('entries', () => {
 describe('expectedReps', () => {
   it('reads reps, sets or a single effort depending on the block', () => {
     const interval: WorkoutBlock = {
-      id: 'b1', order: 1, kind: 'interval', name: 'x', reps: 6,
-      distanceMeters: 800, recoverySeconds: 120,
+      id: 'b1',
+      order: 1,
+      kind: 'interval',
+      name: 'x',
+      reps: 6,
+      distanceMeters: 800,
+      recoverySeconds: 120,
       target: { basis: 'mile_time', factor: 0.94, toleranceSeconds: 5 },
     };
     const strength: WorkoutBlock = {
-      id: 'b2', order: 2, kind: 'strength', name: 'x', sets: 4, reps: 8, restSeconds: 120,
+      id: 'b2',
+      order: 2,
+      kind: 'strength',
+      name: 'x',
+      sets: 4,
+      reps: 8,
+      restSeconds: 120,
     };
     const steady: WorkoutBlock = {
-      id: 'b3', order: 3, kind: 'steady', name: 'x', distanceMeters: 5000,
+      id: 'b3',
+      order: 3,
+      kind: 'steady',
+      name: 'x',
+      distanceMeters: 5000,
     };
     expect(expectedReps(interval)).toBe(6);
     expect(expectedReps(strength)).toBe(4);
@@ -159,23 +183,38 @@ describe('expectedReps', () => {
 
 describe('summariseSession', () => {
   const intervals: WorkoutBlock = {
-    id: 'b1', order: 1, kind: 'interval', name: '800s', reps: 4,
-    distanceMeters: 800, recoverySeconds: 120,
+    id: 'b1',
+    order: 1,
+    kind: 'interval',
+    name: '800s',
+    reps: 4,
+    distanceMeters: 800,
+    recoverySeconds: 120,
     target: { basis: 'mile_time', factor: 0.94, toleranceSeconds: 5 },
   };
   const sessions: WorkoutSession[] = [
     {
-      id: 's1', workoutDayId: 'd1', order: 1, modality: 'running',
-      title: 'Interval Run', estimatedMinutes: 45, blocks: [intervals],
+      id: 's1',
+      workoutDayId: 'd1',
+      order: 1,
+      modality: 'running',
+      title: 'Interval Run',
+      estimatedMinutes: 45,
+      blocks: [intervals],
     },
   ];
   const target: ResolvedTarget = {
-    lowSeconds: 182, highSeconds: 192, targetSeconds: 187,
-    basis: 'mile_time', estimated: false,
+    lowSeconds: 182,
+    highSeconds: 192,
+    targetSeconds: 187,
+    basis: 'mile_time',
+    estimated: false,
   };
 
   const active: ActiveSession = {
-    id: 'a1', athleteId: 'ath', workoutDayId: 'd1',
+    id: 'a1',
+    athleteId: 'ath',
+    workoutDayId: 'd1',
     startedAt: T(0),
     segments: [{ startedAt: T(0), endedAt: T(45) }],
     entries: [

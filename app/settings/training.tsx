@@ -10,14 +10,8 @@ import { ChoiceRow } from '@/components/primitives/ChoiceRow';
 import { Text } from '@/components/primitives/Text';
 import type { AthleteProfile } from '@/domain/athlete/types';
 import { EXPERIENCE_LEVEL_LABELS, type ExperienceLevel } from '@/domain/types';
-import {
-  DISCIPLINES,
-  TRAINING_DAY_OPTIONS,
-} from '@/features/settings/trainingBackground';
-import {
-  useAthleteProfile,
-  useUpdateProfile,
-} from '@/features/settings/useProfileSettings';
+import { DISCIPLINES, TRAINING_DAY_OPTIONS } from '@/features/settings/trainingBackground';
+import { useAthleteProfile, useUpdateProfile } from '@/features/settings/useProfileSettings';
 import { useTheme } from '@/theme';
 
 type Draft = Pick<
@@ -98,9 +92,7 @@ export default function EditTrainingScreen() {
                     options={discipline.levels}
                     selected={working[discipline.field]}
                     labelFor={(level: ExperienceLevel) => EXPERIENCE_LEVEL_LABELS[level]}
-                    onSelect={(level) =>
-                      setDraft({ ...working, [discipline.field]: level })
-                    }
+                    onSelect={(level) => setDraft({ ...working, [discipline.field]: level })}
                   />
                 </View>
               ))}

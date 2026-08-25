@@ -9,10 +9,7 @@ import { Card } from '@/components/primitives/Card';
 import { Divider } from '@/components/primitives/Divider';
 import { Text } from '@/components/primitives/Text';
 import type { NewAssessmentResult } from '@/data/repositories/types';
-import {
-  ASSESSMENT_EVENTS,
-  type AssessmentEventId,
-} from '@/domain/assessment/types';
+import { ASSESSMENT_EVENTS, type AssessmentEventId } from '@/domain/assessment/types';
 import { PERFORMANCE_CATEGORY_LABELS, type PerformanceCategory } from '@/domain/types';
 import { AssessmentField } from '@/features/assessment/AssessmentField';
 import { useLogAssessment } from '@/features/assessment/useLogAssessment';
@@ -97,8 +94,8 @@ export default function NewAssessmentScreen() {
           Retest
         </Text>
         <Text variant="body" color="textSecondary">
-          Enter only what you tested today. Anything you leave blank keeps its previous
-          result, and your readiness updates as soon as you save.
+          Enter only what you tested today. Anything you leave blank keeps its previous result,
+          and your readiness updates as soon as you save.
         </Text>
       </Card>
 

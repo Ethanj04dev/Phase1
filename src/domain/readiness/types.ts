@@ -1,9 +1,4 @@
-import type {
-  CategoryScores,
-  IsoDateTime,
-  PerformanceCategory,
-  Uuid,
-} from '@/domain/types';
+import type { CategoryScores, IsoDateTime, PerformanceCategory, Uuid } from '@/domain/types';
 
 /**
  * The result of scoring an athlete, with no identity or clock attached.

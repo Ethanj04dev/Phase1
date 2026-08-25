@@ -12,8 +12,7 @@ export const disclaimers = {
   training:
     'Physical training carries a risk of injury. Train within your ability, progress gradually, and consult a qualified medical professional before starting a new training program.',
 
-  medical:
-    'Phase 1 does not provide medical advice, diagnosis, or treatment.',
+  medical: 'Phase 1 does not provide medical advice, diagnosis, or treatment.',
 } as const;
 
 /** Condensed line for footers and dense screens. */

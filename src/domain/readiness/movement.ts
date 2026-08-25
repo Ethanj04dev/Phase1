@@ -1,7 +1,4 @@
-import {
-  PERFORMANCE_CATEGORIES,
-  type PerformanceCategory,
-} from '@/domain/types';
+import { PERFORMANCE_CATEGORIES, type PerformanceCategory } from '@/domain/types';
 
 import type { ReadinessSnapshot } from './types';
 
@@ -97,13 +94,9 @@ export function baselineWithin(
   }
   const cutoff = nowMs - windowDays * 24 * 60 * 60 * 1000;
 
-  const chronological = [...history].sort((a, b) =>
-    a.recordedAt.localeCompare(b.recordedAt),
-  );
+  const chronological = [...history].sort((a, b) => a.recordedAt.localeCompare(b.recordedAt));
   const newest = chronological[chronological.length - 1];
-  const candidate = chronological.find(
-    (snapshot) => Date.parse(snapshot.recordedAt) >= cutoff,
-  );
+  const candidate = chronological.find((snapshot) => Date.parse(snapshot.recordedAt) >= cutoff);
 
   // A single snapshot inside the window has nothing to compare against.
   return candidate && candidate !== newest ? candidate : null;

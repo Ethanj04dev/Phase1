@@ -52,9 +52,7 @@ export const EXPERIENCE_LEVEL_LABELS: Record<ExperienceLevel, string> = {
 };
 
 /** Discriminated result type. Keeps repository failures out of throw sites. */
-export type Result<T, E = DomainError> =
-  | { ok: true; value: T }
-  | { ok: false; error: E };
+export type Result<T, E = DomainError> = { ok: true; value: T } | { ok: false; error: E };
 
 export interface DomainError {
   code: DomainErrorCode;
@@ -65,12 +63,7 @@ export interface DomainError {
 }
 
 export type DomainErrorCode =
-  | 'not_found'
-  | 'unauthorized'
-  | 'network'
-  | 'validation'
-  | 'conflict'
-  | 'unknown';
+  'not_found' | 'unauthorized' | 'network' | 'validation' | 'conflict' | 'unknown';
 
 export function ok<T>(value: T): Result<T, never> {
   return { ok: true, value };

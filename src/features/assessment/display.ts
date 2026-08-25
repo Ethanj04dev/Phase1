@@ -19,9 +19,7 @@ export function formatEventValue(event: AssessmentEvent, value: number): string 
  */
 export function formatEventDelta(event: AssessmentEvent, delta: number): string {
   const magnitude = Math.abs(delta);
-  return event.unit === 'seconds'
-    ? formatDuration(magnitude)
-    : String(Math.round(magnitude));
+  return event.unit === 'seconds' ? formatDuration(magnitude) : String(Math.round(magnitude));
 }
 
 /** Trailing unit for a value, or null when the formatted value already reads clearly. */

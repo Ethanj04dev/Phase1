@@ -2,10 +2,7 @@ import { useCallback } from 'react';
 
 import { useRepositories } from '@/data/repositoryContext';
 import { buildEventProgress, type EventProgress } from '@/domain/assessment/records';
-import {
-  findAssessmentEvent,
-  type AssessmentEventId,
-} from '@/domain/assessment/types';
+import { findAssessmentEvent, type AssessmentEventId } from '@/domain/assessment/types';
 import { err, ok, type Result } from '@/domain/types';
 import { useAsyncResource, type AsyncResource } from '@/lib/useAsyncResource';
 

@@ -116,9 +116,7 @@ export function findAssessmentEvent(id: AssessmentEventId): AssessmentEvent | un
 }
 
 /** Events belonging to a category, in catalog order. */
-export function eventsForCategory(
-  category: PerformanceCategory,
-): readonly AssessmentEvent[] {
+export function eventsForCategory(category: PerformanceCategory): readonly AssessmentEvent[] {
   return ASSESSMENT_EVENTS.filter((event) => event.category === category);
 }
 
@@ -165,7 +163,5 @@ export function isImprovement(
   candidate: number,
   previous: number,
 ): boolean {
-  return event.direction === 'lower_is_better'
-    ? candidate < previous
-    : candidate > previous;
+  return event.direction === 'lower_is_better' ? candidate < previous : candidate > previous;
 }

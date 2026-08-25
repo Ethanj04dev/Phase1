@@ -71,16 +71,23 @@ describe('weeklyCompletion', () => {
   // Rest days are not in the denominator, so a fully compliant week reads 100.
   it('reaches full completion without requiring seven days', () => {
     const completed = [
-      day(2026, 8, 24), day(2026, 8, 25), day(2026, 8, 26),
-      day(2026, 8, 27), day(2026, 8, 28),
+      day(2026, 8, 24),
+      day(2026, 8, 25),
+      day(2026, 8, 26),
+      day(2026, 8, 27),
+      day(2026, 8, 28),
     ];
     expect(weeklyCompletion(completed, weekStart, 5)).toBe(1);
   });
 
   it('never exceeds one', () => {
     const completed = [
-      day(2026, 8, 24), day(2026, 8, 25), day(2026, 8, 26),
-      day(2026, 8, 27), day(2026, 8, 28), day(2026, 8, 29),
+      day(2026, 8, 24),
+      day(2026, 8, 25),
+      day(2026, 8, 26),
+      day(2026, 8, 27),
+      day(2026, 8, 28),
+      day(2026, 8, 29),
     ];
     expect(weeklyCompletion(completed, weekStart, 5)).toBe(1);
   });

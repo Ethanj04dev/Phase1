@@ -59,11 +59,7 @@ export function createContentTrainingRepository(
     }
 
     const built = programForTrack(profile.trackId);
-    const position = positionFor(
-      profile.createdAt,
-      now(),
-      built.program.durationWeeks,
-    );
+    const position = positionFor(profile.createdAt, now(), built.program.durationWeeks);
 
     return { ok: true as const, profile, built, position };
   }

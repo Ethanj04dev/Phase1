@@ -36,9 +36,7 @@ export default function WorkoutOverviewScreen() {
             label="Begin Session"
             size="lg"
             accessibilityHint="Starts logging this session"
-            onPress={() =>
-              router.push({ pathname: '/workout/active', params: { dayId } })
-            }
+            onPress={() => router.push({ pathname: '/workout/active', params: { dayId } })}
             testID="begin-session"
           />
         ) : undefined

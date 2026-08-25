@@ -98,10 +98,7 @@ export default function TrainScreen() {
                               : theme.colors.surface,
                         })}
                       >
-                        <Text
-                          variant="mono"
-                          color={selected ? 'accent' : 'textSecondary'}
-                        >
+                        <Text variant="mono" color={selected ? 'accent' : 'textSecondary'}>
                           {String(week).padStart(2, '0')}
                         </Text>
                       </Pressable>

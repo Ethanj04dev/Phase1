@@ -64,9 +64,7 @@ export default function WorkoutCompleteScreen() {
                 <MetricTile
                   label="Volume"
                   value={
-                    summary.distanceMeters > 0
-                      ? formatDistance(summary.distanceMeters)
-                      : '--'
+                    summary.distanceMeters > 0 ? formatDistance(summary.distanceMeters) : '--'
                   }
                 />
               </View>
@@ -90,9 +88,7 @@ export default function WorkoutCompleteScreen() {
               <View>
                 <SectionHeader title="Against Target" />
                 <Card style={{ gap: theme.spacing.sm }}>
-                  <Text variant="metricLg">
-                    {`${summary.onTarget} / ${summary.targeted}`}
-                  </Text>
+                  <Text variant="metricLg">{`${summary.onTarget} / ${summary.targeted}`}</Text>
                   <Text variant="bodySm" color="textSecondary">
                     {`${formatPercent(summary.onTarget / summary.targeted)} of your timed reps landed inside the window.`}
                   </Text>

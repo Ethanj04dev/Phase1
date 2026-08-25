@@ -1,10 +1,6 @@
 import * as Crypto from 'expo-crypto';
 
-import type {
-  ActiveSession,
-  ExerciseResult,
-  WorkoutResult,
-} from '@/domain/training/types';
+import type { ActiveSession, ExerciseResult, WorkoutResult } from '@/domain/training/types';
 import { ok, type Result, type Uuid } from '@/domain/types';
 
 import type { WorkoutRepository } from '@/data/repositories/types';
@@ -63,7 +59,7 @@ export const localWorkoutRepository: WorkoutRepository = {
       athleteId: session.athleteId,
       // The day is the unit an athlete completes; sessions within it are how
       // the work is grouped for reading, not separate commitments.
-      workoutSessionId: session.workoutDayId,
+      workoutDayId: session.workoutDayId,
       completedAt: now(),
       durationSeconds,
       rpe: session.rpe,
@@ -82,9 +78,7 @@ export const localWorkoutRepository: WorkoutRepository = {
       ...(entry.durationSeconds !== undefined
         ? { durationSeconds: entry.durationSeconds }
         : {}),
-      ...(entry.distanceMeters !== undefined
-        ? { distanceMeters: entry.distanceMeters }
-        : {}),
+      ...(entry.distanceMeters !== undefined ? { distanceMeters: entry.distanceMeters } : {}),
       ...(entry.reps !== undefined ? { reps: entry.reps } : {}),
       ...(entry.loadPounds !== undefined ? { loadPounds: entry.loadPounds } : {}),
       ...(entry.rpe !== undefined ? { rpe: entry.rpe } : {}),

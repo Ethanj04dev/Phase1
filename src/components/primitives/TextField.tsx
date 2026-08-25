@@ -16,6 +16,8 @@ export interface TextFieldProps {
   keyboardType?: KeyboardTypeOptions;
   /** Trailing unit, e.g. "REPS". */
   suffix?: string;
+  /** Masks input and disables autocorrect. For passwords. */
+  secureTextEntry?: boolean;
   editable?: boolean;
   onSubmitEditing?: () => void;
   returnKeyType?: 'done' | 'next';
@@ -31,6 +33,7 @@ export function TextField({
   error,
   keyboardType = 'default',
   suffix,
+  secureTextEntry = false,
   editable = true,
   onSubmitEditing,
   returnKeyType = 'done',
@@ -84,6 +87,11 @@ export function TextField({
           placeholder={placeholder}
           placeholderTextColor={theme.colors.textDisabled}
           returnKeyType={returnKeyType}
+          secureTextEntry={secureTextEntry}
+          autoCapitalize={
+            secureTextEntry || keyboardType === 'email-address' ? 'none' : 'sentences'
+          }
+          autoCorrect={!secureTextEntry}
           selectionColor={theme.colors.accent}
           style={inputStyle}
           testID={testID}

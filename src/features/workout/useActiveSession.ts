@@ -147,18 +147,16 @@ export function useActiveSession(dayId: string | undefined) {
       return;
     }
 
-    const session: ActiveSession =
-      resumed ??
-      {
-        id: Crypto.randomUUID(),
-        athleteId: profile.id,
-        workoutDayId: targetDayId,
-        startedAt: nowIso(),
-        segments: startTimer([], nowIso()),
-        entries: [],
-        rpe: null,
-        notes: '',
-      };
+    const session: ActiveSession = resumed ?? {
+      id: Crypto.randomUUID(),
+      athleteId: profile.id,
+      workoutDayId: targetDayId,
+      startedAt: nowIso(),
+      segments: startTimer([], nowIso()),
+      entries: [],
+      rpe: null,
+      notes: '',
+    };
 
     if (!resumed) {
       await workout.saveActive(session);

@@ -21,9 +21,7 @@ function prescription(block: WorkoutBlock): string {
       return `${block.reps} x ${formatDistance(block.distanceMeters)}`;
     case 'steady':
       if (block.distanceMeters !== undefined) return formatDistance(block.distanceMeters);
-      return block.durationSeconds === undefined
-        ? ''
-        : formatDuration(block.durationSeconds);
+      return block.durationSeconds === undefined ? '' : formatDuration(block.durationSeconds);
     case 'ruck':
       return `${formatDistance(block.distanceMeters)} @ ${block.loadPounds} lb`;
     case 'strength':
@@ -135,8 +133,8 @@ export function BlockRow({ block, results }: BlockRowProps) {
 
       {!target && !effort && 'target' in block && block.target ? (
         <Text variant="caption" color="textTertiary">
-          Run by feel. Test your {block.target.basis === 'swim_500_time' ? 'swim' : 'run'}{' '}
-          to get a target here.
+          Run by feel. Test your {block.target.basis === 'swim_500_time' ? 'swim' : 'run'} to
+          get a target here.
         </Text>
       ) : null}
 

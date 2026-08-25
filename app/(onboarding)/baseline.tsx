@@ -45,9 +45,7 @@ export default function BaselineScreen() {
           size="lg"
           onPress={() => router.push('/result')}
           accessibilityHint={
-            tested === 0
-              ? 'Continue without entering any test results'
-              : undefined
+            tested === 0 ? 'Continue without entering any test results' : undefined
           }
           testID="baseline-continue"
         />
@@ -59,8 +57,8 @@ export default function BaselineScreen() {
           Where are you now?
         </Text>
         <Text variant="body" color="textSecondary">
-          Enter whatever you have tested recently. Skip anything you have not — your score
-          will say how complete it is, and you can fill the gaps any time.
+          Enter whatever you have tested recently. Skip anything you have not — your score will
+          say how complete it is, and you can fill the gaps any time.
         </Text>
         <View
           style={{

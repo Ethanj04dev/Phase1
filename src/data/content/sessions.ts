@@ -120,12 +120,7 @@ export function calisthenicsBlock(
   return { kind: 'calisthenics', name, sets, reps, restSeconds };
 }
 
-export function strengthBlock(
-  name: string,
-  sets: number,
-  reps: number,
-  rpe = 7,
-): BlockPlan {
+export function strengthBlock(name: string, sets: number, reps: number, rpe = 7): BlockPlan {
   return { kind: 'strength', name, sets, reps, restSeconds: 120, effort: { rpe } };
 }
 
@@ -193,10 +188,7 @@ export function calisthenicsSession(
   };
 }
 
-export function strengthSession(
-  blocks: readonly BlockPlan[],
-  minutes: number,
-): SessionPlan {
+export function strengthSession(blocks: readonly BlockPlan[], minutes: number): SessionPlan {
   return { modality: 'strength', title: 'Strength', estimatedMinutes: minutes, blocks };
 }
 
@@ -233,10 +225,7 @@ export function recoveryDay(minutes = 30): DayPlan {
     title: 'Recovery',
     description: 'Easy movement and mobility. Nothing that leaves you tired.',
     sessions: [
-      recoverySession(
-        minutes,
-        'Easy walk or spin, then hips, ankles and thoracic spine.',
-      ),
+      recoverySession(minutes, 'Easy walk or spin, then hips, ankles and thoracic spine.'),
     ],
   };
 }

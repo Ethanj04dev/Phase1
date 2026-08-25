@@ -11,7 +11,7 @@ function result(completedAt: string, distanceMeters?: number): WorkoutResult {
   return {
     id: `w${counter}`,
     athleteId: 'a',
-    workoutSessionId: 'd1',
+    workoutDayId: 'd1',
     completedAt,
     durationSeconds: 3600,
     rpe: 7,
@@ -63,7 +63,11 @@ describe('weeklyVolume', () => {
   });
 
   it('sums duration alongside distance', () => {
-    const buckets = weeklyVolume([result(day(2026, 8, 4), 5000), result(day(2026, 8, 5), 5000)], START, 2);
+    const buckets = weeklyVolume(
+      [result(day(2026, 8, 4), 5000), result(day(2026, 8, 5), 5000)],
+      START,
+      2,
+    );
     expect(buckets[0]?.durationSeconds).toBe(7200);
   });
 

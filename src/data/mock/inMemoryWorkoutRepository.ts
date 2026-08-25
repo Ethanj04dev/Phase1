@@ -1,8 +1,4 @@
-import type {
-  ActiveSession,
-  ExerciseResult,
-  WorkoutResult,
-} from '@/domain/training/types';
+import type { ActiveSession, ExerciseResult, WorkoutResult } from '@/domain/training/types';
 import { ok } from '@/domain/types';
 
 import type { WorkoutRepository } from '@/data/repositories/types';
@@ -40,7 +36,7 @@ export function createInMemoryWorkoutRepository(): WorkoutRepository {
       const result: WorkoutResult = {
         id: nextId('workout'),
         athleteId: session.athleteId,
-        workoutSessionId: session.workoutDayId,
+        workoutDayId: session.workoutDayId,
         completedAt: new Date().toISOString(),
         durationSeconds,
         rpe: session.rpe,

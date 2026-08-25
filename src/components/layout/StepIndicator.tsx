@@ -37,8 +37,7 @@ export function StepIndicator({ step, total }: StepIndicatorProps) {
               flex: 1,
               height: 2,
               borderRadius: 1,
-              backgroundColor:
-                index < step ? theme.colors.accent : theme.colors.trackEmpty,
+              backgroundColor: index < step ? theme.colors.accent : theme.colors.trackEmpty,
             }}
           />
         ))}

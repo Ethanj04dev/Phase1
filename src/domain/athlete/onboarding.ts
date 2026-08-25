@@ -60,11 +60,7 @@ export function computeOnboardingOutcome(draft: OnboardingDraft): OnboardingOutc
 
   // The timestamp is irrelevant to scoring here: every baseline entry shares
   // one sitting, so there is no "latest result" contest to resolve.
-  const results = buildBaselineResults(
-    draft.baseline,
-    PREVIEW_ATHLETE_ID,
-    PREVIEW_TIMESTAMP,
-  );
+  const results = buildBaselineResults(draft.baseline, PREVIEW_ATHLETE_ID, PREVIEW_TIMESTAMP);
 
   const calculation = calculateReadiness(goal, results);
 

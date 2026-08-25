@@ -11,7 +11,12 @@ export interface CardProps extends ViewProps {
   accessibilityLabel?: string;
 }
 
-function baseStyle(theme: Theme, elevated: boolean, padded: boolean, bordered: boolean): ViewStyle {
+function baseStyle(
+  theme: Theme,
+  elevated: boolean,
+  padded: boolean,
+  bordered: boolean,
+): ViewStyle {
   return {
     backgroundColor: elevated ? theme.colors.surfaceElevated : theme.colors.surface,
     borderRadius: theme.radii.lg,

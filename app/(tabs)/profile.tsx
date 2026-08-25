@@ -15,6 +15,7 @@ import { findTrack } from '@/domain/athlete/types';
 import { getGoalOrDefault } from '@/domain/goals/catalog';
 import { SERVICE_BRANCH_LABELS } from '@/domain/goals/types';
 import { EXPERIENCE_LEVEL_LABELS } from '@/domain/types';
+import { useAuth } from '@/features/auth/AuthProvider';
 import { useAthleteProfile } from '@/features/settings/useProfileSettings';
 import { useResetData } from '@/features/settings/useResetData';
 import { formatDateStamp } from '@/lib/format';
@@ -45,7 +46,14 @@ function DetailRow({ label, value, onPress, hint }: DetailRowProps) {
       <Text variant="bodySm" color="textSecondary">
         {label}
       </Text>
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: theme.spacing.sm, flexShrink: 1 }}>
+      <View
+        style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          gap: theme.spacing.sm,
+          flexShrink: 1,
+        }}
+      >
         <Text variant="headline" numberOfLines={1}>
           {value}
         </Text>
@@ -81,6 +89,7 @@ export default function ProfileScreen() {
   const theme = useTheme();
   const { state, reload } = useAthleteProfile();
   const { reset, resetting, error: resetError } = useResetData();
+  const { status: authStatus, signOut } = useAuth();
   const [confirmingReset, setConfirmingReset] = useState(false);
 
   // Edits happen on screens pushed over this one.
@@ -219,6 +228,32 @@ export default function ProfileScreen() {
         </Card>
       </View>
 
+      {/* Only shown when a backend is configured. With none, there is no
+          account to sign out of and the row would be a dead end. */}
+      {authStatus !== 'disabled' ? (
+        <View>
+          <SectionHeader title="Account" />
+          <Card style={{ gap: theme.spacing.lg }}>
+            <Text variant="bodySm" color="textSecondary">
+              {authStatus === 'signed_in'
+                ? 'Your training is synced to your account.'
+                : 'Sign in to keep your training if you change phones.'}
+            </Text>
+            <Button
+              label={authStatus === 'signed_in' ? 'Sign Out' : 'Sign In'}
+              variant="secondary"
+              onPress={async () => {
+                if (authStatus === 'signed_in') {
+                  await signOut();
+                }
+                router.replace('/auth/sign-in');
+              }}
+              testID="auth-action"
+            />
+          </Card>
+        </View>
+      ) : null}
+
       {/*
         Destructive and unrecoverable, so it takes two deliberate taps rather
         than a native alert, which react-native-web does not render reliably
@@ -230,8 +265,8 @@ export default function ProfileScreen() {
           {confirmingReset ? (
             <>
               <Text variant="bodySm" color="statusOffTarget">
-                This permanently deletes your profile, assessments, readiness history and
-                logged workouts on this device. It cannot be undone.
+                This permanently deletes your profile, assessments, readiness history and logged
+                workouts on this device. It cannot be undone.
               </Text>
               {resetError ? (
                 <Text variant="caption" color="statusOffTarget">

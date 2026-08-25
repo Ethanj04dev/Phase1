@@ -62,9 +62,7 @@ describe('recommendTrack without a baseline', () => {
   });
 
   it('does not send a total beginner to advanced', () => {
-    expect(recommendTrack(input(null, 'beginner', 'none', 'none')).trackId).toBe(
-      'foundation',
-    );
+    expect(recommendTrack(input(null, 'beginner', 'none', 'none')).trackId).toBe('foundation');
   });
 });
 

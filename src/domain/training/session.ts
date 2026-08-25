@@ -53,20 +53,14 @@ export function elapsedSeconds(segments: readonly TimerSegment[], now: string): 
   return Math.floor(total / 1000);
 }
 
-export function startTimer(
-  segments: readonly TimerSegment[],
-  now: string,
-): TimerSegment[] {
+export function startTimer(segments: readonly TimerSegment[], now: string): TimerSegment[] {
   if (isTimerRunning(segments)) {
     return [...segments];
   }
   return [...segments, { startedAt: now, endedAt: null }];
 }
 
-export function pauseTimer(
-  segments: readonly TimerSegment[],
-  now: string,
-): TimerSegment[] {
+export function pauseTimer(segments: readonly TimerSegment[], now: string): TimerSegment[] {
   if (!isTimerRunning(segments)) {
     return [...segments];
   }
@@ -86,10 +80,7 @@ export type RepVerdict = 'faster' | 'on_target' | 'slower' | 'unknown';
  * under the window usually means the athlete is burning a session they were
  * meant to control. The UI phrases it neutrally.
  */
-export function verdictFor(
-  target: ResolvedTarget | null,
-  durationSeconds: number,
-): RepVerdict {
+export function verdictFor(target: ResolvedTarget | null, durationSeconds: number): RepVerdict {
   if (!target || !Number.isFinite(durationSeconds) || durationSeconds <= 0) {
     return 'unknown';
   }
@@ -149,9 +140,7 @@ export function removeEntry(
   blockId: string,
   repIndex: number,
 ): ActiveEntry[] {
-  return entries.filter(
-    (entry) => !(entry.blockId === blockId && entry.repIndex === repIndex),
-  );
+  return entries.filter((entry) => !(entry.blockId === blockId && entry.repIndex === repIndex));
 }
 
 // --- Summary -----------------------------------------------------------------

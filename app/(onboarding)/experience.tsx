@@ -8,10 +8,7 @@ import { Button } from '@/components/primitives/Button';
 import { ChoiceRow } from '@/components/primitives/ChoiceRow';
 import { Text } from '@/components/primitives/Text';
 import { EXPERIENCE_LEVEL_LABELS } from '@/domain/types';
-import {
-  DISCIPLINES,
-  TRAINING_DAY_OPTIONS,
-} from '@/features/settings/trainingBackground';
+import { DISCIPLINES, TRAINING_DAY_OPTIONS } from '@/features/settings/trainingBackground';
 import { useOnboarding } from '@/features/onboarding/OnboardingProvider';
 import { useTheme } from '@/theme';
 
@@ -47,8 +44,7 @@ export default function ExperienceScreen() {
           Your training background
         </Text>
         <Text variant="body" color="textSecondary">
-          Answer honestly. This decides where your programme starts, not how capable you
-          are.
+          Answer honestly. This decides where your programme starts, not how capable you are.
         </Text>
       </View>
 

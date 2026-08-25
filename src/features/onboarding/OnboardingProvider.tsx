@@ -1,4 +1,11 @@
-import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from 'react';
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useMemo,
+  useState,
+  type ReactNode,
+} from 'react';
 
 import { useRepositories } from '@/data/repositoryContext';
 import type { NewAssessmentResult } from '@/data/repositories/types';
@@ -9,17 +16,11 @@ import {
   type OnboardingOutcome,
   type OnboardingStep,
 } from '@/domain/athlete/onboarding';
-import {
-  EMPTY_ONBOARDING_DRAFT,
-  type OnboardingDraft,
-} from '@/domain/athlete/types';
+import { EMPTY_ONBOARDING_DRAFT, type OnboardingDraft } from '@/domain/athlete/types';
 import type { ExperienceLevel } from '@/domain/types';
 import type { GoalId } from '@/domain/goals/types';
 
-export type ExperienceField =
-  | 'runningExperience'
-  | 'swimmingExperience'
-  | 'ruckingExperience';
+export type ExperienceField = 'runningExperience' | 'swimmingExperience' | 'ruckingExperience';
 
 interface OnboardingContextValue {
   draft: OnboardingDraft;
@@ -66,20 +67,17 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
     setDraft((current) => ({ ...current, trainingDaysPerWeek }));
   }, []);
 
-  const setBaselineValue = useCallback(
-    (eventId: AssessmentEventId, value: number | null) => {
-      setDraft((current) => {
-        const baseline = { ...current.baseline };
-        if (value === null) {
-          delete baseline[eventId];
-        } else {
-          baseline[eventId] = value;
-        }
-        return { ...current, baseline };
-      });
-    },
-    [],
-  );
+  const setBaselineValue = useCallback((eventId: AssessmentEventId, value: number | null) => {
+    setDraft((current) => {
+      const baseline = { ...current.baseline };
+      if (value === null) {
+        delete baseline[eventId];
+      } else {
+        baseline[eventId] = value;
+      }
+      return { ...current, baseline };
+    });
+  }, []);
 
   const canAdvance = useCallback(
     (step: OnboardingStep) => isStepComplete(draft, step),
@@ -121,9 +119,7 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
 
       const entries: NewAssessmentResult[] = Object.entries(draft.baseline).flatMap(
         ([eventId, value]) =>
-          value === undefined
-            ? []
-            : [{ eventId: eventId as AssessmentEventId, value }],
+          value === undefined ? [] : [{ eventId: eventId as AssessmentEventId, value }],
       );
 
       if (entries.length > 0) {

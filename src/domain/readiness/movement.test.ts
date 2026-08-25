@@ -1,11 +1,6 @@
 import type { CategoryScores } from '@/domain/types';
 
-import {
-  baselineWithin,
-  biggestDecline,
-  biggestGain,
-  categoryMovement,
-} from './movement';
+import { baselineWithin, biggestDecline, biggestGain, categoryMovement } from './movement';
 import type { ReadinessSnapshot } from './types';
 
 function snapshot(

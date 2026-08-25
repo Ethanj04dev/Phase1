@@ -18,8 +18,7 @@ export function Divider({ tone = 'default', inset = 0, style, ...rest }: Divider
         {
           height: theme.hairline.width,
           marginHorizontal: inset,
-          backgroundColor:
-            tone === 'strong' ? theme.colors.borderStrong : theme.colors.border,
+          backgroundColor: tone === 'strong' ? theme.colors.borderStrong : theme.colors.border,
         },
         style,
       ]}

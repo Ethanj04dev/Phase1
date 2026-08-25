@@ -11,10 +11,7 @@ import { OptionCard } from '@/components/primitives/OptionCard';
 import { Text } from '@/components/primitives/Text';
 import { GOALS } from '@/domain/goals/catalog';
 import { SERVICE_BRANCH_LABELS, type GoalId, type ServiceBranch } from '@/domain/goals/types';
-import {
-  useAthleteProfile,
-  useUpdateProfile,
-} from '@/features/settings/useProfileSettings';
+import { useAthleteProfile, useUpdateProfile } from '@/features/settings/useProfileSettings';
 import { useTheme } from '@/theme';
 
 const BRANCH_ORDER: readonly ServiceBranch[] = [
@@ -80,9 +77,8 @@ export default function EditGoalScreen() {
                 Changing this changes your score
               </Text>
               <Text variant="bodySm" color="textSecondary">
-                Each objective weights the four categories differently, so your readiness
-                will be recalculated from the same results. Your training history is not
-                affected.
+                Each objective weights the four categories differently, so your readiness will
+                be recalculated from the same results. Your training history is not affected.
               </Text>
             </Card>
 

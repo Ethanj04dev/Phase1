@@ -152,9 +152,7 @@ describe('progressive overload', () => {
   });
 
   it('prescribes faster interval targets on the advanced track', () => {
-    const intervalFactor = (
-      trackId: 'selection_prep' | 'advanced',
-    ): number | undefined => {
+    const intervalFactor = (trackId: 'selection_prep' | 'advanced'): number | undefined => {
       const built = programForTrack(trackId);
       for (const day of built.days.values()) {
         for (const session of day.sessions) {

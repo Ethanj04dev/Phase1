@@ -103,11 +103,7 @@ export function useProgressOverview(): AsyncResource<ProgressOverview> {
     const program = programOutcome.value;
     const position = positionOutcome.value;
     const buckets = program
-      ? weeklyVolume(
-          workoutsOutcome.value,
-          profile.createdAt,
-          program.program.durationWeeks,
-        )
+      ? weeklyVolume(workoutsOutcome.value, profile.createdAt, program.program.durationWeeks)
       : [];
 
     return ok({

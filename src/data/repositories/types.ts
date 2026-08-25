@@ -74,10 +74,7 @@ export interface TrainingRepository {
   getPosition(athleteId: Uuid): Promise<Result<ProgramPosition | null>>;
   getProgram(athleteId: Uuid): Promise<Result<ProgramSummary | null>>;
   /** Every day of one programme week, in order. */
-  getWeek(
-    athleteId: Uuid,
-    weekNumber: number,
-  ): Promise<Result<readonly ResolvedWorkoutDay[]>>;
+  getWeek(athleteId: Uuid, weekNumber: number): Promise<Result<readonly ResolvedWorkoutDay[]>>;
   getDay(athleteId: Uuid, dayId: string): Promise<Result<ResolvedWorkoutDay | null>>;
   /** Fraction of this week completed, 0-1. */
   getWeeklyCompletion(athleteId: Uuid): Promise<Result<number>>;
@@ -124,17 +121,12 @@ export interface WorkoutRepository {
   saveActive(session: ActiveSession): Promise<Result<ActiveSession>>;
   discardActive(athleteId: Uuid): Promise<Result<void>>;
   /** Writes the finished session and its per-rep rows, then clears the draft. */
-  complete(
-    session: ActiveSession,
-    durationSeconds: number,
-  ): Promise<Result<WorkoutResult>>;
+  complete(session: ActiveSession, durationSeconds: number): Promise<Result<WorkoutResult>>;
   listResults(
     athleteId: Uuid,
     options?: { limit?: number },
   ): Promise<Result<readonly WorkoutResult[]>>;
-  listExerciseResults(
-    workoutResultId: Uuid,
-  ): Promise<Result<readonly ExerciseResult[]>>;
+  listExerciseResults(workoutResultId: Uuid): Promise<Result<readonly ExerciseResult[]>>;
 }
 
 export interface Repositories {

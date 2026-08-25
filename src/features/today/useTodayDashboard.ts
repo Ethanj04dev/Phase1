@@ -65,14 +65,7 @@ export function useTodayDashboard(): AsyncResource<TodayDashboard> {
 
     // The loop above proves every result succeeded, but TypeScript cannot
     // narrow across a heterogeneous array, so each is re-checked cheaply here.
-    if (
-      !latest.ok ||
-      !trend.ok ||
-      !position.ok ||
-      !today.ok ||
-      !streak.ok ||
-      !completion.ok
-    ) {
+    if (!latest.ok || !trend.ok || !position.ok || !today.ok || !streak.ok || !completion.ok) {
       return err(NO_PROFILE_ERROR);
     }
 

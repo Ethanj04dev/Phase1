@@ -11,6 +11,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { RepositoryProvider } from '@/data/repositoryContext';
+import { AuthProvider } from '@/features/auth/AuthProvider';
 import { ThemeProvider, darkTheme } from '@/theme';
 
 /**
@@ -48,16 +49,18 @@ export default function RootLayout() {
       <SafeAreaProvider>
         <ThemeProvider>
           <NavigationThemeProvider value={navigationTheme}>
-            <RepositoryProvider>
-              <StatusBar style="light" />
-              <Stack
-                screenOptions={{
-                  headerShown: false,
-                  contentStyle: { backgroundColor: darkTheme.colors.background },
-                  animation: 'fade',
-                }}
-              />
-            </RepositoryProvider>
+            <AuthProvider>
+              <RepositoryProvider>
+                <StatusBar style="light" />
+                <Stack
+                  screenOptions={{
+                    headerShown: false,
+                    contentStyle: { backgroundColor: darkTheme.colors.background },
+                    animation: 'fade',
+                  }}
+                />
+              </RepositoryProvider>
+            </AuthProvider>
           </NavigationThemeProvider>
         </ThemeProvider>
       </SafeAreaProvider>

@@ -93,11 +93,7 @@ function foundationWeek(weekNumber: number): WeekPlan {
         title: 'Swim Technique',
         description: 'Short repeats with long rests. Technique before fitness.',
         sessions: [
-          poolSession(
-            'Swim Technique',
-            [swimSet(8, 50, 45, 4), swimSet(4, 100, 60, 5)],
-            30,
-          ),
+          poolSession('Swim Technique', [swimSet(8, 50, 45, 4), swimSet(4, 100, 60, 5)], 30),
         ],
       },
       restDay(),
@@ -176,16 +172,12 @@ function selectionPrepWeek(weekNumber: number): WeekPlan {
       {
         title: 'Ruck',
         description: 'Steady pace under load. Do not run it.',
-        sessions: [
-          ruckSession(roundMeters(6400 * factor, 400), 35, Math.round(75 * factor)),
-        ],
+        sessions: [ruckSession(roundMeters(6400 * factor, 400), 35, Math.round(75 * factor))],
       },
       {
         title: 'Long Aerobic',
         description: 'Conversational pace throughout.',
-        sessions: [
-          easyRunSession(roundMeters(8000 * factor, 200), Math.round(55 * factor)),
-        ],
+        sessions: [easyRunSession(roundMeters(8000 * factor, 200), Math.round(55 * factor))],
       },
       restDay(),
     ],
@@ -246,9 +238,7 @@ function advancedWeek(weekNumber: number): WeekPlan {
       {
         title: 'Heavy Ruck',
         description: 'Heavier load, same discipline on pace.',
-        sessions: [
-          ruckSession(roundMeters(9600 * factor, 400), 45, Math.round(105 * factor)),
-        ],
+        sessions: [ruckSession(roundMeters(9600 * factor, 400), 45, Math.round(105 * factor))],
       },
       {
         title: 'Long Aerobic + Calisthenics',

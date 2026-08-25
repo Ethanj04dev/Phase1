@@ -3,12 +3,7 @@ import type { IsoDateTime, PerformanceCategory, Uuid } from '@/domain/types';
 
 /** What kind of work a session is. Drives iconography, grouping and scoring. */
 export type SessionModality =
-  | 'running'
-  | 'swimming'
-  | 'strength'
-  | 'calisthenics'
-  | 'rucking'
-  | 'recovery';
+  'running' | 'swimming' | 'strength' | 'calisthenics' | 'rucking' | 'recovery';
 
 export const SESSION_MODALITY_LABELS: Record<SessionModality, string> = {
   running: 'Running',
@@ -47,11 +42,7 @@ export const MODALITY_CATEGORY: Record<SessionModality, PerformanceCategory | nu
  * Each basis maps to an assessment event the athlete can actually test. A
  * basis with no measurable source would produce targets derived from nothing.
  */
-export type PaceBasis =
-  | 'mile_time'
-  | 'one_and_half_mile_time'
-  | 'swim_500_time'
-  | 'ruck_pace';
+export type PaceBasis = 'mile_time' | 'one_and_half_mile_time' | 'swim_500_time' | 'ruck_pace';
 
 export interface PaceTarget {
   basis: PaceBasis;
@@ -185,6 +176,7 @@ export interface WorkoutDay {
 
 export interface WorkoutSession {
   id: Uuid;
+  /** The day this session belongs to. */
   workoutDayId: Uuid;
   order: number;
   modality: SessionModality;
@@ -203,7 +195,9 @@ export interface ResolvedWorkoutDay extends WorkoutDay {
 export interface WorkoutResult {
   id: Uuid;
   athleteId: Uuid;
-  workoutSessionId: Uuid;
+  /** The workout day this result belongs to. A day is the unit an athlete
+   * completes; the sessions inside it are how the work is grouped for reading. */
+  workoutDayId: Uuid;
   completedAt: IsoDateTime;
   durationSeconds: number;
   /** Session-level perceived effort, 1-10. */
@@ -272,6 +266,8 @@ export interface ActiveEntry {
 export interface ActiveSession {
   id: Uuid;
   athleteId: Uuid;
+  /** The workout day this result belongs to. A day is the unit an athlete
+   * completes; the sessions inside it are how the work is grouped for reading. */
   workoutDayId: Uuid;
   startedAt: IsoDateTime;
   segments: readonly TimerSegment[];

@@ -101,9 +101,7 @@ const assessment: AssessmentRepository = {
       return stored;
     }
     // Newest first, matching the eventual Supabase query ordering.
-    const ordered = [...stored.value].sort((a, b) =>
-      b.recordedAt.localeCompare(a.recordedAt),
-    );
+    const ordered = [...stored.value].sort((a, b) => b.recordedAt.localeCompare(a.recordedAt));
     return ok(options?.limit ? ordered.slice(0, options.limit) : ordered);
   },
 
@@ -141,9 +139,7 @@ async function loadSnapshots(): Promise<Result<readonly ReadinessSnapshot[]>> {
 }
 
 /** Oldest first, which is what the trend calculation expects. */
-function chronological(
-  snapshots: readonly ReadinessSnapshot[],
-): readonly ReadinessSnapshot[] {
+function chronological(snapshots: readonly ReadinessSnapshot[]): readonly ReadinessSnapshot[] {
   return [...snapshots].sort((a, b) => a.recordedAt.localeCompare(b.recordedAt));
 }
 

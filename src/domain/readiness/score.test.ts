@@ -274,9 +274,7 @@ describe('calculateReadiness', () => {
       result('ruck_3_mile', 2700),
     ]);
     // Rucking scores lower, but improving swimming moves the needle more.
-    expect(calculation?.categories.rucking).toBeLessThan(
-      calculation?.categories.swimming ?? 0,
-    );
+    expect(calculation?.categories.rucking).toBeLessThan(calculation?.categories.swimming ?? 0);
     expect(calculation?.priorityCategory).toBe('swimming');
   });
 
@@ -355,10 +353,7 @@ describe('calculateTrend', () => {
 
   it('reports a negative delta when readiness falls', () => {
     const trend = calculateTrend(
-      [
-        snapshot(80, '2026-08-05T00:00:00.000Z'),
-        snapshot(74, '2026-08-24T00:00:00.000Z'),
-      ],
+      [snapshot(80, '2026-08-05T00:00:00.000Z'), snapshot(74, '2026-08-24T00:00:00.000Z')],
       30,
       now,
     );

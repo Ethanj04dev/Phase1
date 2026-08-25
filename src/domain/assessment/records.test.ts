@@ -135,7 +135,10 @@ describe('groupResultsByEvent', () => {
   it('drops results for events the catalog no longer knows', () => {
     const grouped = groupResultsByEvent([
       result('pull_ups', 10, '2026-01-01T00:00:00.000Z'),
-      { ...result('pull_ups', 5, '2026-01-01T00:00:00.000Z'), eventId: 'retired_event' as AssessmentEventId },
+      {
+        ...result('pull_ups', 5, '2026-01-01T00:00:00.000Z'),
+        eventId: 'retired_event' as AssessmentEventId,
+      },
     ]);
     expect(grouped.size).toBe(1);
     expect(grouped.get('pull_ups')).toHaveLength(1);

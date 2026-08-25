@@ -86,7 +86,7 @@ export function useWorkoutSummary(
 
     const [entriesOutcome, dayOutcome, assessmentsOutcome] = await Promise.all([
       workout.listExerciseResults(result.id),
-      training.getDay(profile.id, result.workoutSessionId),
+      training.getDay(profile.id, result.workoutDayId),
       assessment.listResults(profile.id),
     ]);
 

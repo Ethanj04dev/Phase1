@@ -9,10 +9,7 @@ import { Card } from '@/components/primitives/Card';
 import { OptionCard } from '@/components/primitives/OptionCard';
 import { Text } from '@/components/primitives/Text';
 import { TRAINING_TRACKS, type TrainingTrackId } from '@/domain/athlete/types';
-import {
-  useAthleteProfile,
-  useUpdateProfile,
-} from '@/features/settings/useProfileSettings';
+import { useAthleteProfile, useUpdateProfile } from '@/features/settings/useProfileSettings';
 import { useTheme } from '@/theme';
 
 export default function EditTrackScreen() {
@@ -68,8 +65,8 @@ export default function EditTrackScreen() {
                 Switching restarts the block
               </Text>
               <Text variant="bodySm" color="textSecondary">
-                Each track is an eight-week block. Changing track changes the sessions you
-                see from here on; your logged workouts and assessments are kept.
+                Each track is an eight-week block. Changing track changes the sessions you see
+                from here on; your logged workouts and assessments are kept.
               </Text>
             </Card>
 
@@ -95,10 +92,7 @@ export default function EditTrackScreen() {
                 </Text>
                 <View style={{ gap: theme.spacing.sm }}>
                   {track.focus.map((item) => (
-                    <View
-                      key={item}
-                      style={{ flexDirection: 'row', gap: theme.spacing.md }}
-                    >
+                    <View key={item} style={{ flexDirection: 'row', gap: theme.spacing.md }}>
                       <Text variant="mono" color="accent">
                         /
                       </Text>

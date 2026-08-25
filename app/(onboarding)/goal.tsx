@@ -53,8 +53,8 @@ export default function GoalScreen() {
           What are you preparing for?
         </Text>
         <Text variant="body" color="textSecondary">
-          This sets how each category is weighted in your readiness score. You can change
-          it later.
+          This sets how each category is weighted in your readiness score. You can change it
+          later.
         </Text>
       </View>
 

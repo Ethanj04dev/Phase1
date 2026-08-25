@@ -43,10 +43,7 @@ function clampScore(score: number): number {
  * direction the event improves: repetitions climb, times fall. The direction is
  * derived from the table rather than assumed, so a single routine handles both.
  */
-export function interpolateScore(
-  anchors: readonly BenchmarkAnchor[],
-  value: number,
-): number {
+export function interpolateScore(anchors: readonly BenchmarkAnchor[], value: number): number {
   const first = anchors[0];
   const last = anchors[anchors.length - 1];
 
@@ -134,10 +131,7 @@ export function scoreCategories(results: readonly AssessmentResult[]): CategoryS
  * (weight 0.30, headroom 12.0) outranks rucking at 55 (weight 0.10, headroom
  * 4.5). Telling that athlete to focus on rucking would be bad coaching.
  */
-function selectPriority(
-  categories: CategoryScores,
-  goal: Goal,
-): PerformanceCategory | null {
+function selectPriority(categories: CategoryScores, goal: Goal): PerformanceCategory | null {
   let best: PerformanceCategory | null = null;
   let bestHeadroom = -1;
 

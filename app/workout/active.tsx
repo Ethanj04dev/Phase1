@@ -114,10 +114,7 @@ export default function ActiveWorkoutScreen() {
             {running ? 'RUNNING' : 'PAUSED'}
           </Text>
         </View>
-        <Text
-          variant="display"
-          accessibilityLabel={`Elapsed time ${formatDuration(elapsed)}`}
-        >
+        <Text variant="display" accessibilityLabel={`Elapsed time ${formatDuration(elapsed)}`}>
           {formatDuration(elapsed)}
         </Text>
         <Button
@@ -229,8 +226,7 @@ export default function ActiveWorkoutScreen() {
       </View>
 
       <Text variant="caption" color="textTertiary">
-        Everything is saved as you go. You can close the app and come back to this
-        session.
+        Everything is saved as you go. You can close the app and come back to this session.
       </Text>
     </Screen>
   );

@@ -34,10 +34,7 @@ function startOfLocalDay(iso: IsoDateTime): number | null {
  * breakfast simply because today's session has not happened yet. It breaks
  * only once a full day has been missed.
  */
-export function streakDays(
-  completedAt: readonly IsoDateTime[],
-  now: IsoDateTime,
-): number {
+export function streakDays(completedAt: readonly IsoDateTime[], now: IsoDateTime): number {
   const today = startOfLocalDay(now);
   if (today === null) {
     return 0;
