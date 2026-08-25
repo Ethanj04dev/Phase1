@@ -19,11 +19,17 @@ export const SESSION_MODALITY_LABELS: Record<SessionModality, string> = {
   recovery: 'Recovery',
 };
 
-/** Which readiness category a modality contributes to. */
+/**
+ * Which readiness category a modality contributes to.
+ *
+ * Strength sessions map to nothing: athletes still train strength, but it is
+ * not a scored category because testing it honestly requires a near-maximal
+ * lift. See the note on PERFORMANCE_CATEGORIES.
+ */
 export const MODALITY_CATEGORY: Record<SessionModality, PerformanceCategory | null> = {
   running: 'running',
   swimming: 'swimming',
-  strength: 'strength',
+  strength: null,
   calisthenics: 'calisthenics',
   rucking: 'rucking',
   recovery: null,

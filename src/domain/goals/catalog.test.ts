@@ -52,7 +52,6 @@ describe('weightsSumToOne', () => {
         swimming: 0.5,
         calisthenics: 0.5,
         rucking: 0,
-        strength: 0,
       }),
     ).toBe(false);
   });
@@ -63,8 +62,7 @@ describe('weightsSumToOne', () => {
         running: 0.1,
         swimming: 0.2,
         calisthenics: 0.3,
-        rucking: 0.2,
-        strength: 0.2,
+        rucking: 0.4,
       }),
     ).toBe(true);
   });

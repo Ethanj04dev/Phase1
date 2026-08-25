@@ -15,7 +15,7 @@ export const GOALS: readonly Goal[] = [
     shortName: 'PJ PREP',
     branch: 'air_force',
     description: 'Water confidence and sustained aerobic work under load.',
-    emphasis: { running: 0.25, swimming: 0.3, calisthenics: 0.2, rucking: 0.15, strength: 0.1 },
+    emphasis: { running: 0.28, swimming: 0.33, calisthenics: 0.22, rucking: 0.17 },
   },
   {
     id: 'combat_control',
@@ -23,7 +23,7 @@ export const GOALS: readonly Goal[] = [
     shortName: 'CCT PREP',
     branch: 'air_force',
     description: 'Balanced running, water and load-bearing demands.',
-    emphasis: { running: 0.25, swimming: 0.25, calisthenics: 0.2, rucking: 0.2, strength: 0.1 },
+    emphasis: { running: 0.28, swimming: 0.28, calisthenics: 0.22, rucking: 0.22 },
   },
   {
     id: 'tacp',
@@ -31,7 +31,7 @@ export const GOALS: readonly Goal[] = [
     shortName: 'TACP PREP',
     branch: 'air_force',
     description: 'Running volume with a heavy ruck emphasis.',
-    emphasis: { running: 0.3, swimming: 0.1, calisthenics: 0.2, rucking: 0.3, strength: 0.1 },
+    emphasis: { running: 0.33, swimming: 0.11, calisthenics: 0.23, rucking: 0.33 },
   },
   {
     id: 'special_reconnaissance',
@@ -39,7 +39,7 @@ export const GOALS: readonly Goal[] = [
     shortName: 'SR PREP',
     branch: 'air_force',
     description: 'Broad aerobic base across land and water.',
-    emphasis: { running: 0.25, swimming: 0.25, calisthenics: 0.2, rucking: 0.2, strength: 0.1 },
+    emphasis: { running: 0.28, swimming: 0.28, calisthenics: 0.22, rucking: 0.22 },
   },
   {
     id: 'sere',
@@ -47,7 +47,7 @@ export const GOALS: readonly Goal[] = [
     shortName: 'SERE PREP',
     branch: 'air_force',
     description: 'Load carriage and durable aerobic endurance.',
-    emphasis: { running: 0.25, swimming: 0.15, calisthenics: 0.2, rucking: 0.3, strength: 0.1 },
+    emphasis: { running: 0.28, swimming: 0.17, calisthenics: 0.22, rucking: 0.33 },
   },
   {
     id: 'navy_seal',
@@ -55,23 +55,23 @@ export const GOALS: readonly Goal[] = [
     shortName: 'SEAL PREP',
     branch: 'navy',
     description: 'Swim-dominant with high calisthenics standards.',
-    emphasis: { running: 0.25, swimming: 0.3, calisthenics: 0.25, rucking: 0.1, strength: 0.1 },
+    emphasis: { running: 0.28, swimming: 0.33, calisthenics: 0.28, rucking: 0.11 },
   },
   {
     id: 'swcc',
     name: 'SWCC',
     shortName: 'SWCC PREP',
     branch: 'navy',
-    description: 'Water work with upper-body strength emphasis.',
-    emphasis: { running: 0.2, swimming: 0.3, calisthenics: 0.25, rucking: 0.1, strength: 0.15 },
+    description: 'Water work with heavy upper-body demand.',
+    emphasis: { running: 0.24, swimming: 0.35, calisthenics: 0.29, rucking: 0.12 },
   },
   {
     id: 'eod',
     name: 'EOD',
     shortName: 'EOD PREP',
     branch: 'navy',
-    description: 'Even split across water, running and strength.',
-    emphasis: { running: 0.25, swimming: 0.25, calisthenics: 0.2, rucking: 0.15, strength: 0.15 },
+    description: 'Even split across water, running and load carriage.',
+    emphasis: { running: 0.29, swimming: 0.29, calisthenics: 0.24, rucking: 0.18 },
   },
   {
     id: 'army_ranger',
@@ -79,7 +79,7 @@ export const GOALS: readonly Goal[] = [
     shortName: 'RANGER PREP',
     branch: 'army',
     description: 'Running speed and sustained ruck performance.',
-    emphasis: { running: 0.3, swimming: 0.05, calisthenics: 0.25, rucking: 0.3, strength: 0.1 },
+    emphasis: { running: 0.33, swimming: 0.06, calisthenics: 0.28, rucking: 0.33 },
   },
   {
     id: 'army_special_forces',
@@ -87,7 +87,7 @@ export const GOALS: readonly Goal[] = [
     shortName: 'SF PREP',
     branch: 'army',
     description: 'Ruck-dominant with a deep aerobic base.',
-    emphasis: { running: 0.25, swimming: 0.05, calisthenics: 0.2, rucking: 0.4, strength: 0.1 },
+    emphasis: { running: 0.28, swimming: 0.06, calisthenics: 0.22, rucking: 0.44 },
   },
   {
     id: 'marine_recon',
@@ -95,7 +95,7 @@ export const GOALS: readonly Goal[] = [
     shortName: 'RECON PREP',
     branch: 'marine_corps',
     description: 'Water confidence with strong calisthenics.',
-    emphasis: { running: 0.25, swimming: 0.25, calisthenics: 0.25, rucking: 0.15, strength: 0.1 },
+    emphasis: { running: 0.28, swimming: 0.28, calisthenics: 0.28, rucking: 0.16 },
   },
   {
     id: 'marsoc',
@@ -103,7 +103,7 @@ export const GOALS: readonly Goal[] = [
     shortName: 'MARSOC PREP',
     branch: 'marine_corps',
     description: 'Load carriage balanced with water and running.',
-    emphasis: { running: 0.25, swimming: 0.2, calisthenics: 0.2, rucking: 0.25, strength: 0.1 },
+    emphasis: { running: 0.28, swimming: 0.22, calisthenics: 0.22, rucking: 0.28 },
   },
   {
     id: 'general_selection',
@@ -111,7 +111,7 @@ export const GOALS: readonly Goal[] = [
     shortName: 'SELECTION PREP',
     branch: 'general',
     description: 'Broad preparation if you have not chosen a pipeline yet.',
-    emphasis: { running: 0.25, swimming: 0.15, calisthenics: 0.25, rucking: 0.2, strength: 0.15 },
+    emphasis: { running: 0.29, swimming: 0.18, calisthenics: 0.29, rucking: 0.24 },
   },
 ] as const;
 

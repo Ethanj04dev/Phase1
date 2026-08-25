@@ -9,15 +9,22 @@ export type IsoDate = string;
 export type Uuid = string;
 
 /**
- * The five performance domains the product measures. Every readiness score,
+ * The four performance domains the product measures. Every readiness score,
  * benchmark and program emphasis is expressed in terms of these.
+ *
+ * Strength is deliberately not a scored category. Measuring it honestly needs
+ * a maximal or near-maximal lift, which is not a responsible thing to ask of a
+ * population that includes people who have not started training yet, and it
+ * would add a barbell dependency to an otherwise equipment-light product.
+ * Athletes still train strength -- there is a `strength` session modality --
+ * it simply does not carry its own readiness score. Calisthenics and rucking
+ * already load the same systems and are safe to test.
  */
 export const PERFORMANCE_CATEGORIES = [
   'running',
   'swimming',
   'calisthenics',
   'rucking',
-  'strength',
 ] as const;
 
 export type PerformanceCategory = (typeof PERFORMANCE_CATEGORIES)[number];
@@ -27,7 +34,6 @@ export const PERFORMANCE_CATEGORY_LABELS: Record<PerformanceCategory, string> = 
   swimming: 'Swimming',
   calisthenics: 'Calisthenics',
   rucking: 'Rucking',
-  strength: 'Strength',
 };
 
 /** Weighting across categories. Values are expected to sum to 1. */

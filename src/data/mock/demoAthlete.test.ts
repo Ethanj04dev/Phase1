@@ -1,6 +1,7 @@
 import { getGoalOrDefault } from '@/domain/goals/catalog';
 import { calculateReadiness, calculateTrend } from '@/domain/readiness/score';
 import type { ReadinessSnapshot } from '@/domain/readiness/types';
+import { PERFORMANCE_CATEGORIES } from '@/domain/types';
 
 import {
   demoAssessmentDates,
@@ -30,16 +31,17 @@ function historyToDate(): ReadinessSnapshot[] {
 }
 
 describe('demo athlete', () => {
-  it('scores every category that has an assessment event', () => {
+  it('scores every performance category', () => {
     const calculation = calculateReadiness(goal, demoAssessmentResults);
     expect(calculation).not.toBeNull();
-    expect(calculation?.categories.running).toBeDefined();
-    expect(calculation?.categories.swimming).toBeDefined();
-    expect(calculation?.categories.calisthenics).toBeDefined();
-    expect(calculation?.categories.rucking).toBeDefined();
-    // No strength assessment exists yet, so the category stays absent rather
-    // than being invented. See docs/ROADMAP.md, M3.
-    expect(calculation?.categories.strength).toBeUndefined();
+    for (const category of PERFORMANCE_CATEGORIES) {
+      expect(calculation?.categories[category]).toBeDefined();
+    }
+  });
+
+  it('reaches full coverage, since the demo battery is complete', () => {
+    const calculation = calculateReadiness(goal, demoAssessmentResults);
+    expect(calculation?.coverage).toBeCloseTo(1, 5);
   });
 
   it('describes a mid-preparation athlete, not a beginner or a finished one', () => {

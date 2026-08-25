@@ -215,21 +215,22 @@ describe('calculateReadiness', () => {
   });
 
   it('reports coverage as the share of goal weight backed by data', () => {
-    // Only calisthenics tested. For a SEAL goal that category weighs 0.25.
+    // Only calisthenics tested. For a SEAL goal that category weighs 0.28.
     const calculation = calculateReadiness(seal, [result('pull_ups', 10)]);
     expect(calculation).not.toBeNull();
-    expect(calculation?.coverage).toBeCloseTo(0.25, 5);
+    expect(calculation?.coverage).toBeCloseTo(0.28, 5);
   });
 
-  it('reaches full coverage only when every weighted category has data', () => {
+  it('reaches full coverage when every category has data', () => {
     const calculation = calculateReadiness(seal, [
       result('pull_ups', 10),
       result('run_1_mile', 420),
       result('swim_500m', 630),
       result('ruck_3_mile', 2700),
     ]);
-    // Strength has no assessment event, so it can never be covered today.
-    expect(calculation?.coverage).toBeCloseTo(1 - seal.emphasis.strength, 5);
+    // All four scored categories have an assessment event, so a complete
+    // battery is genuinely reachable.
+    expect(calculation?.coverage).toBeCloseTo(1, 5);
   });
 
   it('renormalises weights so untested categories are not implicit zeros', () => {
@@ -246,15 +247,15 @@ describe('calculateReadiness', () => {
       result('ruck_3_mile', 3600), // rucking 0
     ];
 
-    // SEAL weights swimming 0.30 and rucking 0.10, so the score leans high.
+    // SEAL weights swimming 0.33 and rucking 0.11, so the score leans high.
     const sealScore = calculateReadiness(seal, results)?.overall ?? 0;
-    // Special Forces weights rucking 0.40 and swimming 0.05, so it leans low.
+    // Special Forces weights rucking 0.44 and swimming 0.06, so it leans low.
     const sf = getGoalOrDefault('army_special_forces');
     const sfScore = calculateReadiness(sf, results)?.overall ?? 0;
 
     expect(sealScore).toBeGreaterThan(sfScore);
-    expect(sealScore).toBe(75); // 100*0.30 / (0.30+0.10)
-    expect(sfScore).toBe(11); // 100*0.05 / (0.05+0.40)
+    expect(sealScore).toBe(75); // 100*0.33 / (0.33+0.11)
+    expect(sfScore).toBe(12); // 100*0.06 / (0.06+0.44)
   });
 
   it('identifies the strongest category', () => {
@@ -267,9 +268,9 @@ describe('calculateReadiness', () => {
 
   it('picks priority by weighted headroom, not raw weakness', () => {
     const calculation = calculateReadiness(seal, [
-      // swimming 70, weight 0.30 -> headroom 9.0
+      // swimming 70, weight 0.33 -> headroom 9.9
       result('swim_500m', 570),
-      // rucking 65, weight 0.10 -> headroom 3.5
+      // rucking 65, weight 0.11 -> headroom 3.9
       result('ruck_3_mile', 2700),
     ]);
     // Rucking scores lower, but improving swimming moves the needle more.
