@@ -25,8 +25,19 @@ interface AuthContextValue {
   status: AuthStatus;
   session: Session | null;
   signIn: (email: string, password: string) => Promise<string | null>;
-  signUp: (email: string, password: string) => Promise<string | null>;
+  signUp: (email: string, password: string) => Promise<SignUpOutcome>;
   signOut: () => Promise<void>;
+}
+
+export interface SignUpOutcome {
+  error: string | null;
+  /**
+   * True when the account was created but no session came back, which is what
+   * Supabase does when the project requires email confirmation. The caller
+   * must tell the athlete to go and confirm rather than navigating onward,
+   * because there is nothing to navigate into.
+   */
+  needsEmailConfirmation: boolean;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -87,16 +98,39 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 
   const signUp = useCallback(
-    async (email: string, password: string): Promise<string | null> => {
-      if (!client) return 'Accounts are not available in this build.';
+    async (email: string, password: string): Promise<SignUpOutcome> => {
+      if (!client) {
+        return {
+          error: 'Accounts are not available in this build.',
+          needsEmailConfirmation: false,
+        };
+      }
       // Checked here as well as server-side so the athlete finds out before a
       // round trip, and with wording we control.
       if (password.length < MIN_PASSWORD_LENGTH) {
-        return `Passwords must be at least ${MIN_PASSWORD_LENGTH} characters.`;
+        return {
+          error: `Passwords must be at least ${MIN_PASSWORD_LENGTH} characters.`,
+          needsEmailConfirmation: false,
+        };
       }
 
-      const { error } = await client.auth.signUp({ email: email.trim(), password });
-      return error ? friendlyMessage('We could not create your account.', error) : null;
+      const { data, error } = await client.auth.signUp({
+        email: email.trim(),
+        password,
+      });
+
+      if (error) {
+        return {
+          error: friendlyMessage('We could not create your account.', error),
+          needsEmailConfirmation: false,
+        };
+      }
+
+      // A project with email confirmation switched on creates the user but
+      // withholds the session until they click the link. Treating that as
+      // success and navigating on would drop the athlete back at this screen
+      // with no explanation.
+      return { error: null, needsEmailConfirmation: data.session === null };
     },
     [client],
   );

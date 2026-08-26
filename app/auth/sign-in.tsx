@@ -5,6 +5,7 @@ import { View } from 'react-native';
 import { GridBackdrop } from '@/components/layout/GridBackdrop';
 import { Screen } from '@/components/layout/Screen';
 import { Button } from '@/components/primitives/Button';
+import { Card } from '@/components/primitives/Card';
 import { Text } from '@/components/primitives/Text';
 import { TextField } from '@/components/primitives/TextField';
 import { branding } from '@/config/branding';
@@ -25,6 +26,7 @@ export default function SignInScreen() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
+  const [awaitingConfirmation, setAwaitingConfirmation] = useState<string | null>(null);
 
   const canSubmit = email.trim().length > 0 && password.length > 0 && !busy;
 
@@ -32,13 +34,30 @@ export default function SignInScreen() {
     setBusy(true);
     setError(null);
     setNotice(null);
+    setAwaitingConfirmation(null);
 
-    const failure =
-      mode === 'sign_in' ? await signIn(email, password) : await signUp(email, password);
-    if (failure) {
-      setError(failure);
-      setBusy(false);
-      return;
+    if (mode === 'sign_up') {
+      const outcome = await signUp(email, password);
+      if (outcome.error) {
+        setError(outcome.error);
+        setBusy(false);
+        return;
+      }
+      if (outcome.needsEmailConfirmation) {
+        // There is nothing to navigate into: the account exists but has no
+        // session until the link is clicked. Say so plainly and stay put,
+        // rather than bouncing back here with no explanation.
+        setAwaitingConfirmation(email.trim());
+        setBusy(false);
+        return;
+      }
+    } else {
+      const failure = await signIn(email, password);
+      if (failure) {
+        setError(failure);
+        setBusy(false);
+        return;
+      }
     }
 
     // Anything created before signing in belongs to this athlete. Moving it
@@ -80,7 +99,13 @@ export default function SignInScreen() {
             </Text>
           ) : null}
           <Button
-            label={mode === 'sign_in' ? 'Sign In' : 'Create Account'}
+            label={
+              mode === 'sign_in'
+                ? 'Sign In'
+                : awaitingConfirmation
+                  ? 'Create Another Account'
+                  : 'Create Account'
+            }
             size="lg"
             disabled={!canSubmit}
             loading={busy}
@@ -96,6 +121,7 @@ export default function SignInScreen() {
               setMode(mode === 'sign_in' ? 'sign_up' : 'sign_in');
               setError(null);
               setNotice(null);
+              setAwaitingConfirmation(null);
             }}
           />
         </View>
@@ -116,6 +142,20 @@ export default function SignInScreen() {
             : 'Create an account to keep your training safe if you change phones.'}
         </Text>
       </View>
+
+      {awaitingConfirmation ? (
+        <Card style={{ gap: theme.spacing.md }}>
+          <Text variant="label" color="accent">
+            Confirm your email
+          </Text>
+          <Text variant="body" color="textSecondary">
+            {`Your account was created. We sent a confirmation link to ${awaitingConfirmation}. Open it, then come back and sign in.`}
+          </Text>
+          <Text variant="caption" color="textTertiary">
+            Nothing arrived? Check spam. The link can take a minute.
+          </Text>
+        </Card>
+      ) : null}
 
       <View style={{ gap: theme.spacing.xl }}>
         <TextField
