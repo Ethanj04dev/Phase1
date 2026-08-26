@@ -101,6 +101,16 @@ export interface PipelineStage {
   emphasis: readonly PreparationDomainId[];
   /** What a candidate should understand before arriving. */
   whatToKnow?: string;
+  /**
+   * True while the stage is generic scaffolding rather than this career's
+   * actual pipeline.
+   *
+   * A named stage is itself a claim, so an unsourced pipeline cannot simply
+   * borrow plausible-sounding stage names and hope the caveat is read. The UI
+   * labels these as structure pending verification, and a Target must not ship
+   * to real users with placeholders still showing.
+   */
+  isPlaceholder: boolean;
 }
 
 // --- Milestones -------------------------------------------------------------
