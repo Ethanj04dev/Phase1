@@ -27,7 +27,7 @@ export const darkColors = {
 
   // Brand accent.
   accent: palette.blue400,
-  accentPressed: palette.blue500,
+  accentPressed: palette.blue300,
   accentStrong: palette.blue300,
   accentBorder: palette.blue600,
   accentSurface: palette.blue100,

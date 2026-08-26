@@ -3,40 +3,46 @@
  * screens and components consume *semantic* tokens so the palette can be
  * retuned (or white-labelled for a partner) without touching the UI layer.
  *
- * Contrast note: every value used for text has been checked against the
- * `background` and `surface` tokens for WCAG AA (>= 4.5:1 at body size).
+ * Contrast is enforced by `contrast.test.ts`, not by eye. Every value used for
+ * text is asserted against the surface it sits on at WCAG AA, so darkening the
+ * palette cannot quietly push a label below the legibility floor. This ramp is
+ * the darkest one that still clears every gate.
  */
 export const palette = {
-  // Neutrals — near-black through off-white, very slightly cool. The tint is
-  // deliberate: a warm or green-cast charcoal under a blue accent reads muddy.
-  black900: '#080A0D',
-  black800: '#0C0E12',
-  black700: '#151821',
-  black600: '#1C2029',
-  black500: '#252A34',
-  black400: '#333944',
-  grey500: '#4A505C',
-  grey400: '#7B8290',
+  // Neutrals — deep and cool, close to black. Each step is small but stays
+  // measurably distinct from the one below, so a card still reads as a card
+  // rather than dissolving into the background.
+  black900: '#030409',
+  black800: '#06080E',
+  black700: '#0B0F16',
+  black600: '#11151E',
+  black500: '#1B212C',
+  black400: '#28303D',
+  grey500: '#4A5364',
+  grey400: '#7F8899',
   grey300: '#99A0AE',
   white100: '#F0F2F5',
 
-  // Signal blue — the single brand accent. Restrained on purpose: never neon,
-  // never a saturated "tech" blue. 5.9:1 against the background.
-  blue600: '#2C4570',
-  blue500: '#4A79C0',
-  blue400: '#5B8FD6',
-  blue300: '#8AB2E8',
-  blue100: '#111827',
+  // Steel blue — the single brand accent. Deeper than a bright azure, but kept
+  // clear of navy: navy against a near-black background loses its identity and
+  // reads as more chrome rather than as the one lit element on the screen.
+  blue600: '#234069',
+  blue500: '#3A639E',
+  blue400: '#4E83CC',
+  // Lighter than the base, because on a dark interface a press should add
+  // light rather than remove it.
+  blue300: '#6E9BDA',
+  blue100: '#132038',
 
   // Status. Restrained; used as small indicators, never as screen washes.
   // Positive is its own green rather than the accent, so "on target" never
   // reads as merely "branded".
   green400: '#6FA96F',
-  green100: '#101A11',
+  green100: '#0B130C',
   amber400: '#C7A03C',
-  amber100: '#241D0C',
+  amber100: '#1C1608',
   red400: '#CC6B54',
-  red100: '#261310',
+  red100: '#1E0E0C',
 } as const;
 
 export type Palette = typeof palette;
