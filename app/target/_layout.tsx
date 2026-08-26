@@ -1,0 +1,25 @@
+import { Stack } from 'expo-router';
+
+import { darkTheme } from '@/theme';
+
+export default function TargetDetailLayout() {
+  return (
+    <Stack
+      screenOptions={{
+        headerShown: true,
+        headerStyle: { backgroundColor: darkTheme.colors.background },
+        headerTintColor: darkTheme.colors.accent,
+        headerTitleStyle: {
+          ...darkTheme.typography.headline,
+          color: darkTheme.colors.textPrimary,
+        },
+        headerShadowVisible: false,
+        contentStyle: { backgroundColor: darkTheme.colors.background },
+      }}
+    >
+      <Stack.Screen name="demands" options={{ title: 'Physical demands' }} />
+      <Stack.Screen name="pipeline" options={{ title: 'Pipeline' }} />
+      <Stack.Screen name="intel" options={{ title: 'Career intel' }} />
+    </Stack>
+  );
+}

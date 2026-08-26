@@ -12,11 +12,13 @@ interface TabDefinition {
 }
 
 /**
- * Four tabs, deliberately. Each one answers a different question:
- * what now, what is the plan, am I improving, who am I training as.
+ * Five tabs, one question each:
+ * what matters now, what am I preparing for, what am I doing about it,
+ * am I getting closer, how is my preparation configured.
  */
 const TABS: readonly TabDefinition[] = [
-  { name: 'index', title: 'Today', icon: 'crosshair' },
+  { name: 'index', title: 'Today', icon: 'sunrise' },
+  { name: 'target', title: 'Target', icon: 'crosshair' },
   { name: 'train', title: 'Train', icon: 'activity' },
   { name: 'progress', title: 'Progress', icon: 'trending-up' },
   { name: 'profile', title: 'Profile', icon: 'user' },
