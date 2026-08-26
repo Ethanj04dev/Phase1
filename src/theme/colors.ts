@@ -25,25 +25,34 @@ export const darkColors = {
   textSecondary: palette.grey300,
   textTertiary: palette.grey400,
   textDisabled: palette.grey500,
-  // Filled accent blocks are white, so their label is black.
-  textOnAccent: palette.black900,
 
-  // Accent. Light rather than a hue.
-  accent: palette.white100,
-  // A press dims rather than brightens here, because the accent is already at
-  // maximum light and has nowhere brighter to go.
-  accentPressed: palette.white200,
-  accentStrong: palette.white100,
-  accentBorder: palette.whiteBorder,
-  accentSurface: palette.whiteSurface,
+  // --- Emphasis: white ------------------------------------------------------
+  // The single most important action on a screen. White on black is the
+  // highest-contrast thing the interface can do, so it is spent on exactly one
+  // job and never diluted.
+  emphasis: palette.white100,
+  emphasisPressed: palette.white200,
+  emphasisSurface: palette.whiteSurface,
+  emphasisBorder: palette.whiteBorder,
+  textOnEmphasis: palette.black900,
+
+  // --- Accent: blue ---------------------------------------------------------
+  // Signal rather than action: progress, charts, selection, identity. Keeping
+  // it off the primary button is what stops the two accents competing.
+  accent: palette.blue400,
+  accentPressed: palette.blue300,
+  accentStrong: palette.blue300,
+  accentBorder: palette.blue600,
+  accentSurface: palette.blue100,
+  textOnAccent: palette.black900,
 
   // Status.
   //
-  // On target is full white: in a monochrome system, lit means good. Only the
-  // two failure states carry a hue, because "something is off" is the one
-  // message worth spending colour on. Direction is never carried by colour
-  // alone -- DeltaBadge always renders a sign and StatusIndicator requires a
-  // label.
+  // On target is white: lit means good. Only the two failure states carry a
+  // hue, because "something is off" is the one message worth spending colour
+  // on, and both are muted to read as ink. Direction is never carried by
+  // colour alone -- DeltaBadge always renders a sign and StatusIndicator
+  // requires a label.
   statusOnTarget: palette.white100,
   statusOnTargetSurface: palette.whiteSurface,
   statusCaution: palette.amber400,

@@ -33,11 +33,14 @@ interface VariantColors {
 function variantColors(theme: Theme, variant: ButtonVariant): VariantColors {
   switch (variant) {
     case 'primary':
+      // White, not the blue accent. The primary action is the single most
+      // important thing on a screen, and on black nothing outranks white.
+      // Blue stays reserved for signal so the two never compete.
       return {
-        background: theme.colors.accent,
-        backgroundPressed: theme.colors.accentPressed,
-        border: theme.colors.accent,
-        label: theme.colors.textOnAccent,
+        background: theme.colors.emphasis,
+        backgroundPressed: theme.colors.emphasisPressed,
+        border: theme.colors.emphasis,
+        label: theme.colors.textOnEmphasis,
       };
     case 'secondary':
       return {

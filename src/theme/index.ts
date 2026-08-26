@@ -12,6 +12,7 @@ export {
 } from './spacing';
 export { ThemeProvider, useTheme, useThemedStyles } from './ThemeProvider';
 export { darkTheme, defaultTheme, type Theme } from './theme';
+export { useAppFonts } from './useAppFonts';
 export {
   monoFontFamily,
   tabularNumbers,

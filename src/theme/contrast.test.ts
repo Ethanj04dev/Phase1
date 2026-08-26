@@ -54,6 +54,7 @@ const BODY_TEXT = [
   ['textSecondary', darkColors.textSecondary],
   ['textTertiary', darkColors.textTertiary],
   ['accent', darkColors.accent],
+  ['emphasis', darkColors.emphasis],
   ['statusOnTarget', darkColors.statusOnTarget],
   ['statusCaution', darkColors.statusCaution],
   ['statusOffTarget', darkColors.statusOffTarget],
@@ -84,15 +85,22 @@ describe('text contrast meets WCAG AA', () => {
 describe('interactive contrast', () => {
   // The primary button is a filled accent block with dark text on it. Getting
   // this backwards is the classic accessibility failure of a coloured button.
-  it('button label is readable on the accent fill', () => {
+  it('primary button label is readable on the white emphasis fill', () => {
     expect(
-      contrastRatio(darkColors.textOnAccent, darkColors.accent),
+      contrastRatio(darkColors.textOnEmphasis, darkColors.emphasis),
     ).toBeGreaterThanOrEqual(AA_NORMAL);
   });
 
-  it('pressed accent still carries its label', () => {
+  it('pressed emphasis still carries its label', () => {
     expect(
-      contrastRatio(darkColors.textOnAccent, darkColors.accentPressed),
+      contrastRatio(darkColors.textOnEmphasis, darkColors.emphasisPressed),
+    ).toBeGreaterThanOrEqual(AA_NORMAL);
+  });
+
+  // Blue is used for filled chips and selected states as well as for text.
+  it('a label on the accent fill is readable', () => {
+    expect(
+      contrastRatio(darkColors.textOnAccent, darkColors.accent),
     ).toBeGreaterThanOrEqual(AA_NORMAL);
   });
 

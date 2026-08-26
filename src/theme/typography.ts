@@ -1,130 +1,155 @@
-import { Platform, type TextStyle } from 'react-native';
+import type { TextStyle } from 'react-native';
 
 /**
- * Typography is deliberately system-native: on iOS this resolves to SF Pro,
- * which is what makes the app feel like instrumentation rather than a web
- * page in a wrapper. No webfont download, no licence, no flash of unstyled
- * text. `fontFamily` is left undefined for the system variants so React
- * Native uses the platform face directly.
+ * Type system, built on IBM Plex.
+ *
+ * The system font was the wrong voice: SF Pro is humanist and friendly, and
+ * next to a stark screen-printed mark it reads soft and generic. Plex was
+ * drawn for engineering contexts -- squared terminals, mechanical curves, a
+ * deliberately unglamorous tone -- which is what "instrumentation for the
+ * body" actually looks like as type.
+ *
+ * Three roles from one superfamily, so display, prose and data are related
+ * rather than merely adjacent:
+ *
+ *   Condensed  display metrics and operational labels. The narrow set gives
+ *              big numbers density and uppercase labels a stencilled feel.
+ *   Sans       prose. Readable at body size without going soft.
+ *   Mono       dates, intervals, identifiers, split times. Anything that is
+ *              read as data rather than as language.
  */
-export const monoFontFamily = Platform.select({
-  ios: 'Menlo',
-  android: 'monospace',
-  default: 'monospace',
-});
+
+export const fontFamilies = {
+  condensed: 'IBMPlexSansCondensed_600SemiBold',
+  condensedBold: 'IBMPlexSansCondensed_700Bold',
+  sans: 'IBMPlexSans_400Regular',
+  sansSemiBold: 'IBMPlexSans_600SemiBold',
+  mono: 'IBMPlexMono_400Regular',
+  monoMedium: 'IBMPlexMono_500Medium',
+} as const;
+
+export const monoFontFamily = fontFamilies.mono;
 
 /**
- * Tabular figures stop large metrics from jittering as digits change during
- * a live timer or an animated count-up.
+ * Tabular figures stop large metrics from jittering as digits change during a
+ * live timer or an animated count-up. Plex Mono is tabular by construction;
+ * this covers the proportional faces.
  */
 export const tabularNumbers: TextStyle = {
   fontVariant: ['tabular-nums'],
 };
 
+/**
+ * Weight is carried by the font family, not by fontWeight.
+ *
+ * React Native maps a custom `fontFamily` to one physical face. Asking for
+ * `fontWeight: '800'` on top of it makes the platform synthesise a fake bold,
+ * which smears the letterforms. Naming the actual face is what keeps the
+ * type crisp.
+ */
+
 // --- Metric scale -----------------------------------------------------------
-// Big numbers carry the product. Tight negative tracking keeps them dense.
 
 const display: TextStyle = {
-  fontSize: 64,
-  lineHeight: 66,
-  fontWeight: '800',
-  letterSpacing: -3,
+  fontFamily: fontFamilies.condensedBold,
+  fontSize: 68,
+  lineHeight: 70,
+  letterSpacing: -1.5,
   ...tabularNumbers,
 };
 
 const metricXl: TextStyle = {
-  fontSize: 48,
-  lineHeight: 50,
-  fontWeight: '800',
-  letterSpacing: -2.2,
+  fontFamily: fontFamilies.condensedBold,
+  fontSize: 50,
+  lineHeight: 52,
+  letterSpacing: -1,
   ...tabularNumbers,
 };
 
 const metricLg: TextStyle = {
-  fontSize: 34,
-  lineHeight: 38,
-  fontWeight: '800',
-  letterSpacing: -1.4,
+  fontFamily: fontFamilies.condensedBold,
+  fontSize: 36,
+  lineHeight: 40,
+  letterSpacing: -0.6,
   ...tabularNumbers,
 };
 
 const metricMd: TextStyle = {
-  fontSize: 24,
-  lineHeight: 28,
-  fontWeight: '600',
-  letterSpacing: -0.5,
+  fontFamily: fontFamilies.condensed,
+  fontSize: 25,
+  lineHeight: 29,
+  letterSpacing: -0.3,
   ...tabularNumbers,
 };
 
 // --- Prose scale ------------------------------------------------------------
 
 const title: TextStyle = {
+  fontFamily: fontFamilies.sansSemiBold,
   fontSize: 22,
   lineHeight: 28,
-  fontWeight: '600',
-  letterSpacing: -0.4,
+  letterSpacing: -0.3,
 };
 
 const headline: TextStyle = {
+  fontFamily: fontFamilies.sansSemiBold,
   fontSize: 17,
   lineHeight: 22,
-  fontWeight: '600',
-  letterSpacing: -0.2,
+  letterSpacing: -0.1,
 };
 
 const body: TextStyle = {
+  fontFamily: fontFamilies.sans,
   fontSize: 16,
   lineHeight: 23,
-  fontWeight: '400',
 };
 
 const bodySm: TextStyle = {
+  fontFamily: fontFamilies.sans,
   fontSize: 14,
   lineHeight: 20,
-  fontWeight: '400',
 };
 
 const caption: TextStyle = {
+  fontFamily: fontFamilies.sans,
   fontSize: 13,
   lineHeight: 18,
-  fontWeight: '400',
 };
 
 // --- Operational labels -----------------------------------------------------
-// Compact uppercase labels are the main "military influence" in the type
-// system. Used sparingly, they read as instrumentation rather than costume.
+// Condensed and widely tracked, so they read as markings stamped on a plate
+// rather than as UI captions.
 
 const label: TextStyle = {
-  fontSize: 12,
+  fontFamily: fontFamilies.condensedBold,
+  fontSize: 12.5,
   lineHeight: 16,
-  fontWeight: '700',
-  letterSpacing: 1.6,
+  letterSpacing: 1.7,
   textTransform: 'uppercase',
 };
 
 const labelSm: TextStyle = {
-  fontSize: 10,
+  fontFamily: fontFamilies.condensedBold,
+  fontSize: 10.5,
   lineHeight: 14,
-  fontWeight: '800',
-  letterSpacing: 1.8,
+  letterSpacing: 1.9,
   textTransform: 'uppercase',
 };
 
 // --- Monospace --------------------------------------------------------------
-// Reserved for dates, identifiers, intervals and split times. Never body copy.
 
 const mono: TextStyle = {
-  fontFamily: monoFontFamily,
+  fontFamily: fontFamilies.mono,
   fontSize: 12,
   lineHeight: 16,
-  letterSpacing: 0.4,
+  letterSpacing: 0.2,
 };
 
 const monoSm: TextStyle = {
-  fontFamily: monoFontFamily,
+  fontFamily: fontFamilies.monoMedium,
   fontSize: 10,
   lineHeight: 14,
-  letterSpacing: 0.6,
+  letterSpacing: 0.4,
 };
 
 export const typography = {

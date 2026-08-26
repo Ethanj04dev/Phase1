@@ -6,13 +6,13 @@ import {
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
-import { useEffect } from 'react';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { RepositoryProvider } from '@/data/repositoryContext';
 import { AuthProvider } from '@/features/auth/AuthProvider';
 import { ThemeProvider, darkTheme } from '@/theme';
+import { useAppFonts } from '@/theme/useAppFonts';
 
 /**
  * React Navigation paints its own root container, and its default theme is
@@ -38,11 +38,15 @@ const navigationTheme: NavigationTheme = {
 void SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
-  useEffect(() => {
-    // No async boot work yet. Once auth and profile hydration land, this moves
-    // behind that gate instead of firing on mount.
-    void SplashScreen.hideAsync();
-  }, []);
+  const fontsReady = useAppFonts();
+
+  // Rendering nothing until the type system is ready keeps the splash up
+  // rather than painting the app once in the system face and reflowing into
+  // Plex a moment later. The boot gate hides the splash once it knows where
+  // the launch is going.
+  if (!fontsReady) {
+    return null;
+  }
 
   return (
     <GestureHandlerRootView style={{ flex: 1, backgroundColor: darkTheme.colors.background }}>
