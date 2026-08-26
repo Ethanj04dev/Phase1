@@ -8,6 +8,7 @@ import {
   calculateTargetReadiness,
   type TargetReadiness,
 } from '@/domain/readiness/targetScore';
+import { buildRoadToReady, type RoadToReady } from '@/domain/target/roadToReady';
 import type { TargetDefinition } from '@/domain/target/types';
 import { err, ok, type Result } from '@/domain/types';
 import { useAsyncResource, type AsyncResource } from '@/lib/useAsyncResource';
@@ -23,6 +24,12 @@ export interface TargetView {
   results: readonly AssessmentResult[];
   /** Scored against the Target's own domains. Null when nothing is measured. */
   readiness: TargetReadiness | null;
+  /**
+   * The ordered work list. Derived here rather than per screen so Today, the
+   * Target overview and Road to Ready cannot end up recommending different
+   * things from the same data.
+   */
+  road: RoadToReady | null;
 }
 
 const NO_PROFILE = {
@@ -67,7 +74,9 @@ export function useTarget(): AsyncResource<TargetView> {
         })
       : null;
 
-    return ok({ profile, target, results, readiness });
+    const road = target ? buildRoadToReady(target, readiness, results) : null;
+
+    return ok({ profile, target, results, readiness, road });
   }, [assessment, athlete, training, workout]);
 
   return useAsyncResource(fetcher);

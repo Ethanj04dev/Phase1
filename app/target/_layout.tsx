@@ -17,6 +17,8 @@ export default function TargetDetailLayout() {
         contentStyle: { backgroundColor: darkTheme.colors.background },
       }}
     >
+      <Stack.Screen name="road" options={{ title: 'Road to ready' }} />
+      <Stack.Screen name="fitness" options={{ title: 'Fitness' }} />
       <Stack.Screen name="demands" options={{ title: 'Physical demands' }} />
       <Stack.Screen name="pipeline" options={{ title: 'Pipeline' }} />
       <Stack.Screen name="intel" options={{ title: 'Career intel' }} />

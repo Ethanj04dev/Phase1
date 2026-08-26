@@ -6,6 +6,12 @@
       "runtimeExecutable": "npx",
       "runtimeArgs": ["expo", "start", "--web", "--port", "8081"],
       "port": 8081
+    },
+    {
+      "name": "phase1-verify",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["expo", "start", "--web", "--port", "8096"],
+      "port": 8096
     }
   ]
 }

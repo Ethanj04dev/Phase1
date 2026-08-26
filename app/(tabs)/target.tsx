@@ -1,6 +1,6 @@
 import { router, useFocusEffect } from 'expo-router';
 import { useCallback } from 'react';
-import { View } from 'react-native';
+import { Pressable, View } from 'react-native';
 
 import { AsyncBoundary } from '@/components/feedback/AsyncBoundary';
 import { NavRow } from '@/components/layout/NavRow';
@@ -10,6 +10,7 @@ import { Divider } from '@/components/primitives/Divider';
 import { Text } from '@/components/primitives/Text';
 import { READINESS_BAND_DESCRIPTIONS, READINESS_BAND_LABELS, readinessBand } from '@/domain/readiness/bands';
 import { preparationDomain } from '@/domain/target/domains';
+import { roadStepInstruction } from '@/features/target/roadCopy';
 import { useTarget } from '@/features/target/useTarget';
 import { formatPercent } from '@/lib/format';
 import { useTheme } from '@/theme';
@@ -35,7 +36,7 @@ export default function TargetScreen() {
       }}
     >
       <AsyncBoundary state={state} onRetry={reload}>
-        {({ target, readiness }) => {
+        {({ target, readiness, road }) => {
           if (!target) {
             // Honest rather than empty. Only Pararescue is modelled so far,
             // and saying so beats an inert screen that looks broken.
@@ -109,9 +110,49 @@ export default function TargetScreen() {
                 </Text>
               </View>
 
+              {/* The one instruction the screen exists to give. Above the
+                  navigation, because it is the answer, not a destination. */}
+              {road?.focus ? (
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel={`Road to ready. Start with ${preparationDomain(road.focus.domainId).label}`}
+                  onPress={() => router.push('/target/road')}
+                >
+                  <Card style={{ gap: theme.spacing.sm }}>
+                    <Text variant="bodySm" color="textTertiary">
+                      Road to ready
+                    </Text>
+                    <Text variant="title">
+                      {`Start with ${preparationDomain(road.focus.domainId).label.toLowerCase()}`}
+                    </Text>
+                    <Text variant="bodySm" color="textSecondary">
+                      {roadStepInstruction(road.focus)}
+                    </Text>
+                    <Text variant="caption" color="accent">
+                      See the full list ›
+                    </Text>
+                  </Card>
+                </Pressable>
+              ) : null}
+
               {/* Drill-downs. Sections appear here as they are built, so there
                   are never rows that lead nowhere. */}
               <Card padded={false}>
+                <NavRow
+                  title="Road to ready"
+                  subtitle="What to work on, in order of what it is worth"
+                  meta={road && road.focus ? `${road.steps.filter((s) => s.impact > 0).length}` : undefined}
+                  metaAccent
+                  onPress={() => router.push('/target/road')}
+                />
+                <Divider />
+                <NavRow
+                  title="Fitness"
+                  subtitle="Your numbers against the benchmarks"
+                  meta={`${target.phase1Benchmarks.length}`}
+                  onPress={() => router.push('/target/fitness')}
+                />
+                <Divider />
                 <NavRow
                   title="Physical demands"
                   subtitle="What this career asks of you, and why"
