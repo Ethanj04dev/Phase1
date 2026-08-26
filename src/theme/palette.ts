@@ -3,46 +3,39 @@
  * screens and components consume *semantic* tokens so the palette can be
  * retuned (or white-labelled for a partner) without touching the UI layer.
  *
- * Contrast is enforced by `contrast.test.ts`, not by eye. Every value used for
- * text is asserted against the surface it sits on at WCAG AA, so darkening the
- * palette cannot quietly push a label below the legibility floor. This ramp is
- * the darkest one that still clears every gate.
+ * The system is monochrome, taken from the product mark: a stark white
+ * screen-printed helmet on black, with no colour anywhere in it. Light is the
+ * accent. Colour appears only where it carries information a label cannot, and
+ * even then it is muted to read as printed ink rather than as a web palette.
+ *
+ * Contrast is enforced by `contrast.test.ts`, not by eye.
  */
 export const palette = {
-  // Neutrals — deep and cool, close to black. Each step is small but stays
-  // measurably distinct from the one below, so a card still reads as a card
-  // rather than dissolving into the background.
-  black900: '#030409',
-  black800: '#06080E',
-  black700: '#0B0F16',
-  black600: '#11151E',
-  black500: '#1B212C',
-  black400: '#28303D',
-  grey500: '#4A5364',
-  grey400: '#7F8899',
-  grey300: '#99A0AE',
-  white100: '#F0F2F5',
+  // Neutrals — true black upward. Deliberately untinted: the mark is neutral
+  // black and white, and a blue or warm cast in the greys fights it.
+  black900: '#000000',
+  black800: '#050505',
+  black700: '#0C0C0C',
+  black600: '#141414',
+  black500: '#232323',
+  black400: '#3A3A3A',
+  grey500: '#555555',
+  grey400: '#8A8A8A',
+  grey300: '#B4B4B4',
+  white100: '#FFFFFF',
 
-  // Steel blue — the single brand accent. Deeper than a bright azure, but kept
-  // clear of navy: navy against a near-black background loses its identity and
-  // reads as more chrome rather than as the one lit element on the screen.
-  blue600: '#234069',
-  blue500: '#3A639E',
-  blue400: '#4E83CC',
-  // Lighter than the base, because on a dark interface a press should add
-  // light rather than remove it.
-  blue300: '#6E9BDA',
-  blue100: '#132038',
+  // Light is the accent. On a black ground, the brightest thing on screen is
+  // the emphasis, which is exactly how the mark works.
+  white200: '#D6D6D6',
+  whiteSurface: '#1A1A1A',
+  whiteBorder: '#4A4A4A',
 
-  // Status. Restrained; used as small indicators, never as screen washes.
-  // Positive is its own green rather than the accent, so "on target" never
-  // reads as merely "branded".
-  green400: '#6FA96F',
-  green100: '#0B130C',
-  amber400: '#C7A03C',
-  amber100: '#1C1608',
-  red400: '#CC6B54',
-  red100: '#1E0E0C',
+  // Status. Muted to the point of looking like ink on paper. Reinforcement
+  // only: every status in the UI also carries a label or a sign.
+  amber400: '#A98B4A',
+  amber100: '#171208',
+  red400: '#C4685A',
+  red100: '#170B09',
 } as const;
 
 export type Palette = typeof palette;

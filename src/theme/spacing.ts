@@ -17,13 +17,21 @@ export type SpacingToken = keyof typeof spacing;
 /** Horizontal gutter used by every full-width screen. */
 export const SCREEN_GUTTER = spacing.xl;
 
+/**
+ * Corner radii, kept deliberately tight.
+ *
+ * The product mark is rails, slots and hard edges; soft twelve-pixel corners
+ * read as a consumer dashboard and fight it. Small radii keep the surfaces
+ * feeling like machined plates rather than cards, without going fully square,
+ * which on a phone reads as unfinished.
+ */
 export const radii = {
   none: 0,
-  sm: 4,
-  md: 8,
-  lg: 12,
-  xl: 16,
-  xxl: 24,
+  sm: 1,
+  md: 2,
+  lg: 3,
+  xl: 4,
+  xxl: 6,
   pill: 999,
 } as const;
 

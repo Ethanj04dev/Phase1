@@ -27,24 +27,24 @@ export const tabularNumbers: TextStyle = {
 const display: TextStyle = {
   fontSize: 64,
   lineHeight: 66,
-  fontWeight: '700',
-  letterSpacing: -2.5,
+  fontWeight: '800',
+  letterSpacing: -3,
   ...tabularNumbers,
 };
 
 const metricXl: TextStyle = {
   fontSize: 48,
   lineHeight: 50,
-  fontWeight: '700',
-  letterSpacing: -1.8,
+  fontWeight: '800',
+  letterSpacing: -2.2,
   ...tabularNumbers,
 };
 
 const metricLg: TextStyle = {
   fontSize: 34,
   lineHeight: 38,
-  fontWeight: '700',
-  letterSpacing: -1.1,
+  fontWeight: '800',
+  letterSpacing: -1.4,
   ...tabularNumbers,
 };
 
@@ -97,16 +97,16 @@ const caption: TextStyle = {
 const label: TextStyle = {
   fontSize: 12,
   lineHeight: 16,
-  fontWeight: '600',
-  letterSpacing: 1.2,
+  fontWeight: '700',
+  letterSpacing: 1.6,
   textTransform: 'uppercase',
 };
 
 const labelSm: TextStyle = {
   fontSize: 10,
   lineHeight: 14,
-  fontWeight: '700',
-  letterSpacing: 1.4,
+  fontWeight: '800',
+  letterSpacing: 1.8,
   textTransform: 'uppercase',
 };
 

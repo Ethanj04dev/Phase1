@@ -2,18 +2,20 @@ import { palette } from './palette';
 
 /**
  * Semantic colour tokens. Components reference intent ("textSecondary",
- * "statusCaution"), never raw hex, so the whole surface can be re-themed
- * from one file.
+ * "statusCaution"), never raw hex, so the whole surface can be re-themed from
+ * one file.
  */
 export const darkColors = {
-  // Surfaces, back to front.
+  // Surfaces, back to front. The steps are small and the ground is true black,
+  // so a card reads as a slightly lifted plate rather than a floating panel.
   background: palette.black800,
   backgroundSunken: palette.black900,
   surface: palette.black700,
   surfaceElevated: palette.black600,
   surfacePressed: palette.black500,
 
-  // Hairlines and structure. `grid` powers the subtle map-grid motif.
+  // Hairlines and structure. Rules are meant to be seen: this interface is
+  // closer to a printed spec sheet than to a soft card layout.
   border: palette.black500,
   borderStrong: palette.black400,
   grid: palette.black500,
@@ -23,19 +25,27 @@ export const darkColors = {
   textSecondary: palette.grey300,
   textTertiary: palette.grey400,
   textDisabled: palette.grey500,
+  // Filled accent blocks are white, so their label is black.
   textOnAccent: palette.black900,
 
-  // Brand accent.
-  accent: palette.blue400,
-  accentPressed: palette.blue300,
-  accentStrong: palette.blue300,
-  accentBorder: palette.blue600,
-  accentSurface: palette.blue100,
+  // Accent. Light rather than a hue.
+  accent: palette.white100,
+  // A press dims rather than brightens here, because the accent is already at
+  // maximum light and has nowhere brighter to go.
+  accentPressed: palette.white200,
+  accentStrong: palette.white100,
+  accentBorder: palette.whiteBorder,
+  accentSurface: palette.whiteSurface,
 
-  // Status. Positive is a green distinct from the blue accent, so "on target"
-  // carries meaning rather than just reading as a branded element.
-  statusOnTarget: palette.green400,
-  statusOnTargetSurface: palette.green100,
+  // Status.
+  //
+  // On target is full white: in a monochrome system, lit means good. Only the
+  // two failure states carry a hue, because "something is off" is the one
+  // message worth spending colour on. Direction is never carried by colour
+  // alone -- DeltaBadge always renders a sign and StatusIndicator requires a
+  // label.
+  statusOnTarget: palette.white100,
+  statusOnTargetSurface: palette.whiteSurface,
   statusCaution: palette.amber400,
   statusCautionSurface: palette.amber100,
   statusOffTarget: palette.red400,
@@ -45,7 +55,7 @@ export const darkColors = {
   trackEmpty: palette.black500,
 
   // Scrims and overlays.
-  overlay: 'rgba(9, 11, 10, 0.82)',
+  overlay: 'rgba(0, 0, 0, 0.86)',
   transparent: 'transparent',
 } as const;
 
