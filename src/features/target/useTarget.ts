@@ -8,6 +8,7 @@ import {
   calculateTargetReadiness,
   type TargetReadiness,
 } from '@/domain/readiness/targetScore';
+import { currentLevels, type ProficiencyRating } from '@/domain/target/proficiency';
 import { buildRoadToReady, type RoadToReady } from '@/domain/target/roadToReady';
 import type { TargetDefinition } from '@/domain/target/types';
 import { err, ok, type Result } from '@/domain/types';
@@ -22,6 +23,8 @@ export interface TargetView {
    */
   target: TargetDefinition | null;
   results: readonly AssessmentResult[];
+  /** Self-assessed skill history, for domains measured by proficiency. */
+  ratings: readonly ProficiencyRating[];
   /** Scored against the Target's own domains. Null when nothing is measured. */
   readiness: TargetReadiness | null;
   /**
@@ -38,7 +41,7 @@ const NO_PROFILE = {
 };
 
 export function useTarget(): AsyncResource<TargetView> {
-  const { athlete, assessment, training, workout } = useRepositories();
+  const { athlete, assessment, proficiency, training, workout } = useRepositories();
 
   const fetcher = useCallback(async (): Promise<Result<TargetView>> => {
     const profileResult = await athlete.getCurrentProfile();
@@ -52,9 +55,10 @@ export function useTarget(): AsyncResource<TargetView> {
 
     const target = findTarget(profile.goalId) ?? null;
 
-    const [resultsOutcome, completionOutcome] = await Promise.all([
+    const [resultsOutcome, completionOutcome, ratingsOutcome] = await Promise.all([
       assessment.listResults(profile.id),
       training.getWeeklyCompletion(profile.id),
+      proficiency.listRatings(profile.id),
     ]);
     if (!resultsOutcome.ok) {
       return resultsOutcome;
@@ -64,10 +68,15 @@ export function useTarget(): AsyncResource<TargetView> {
     void workout;
 
     const results = resultsOutcome.value;
+    // Ratings are supporting data for one domain. If they fail to load, that
+    // domain reads as unmeasured -- which the whole model already handles --
+    // rather than taking the screen down with it.
+    const ratings = ratingsOutcome.ok ? ratingsOutcome.value : [];
 
     const readiness = target
       ? calculateTargetReadiness(target, {
           results,
+          proficiency: currentLevels(ratings),
           behavioural: completionOutcome.ok
             ? { training_consistency: Math.round(completionOutcome.value * 100) }
             : {},
@@ -76,8 +85,8 @@ export function useTarget(): AsyncResource<TargetView> {
 
     const road = target ? buildRoadToReady(target, readiness, results) : null;
 
-    return ok({ profile, target, results, readiness, road });
-  }, [assessment, athlete, training, workout]);
+    return ok({ profile, target, results, ratings, readiness, road });
+  }, [assessment, athlete, proficiency, training, workout]);
 
   return useAsyncResource(fetcher);
 }

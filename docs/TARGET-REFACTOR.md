@@ -141,6 +141,15 @@ The Supabase two-account isolation test is unfinished. This refactor does not
 block it, and it stays outstanding: no athlete data should reach real users
 until it passes.
 
-`athlete_profiles.goal_id` becomes `target_id`, which is a migration
-(`0002_rename_goal_to_target.sql`) rather than an edit to `0001`, since `0001`
-has already been run.
+`athlete_profiles.goal_id` becomes `target_id`, which is a migration rather
+than an edit to `0001`, since `0001` has already been run. It is now numbered
+`0003`, because `0002` was taken by `proficiency_ratings`.
+
+`0002_proficiency_ratings.sql` needs running against the live project before a
+signed-in athlete can save skill ratings. Until then water confidence reads as
+unmeasured for them, which the readiness model already handles; nothing breaks.
+
+Safety notices currently surface on the skill-rating screen. Surfacing them on
+the water *sessions* themselves is step 9 work, and it is not done. The rating
+screen is where an athlete decides what to practise, so it is the right first
+place, but it is not the last one.

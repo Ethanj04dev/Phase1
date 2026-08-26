@@ -11,6 +11,7 @@ import { localWorkoutRepository as localDraftStore } from '@/data/local/workoutR
 import type {
   AssessmentRepository,
   AthleteRepository,
+  ProficiencyRepository,
   ReadinessRepository,
   Repositories,
   WorkoutRepository,
@@ -21,11 +22,13 @@ import {
   toAssessmentResult,
   toAthleteProfile,
   toExerciseResult,
+  toProficiencyRating,
   toReadinessSnapshot,
   toWorkoutResult,
   type AssessmentResultRow,
   type AthleteProfileRow,
   type ExerciseResultRow,
+  type ProficiencyRatingRow,
   type ReadinessScoreRow,
   type WorkoutResultRow,
 } from './rows';
@@ -183,6 +186,52 @@ export function createSupabaseRepositories(client: SupabaseClient): Repositories
         return failure('We could not save your results.', error);
       }
       return ok((data as AssessmentResultRow[]).map(toAssessmentResult));
+    },
+  };
+
+  const proficiency: ProficiencyRepository = {
+    listRatings: async (athleteId, options) => {
+      let query = client
+        .from('proficiency_ratings')
+        .select('*')
+        .eq('athlete_id', athleteId)
+        .order('recorded_at', { ascending: false });
+
+      if (options?.limit) {
+        query = query.limit(options.limit);
+      }
+
+      const { data, error } = await query;
+      if (error) {
+        return failure('We could not load your skill ratings.', error);
+      }
+      return ok((data as ProficiencyRatingRow[]).map(toProficiencyRating));
+    },
+
+    recordRatings: async (athleteId, entries) => {
+      if (entries.length === 0) {
+        return ok([]);
+      }
+      const recordedAt = new Date().toISOString();
+
+      const { data, error } = await client
+        .from('proficiency_ratings')
+        .insert(
+          entries.map((entry) => ({
+            athlete_id: athleteId,
+            domain_id: entry.domainId,
+            skill_id: entry.skillId,
+            level: entry.level,
+            recorded_at: recordedAt,
+            notes: entry.notes ?? null,
+          })),
+        )
+        .select('*');
+
+      if (error) {
+        return failure('We could not save your skill ratings.', error);
+      }
+      return ok((data as ProficiencyRatingRow[]).map(toProficiencyRating));
     },
   };
 
@@ -359,6 +408,7 @@ export function createSupabaseRepositories(client: SupabaseClient): Repositories
   return {
     athlete,
     assessment,
+    proficiency,
     readiness,
     workout,
     // Programme content ships with the app; only the athlete's position in it

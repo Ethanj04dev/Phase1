@@ -3,11 +3,13 @@ import type { AthleteProfile } from '@/domain/athlete/types';
 import { getGoalOrDefault } from '@/domain/goals/catalog';
 import { calculateReadiness, calculateTrend } from '@/domain/readiness/score';
 import type { ReadinessSnapshot } from '@/domain/readiness/types';
+import type { ProficiencyRating } from '@/domain/target/proficiency';
 import { ok, type Result } from '@/domain/types';
 
 import type {
   AssessmentRepository,
   AthleteRepository,
+  ProficiencyRepository,
   ReadinessRepository,
   Repositories,
   TrainingRepository,
@@ -84,6 +86,33 @@ const assessment: AssessmentRepository = {
 };
 
 /**
+ * The demo athlete has rated nothing.
+ *
+ * Deliberate: it is the state that exposes the unmeasured-domain handling, and
+ * seeding plausible water ratings would hide the exact case the Target work
+ * exists to get right.
+ */
+let extraRatings: readonly ProficiencyRating[] = [];
+
+const proficiency: ProficiencyRepository = {
+  listRatings: () => delayed([...extraRatings]),
+  recordRatings: (athleteId, entries) => {
+    const recordedAt = new Date().toISOString();
+    const created: ProficiencyRating[] = entries.map((entry, index) => ({
+      id: `mock-rating-${extraRatings.length + index}`,
+      athleteId,
+      domainId: entry.domainId,
+      skillId: entry.skillId,
+      level: entry.level,
+      recordedAt,
+      notes: entry.notes ?? null,
+    }));
+    extraRatings = [...extraRatings, ...created];
+    return delayed(created);
+  },
+};
+
+/**
  * Builds the readiness history by scoring the athlete as they stood after each
  * round of testing. Nothing is hardcoded: change a demo performance and the
  * dashboard, the trend and the priority category all move accordingly.
@@ -148,6 +177,7 @@ const training: TrainingRepository = createContentTrainingRepository(
 export const mockRepositories: Repositories = {
   athlete,
   assessment,
+  proficiency,
   readiness,
   training,
   workout,
@@ -157,4 +187,5 @@ export const mockRepositories: Repositories = {
 export function resetMockRepositories(): void {
   profile = { ...demoProfile };
   extraResults = [];
+  extraRatings = [];
 }

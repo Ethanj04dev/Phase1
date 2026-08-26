@@ -2,6 +2,8 @@ import type { AssessmentEventId, AssessmentResult } from '@/domain/assessment/ty
 import type { AthleteProfile, TrainingTrackId } from '@/domain/athlete/types';
 import type { GoalId } from '@/domain/goals/types';
 import type { ReadinessSnapshot } from '@/domain/readiness/types';
+import type { PreparationDomainId, ProficiencyLevel } from '@/domain/target/domains';
+import type { ProficiencyRating } from '@/domain/target/proficiency';
 import type { ExerciseResult, WorkoutResult } from '@/domain/training/types';
 import type { CategoryScores, ExperienceLevel, PerformanceCategory } from '@/domain/types';
 
@@ -63,6 +65,28 @@ export function toAssessmentResult(row: AssessmentResultRow): AssessmentResult {
     athleteId: row.athlete_id,
     eventId: row.event_id as AssessmentEventId,
     value: Number(row.value),
+    recordedAt: row.recorded_at,
+    notes: row.notes,
+  };
+}
+
+export interface ProficiencyRatingRow {
+  id: string;
+  athlete_id: string;
+  domain_id: string;
+  skill_id: string;
+  level: string;
+  recorded_at: string;
+  notes: string | null;
+}
+
+export function toProficiencyRating(row: ProficiencyRatingRow): ProficiencyRating {
+  return {
+    id: row.id,
+    athleteId: row.athlete_id,
+    domainId: row.domain_id as PreparationDomainId,
+    skillId: row.skill_id,
+    level: row.level as ProficiencyLevel,
     recordedAt: row.recorded_at,
     notes: row.notes,
   };

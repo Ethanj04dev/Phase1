@@ -10,16 +10,25 @@ across devices.
 Create a project at [supabase.com](https://supabase.com). Note the project URL
 and the **anon / publishable** key from Project Settings → API.
 
-## 2. Run the migration
+## 2. Run the migrations
 
-Open the SQL Editor in the Supabase dashboard, paste the contents of
-[`migrations/0001_initial_schema.sql`](migrations/0001_initial_schema.sql), and
-run it.
+Open the SQL Editor in the Supabase dashboard and run each file in order:
 
-It creates five tables and enables row-level security on every one of them in
-the same statement block. Verify afterwards in Database → Tables that each
-table shows **RLS enabled**. If any table is missing it, stop and fix that
-before pointing the app at the project.
+1. [`migrations/0001_initial_schema.sql`](migrations/0001_initial_schema.sql) —
+   five tables, row-level security enabled on every one in the same statement
+   block.
+2. [`migrations/0002_proficiency_ratings.sql`](migrations/0002_proficiency_ratings.sql)
+   — self-assessed skill levels for water confidence. Additive; it touches
+   nothing `0001` created.
+
+Verify afterwards in Database → Tables that each table shows **RLS enabled**.
+If any table is missing it, stop and fix that before pointing the app at the
+project.
+
+Until `0002` has been run, a signed-in athlete simply has no skill ratings:
+water confidence reads as unmeasured and the rest of the app is unaffected.
+The failure is contained on purpose, so a missing migration degrades one domain
+rather than breaking a screen.
 
 ## 3. Configure the app
 

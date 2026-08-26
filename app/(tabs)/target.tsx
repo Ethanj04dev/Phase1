@@ -10,6 +10,7 @@ import { Divider } from '@/components/primitives/Divider';
 import { Text } from '@/components/primitives/Text';
 import { READINESS_BAND_DESCRIPTIONS, READINESS_BAND_LABELS, readinessBand } from '@/domain/readiness/bands';
 import { preparationDomain } from '@/domain/target/domains';
+import { ratedCount, skillStandings } from '@/domain/target/proficiency';
 import { roadStepInstruction } from '@/features/target/roadCopy';
 import { useTarget } from '@/features/target/useTarget';
 import { formatPercent } from '@/lib/format';
@@ -36,7 +37,7 @@ export default function TargetScreen() {
       }}
     >
       <AsyncBoundary state={state} onRetry={reload}>
-        {({ target, readiness, road }) => {
+        {({ target, readiness, road, ratings }) => {
           if (!target) {
             // Honest rather than empty. Only Pararescue is modelled so far,
             // and saying so beats an inert screen that looks broken.
@@ -58,6 +59,9 @@ export default function TargetScreen() {
           }
 
           const band = readiness ? readinessBand(readiness.overall) : null;
+          const skillDomains = target.domains.filter(
+            (domain) => (domain.proficiencySkills?.length ?? 0) > 0,
+          );
 
           return (
             <>
@@ -152,6 +156,24 @@ export default function TargetScreen() {
                   meta={`${target.phase1Benchmarks.length}`}
                   onPress={() => router.push('/target/fitness')}
                 />
+                {/* Named for the domain rather than filed under a generic
+                    "Skills", so water confidence reads as the first-class
+                    thing it is for this career. */}
+                {skillDomains.map((domain) => {
+                  const counts = ratedCount(skillStandings(domain, ratings));
+                  return (
+                    <View key={domain.id}>
+                      <Divider />
+                      <NavRow
+                        title={preparationDomain(domain.id).label}
+                        subtitle="Rate yourself against named skills"
+                        meta={`${counts.rated}/${counts.total}`}
+                        metaAccent={counts.rated < counts.total}
+                        onPress={() => router.push('/target/skills')}
+                      />
+                    </View>
+                  );
+                })}
                 <Divider />
                 <NavRow
                   title="Physical demands"

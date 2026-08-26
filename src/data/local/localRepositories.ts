@@ -4,6 +4,10 @@ import type { AssessmentResult } from '@/domain/assessment/types';
 import type { AthleteProfile } from '@/domain/athlete/types';
 import { calculateTrend } from '@/domain/readiness/score';
 import type { ReadinessCalculation, ReadinessSnapshot } from '@/domain/readiness/types';
+import type {
+  NewProficiencyRating,
+  ProficiencyRating,
+} from '@/domain/target/proficiency';
 import { err, ok, type Result, type Uuid } from '@/domain/types';
 
 import { createContentTrainingRepository } from '@/data/content/trainingRepository';
@@ -12,6 +16,7 @@ import type {
   AthleteRepository,
   NewAssessmentResult,
   NewAthleteProfile,
+  ProficiencyRepository,
   ReadinessRepository,
   Repositories,
 } from '@/data/repositories/types';
@@ -131,6 +136,50 @@ const assessment: AssessmentRepository = {
   },
 };
 
+// --- Proficiency -------------------------------------------------------------
+
+async function loadRatings(): Promise<Result<readonly ProficiencyRating[]>> {
+  const stored = await readRecord<ProficiencyRating[]>(StorageKeys.proficiencyRatings);
+  return stored.ok ? ok(stored.value ?? []) : stored;
+}
+
+const proficiency: ProficiencyRepository = {
+  listRatings: async (_athleteId, options) => {
+    const stored = await loadRatings();
+    if (!stored.ok) {
+      return stored;
+    }
+    const ordered = [...stored.value].sort((a, b) => b.recordedAt.localeCompare(a.recordedAt));
+    return ok(options?.limit ? ordered.slice(0, options.limit) : ordered);
+  },
+
+  recordRatings: async (athleteId, entries: readonly NewProficiencyRating[]) => {
+    const stored = await loadRatings();
+    if (!stored.ok) {
+      return stored;
+    }
+
+    // One timestamp for the batch, matching how assessments are stored: these
+    // ratings are one honest sitting, not five separate judgements.
+    const recordedAt = now();
+    const created: ProficiencyRating[] = entries.map((entry) => ({
+      id: newId(),
+      athleteId,
+      domainId: entry.domainId,
+      skillId: entry.skillId,
+      level: entry.level,
+      recordedAt,
+      notes: entry.notes ?? null,
+    }));
+
+    const written = await writeRecord(StorageKeys.proficiencyRatings, [
+      ...stored.value,
+      ...created,
+    ]);
+    return written.ok ? ok(created) : written;
+  },
+};
+
 // --- Readiness ---------------------------------------------------------------
 
 async function loadSnapshots(): Promise<Result<readonly ReadinessSnapshot[]>> {
@@ -196,6 +245,7 @@ const readiness: ReadinessRepository = {
 export const localRepositories: Repositories = {
   athlete,
   assessment,
+  proficiency,
   readiness,
   // Programme content is authored and ships with the app; only the athlete's
   // position in it is personal, and that is derived from their start date.

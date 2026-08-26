@@ -1,6 +1,10 @@
 import type { AssessmentEventId, AssessmentResult } from '@/domain/assessment/types';
 import type { AthleteProfile } from '@/domain/athlete/types';
 import type {
+  NewProficiencyRating,
+  ProficiencyRating,
+} from '@/domain/target/proficiency';
+import type {
   ReadinessCalculation,
   ReadinessSnapshot,
   ReadinessTrend,
@@ -109,6 +113,27 @@ export interface NewAssessmentResult {
   notes?: string | null;
 }
 
+/**
+ * Self-assessed skill levels, for domains that cannot be timed or counted.
+ *
+ * Separate from AssessmentRepository rather than folded into it, because the
+ * two store different things: one is a measured performance, the other is the
+ * athlete's own judgement. Sharing a table would eventually mean sharing a
+ * screen, and a self-rating must never be presented as a test result.
+ */
+export interface ProficiencyRepository {
+  /** Full append-only history, newest first. */
+  listRatings(
+    athleteId: Uuid,
+    options?: { limit?: number },
+  ): Promise<Result<readonly ProficiencyRating[]>>;
+  /** Appends a batch rated at the same sitting. */
+  recordRatings(
+    athleteId: Uuid,
+    entries: readonly NewProficiencyRating[],
+  ): Promise<Result<readonly ProficiencyRating[]>>;
+}
+
 export interface WorkoutRepository {
   /**
    * The single session in progress, if any.
@@ -132,6 +157,7 @@ export interface WorkoutRepository {
 export interface Repositories {
   athlete: AthleteRepository;
   assessment: AssessmentRepository;
+  proficiency: ProficiencyRepository;
   readiness: ReadinessRepository;
   training: TrainingRepository;
   workout: WorkoutRepository;
