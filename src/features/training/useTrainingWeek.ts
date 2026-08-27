@@ -13,6 +13,14 @@ export interface TrainingWeek {
   weekNumber: number;
   focus: string;
   days: readonly ResolvedWorkoutDay[];
+  /**
+   * Day ids with a finished workout against them.
+   *
+   * The whole history rather than this week's, because the week selector
+   * moves and refetching per week would make paging back through a programme
+   * feel like loading a website.
+   */
+  completedDayIds: ReadonlySet<string>;
 }
 
 const NO_PROGRAM = {
@@ -28,7 +36,7 @@ const NO_PROGRAM = {
  * the programme has loaded.
  */
 export function useTrainingWeek(selectedWeek: number | null): AsyncResource<TrainingWeek> {
-  const { athlete, training } = useRepositories();
+  const { athlete, training, workout } = useRepositories();
 
   const fetcher = useCallback(async (): Promise<Result<TrainingWeek>> => {
     const profileResult = await athlete.getCurrentProfile();
@@ -57,8 +65,17 @@ export function useTrainingWeek(selectedWeek: number | null): AsyncResource<Trai
       program.program.durationWeeks,
     );
 
-    const daysResult = await training.getWeek(profile.id, weekNumber);
+    const [daysResult, workoutsResult] = await Promise.all([
+      training.getWeek(profile.id, weekNumber),
+      workout.listResults(profile.id),
+    ]);
     if (!daysResult.ok) return daysResult;
+
+    // Workout history only decorates the week with what was logged. Losing it
+    // should grey out the state markers, not the programme.
+    const completedDayIds = new Set(
+      workoutsResult.ok ? workoutsResult.value.map((result) => result.workoutDayId) : [],
+    );
 
     return ok({
       program,
@@ -66,8 +83,9 @@ export function useTrainingWeek(selectedWeek: number | null): AsyncResource<Trai
       weekNumber,
       focus: program.weekFocus.get(weekNumber) ?? '',
       days: daysResult.value,
+      completedDayIds,
     });
-  }, [athlete, selectedWeek, training]);
+  }, [athlete, selectedWeek, training, workout]);
 
   return useAsyncResource(fetcher);
 }
