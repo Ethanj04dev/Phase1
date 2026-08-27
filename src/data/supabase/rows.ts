@@ -3,6 +3,7 @@ import type { AthleteProfile, TrainingTrackId } from '@/domain/athlete/types';
 import type { GoalId } from '@/domain/goals/types';
 import type { ReadinessSnapshot, TargetReadinessRecord } from '@/domain/readiness/types';
 import type { PreparationDomainId, ProficiencyLevel } from '@/domain/target/domains';
+import type { MilestoneCompletion } from '@/domain/target/milestones';
 import type { ProficiencyRating } from '@/domain/target/proficiency';
 import type { ExerciseResult, WorkoutResult } from '@/domain/training/types';
 import type { CategoryScores, ExperienceLevel, PerformanceCategory } from '@/domain/types';
@@ -89,6 +90,22 @@ export function toProficiencyRating(row: ProficiencyRatingRow): ProficiencyRatin
     level: row.level as ProficiencyLevel,
     recordedAt: row.recorded_at,
     notes: row.notes,
+  };
+}
+
+export interface MilestoneCompletionRow {
+  id: string;
+  athlete_id: string;
+  milestone_id: string;
+  completed_at: string;
+}
+
+export function toMilestoneCompletion(row: MilestoneCompletionRow): MilestoneCompletion {
+  return {
+    id: row.id,
+    athleteId: row.athlete_id,
+    milestoneId: row.milestone_id,
+    completedAt: row.completed_at,
   };
 }
 

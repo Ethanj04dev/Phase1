@@ -11,6 +11,7 @@ import { localWorkoutRepository as localDraftStore } from '@/data/local/workoutR
 import type {
   AssessmentRepository,
   AthleteRepository,
+  MilestoneRepository,
   ProficiencyRepository,
   ReadinessRepository,
   Repositories,
@@ -22,12 +23,14 @@ import {
   toAssessmentResult,
   toAthleteProfile,
   toExerciseResult,
+  toMilestoneCompletion,
   toProficiencyRating,
   toReadinessSnapshot,
   toWorkoutResult,
   type AssessmentResultRow,
   type AthleteProfileRow,
   type ExerciseResultRow,
+  type MilestoneCompletionRow,
   type ProficiencyRatingRow,
   type ReadinessScoreRow,
   type WorkoutResultRow,
@@ -235,6 +238,45 @@ export function createSupabaseRepositories(client: SupabaseClient): Repositories
     },
   };
 
+  const milestone: MilestoneRepository = {
+    listCompletions: async (athleteId) => {
+      const { data, error } = await client
+        .from('milestone_completions')
+        .select('*')
+        .eq('athlete_id', athleteId);
+
+      if (error) {
+        return failure('We could not load your milestones.', error);
+      }
+      return ok((data as MilestoneCompletionRow[]).map(toMilestoneCompletion));
+    },
+
+    setCompleted: async (athleteId, milestoneId, completed) => {
+      if (!completed) {
+        const { error } = await client
+          .from('milestone_completions')
+          .delete()
+          .eq('athlete_id', athleteId)
+          .eq('milestone_id', milestoneId);
+
+        return error ? failure('We could not update your milestone.', error) : ok(undefined);
+      }
+
+      // Upsert on the unique pair, so a double tap cannot create two rows and
+      // marking something already done is a no-op rather than an error.
+      const { error } = await client.from('milestone_completions').upsert(
+        {
+          athlete_id: athleteId,
+          milestone_id: milestoneId,
+          completed_at: new Date().toISOString(),
+        },
+        { onConflict: 'athlete_id,milestone_id' },
+      );
+
+      return error ? failure('We could not update your milestone.', error) : ok(undefined);
+    },
+  };
+
   const readiness: ReadinessRepository = {
     getLatest: async (athleteId) => {
       const { data, error } = await client
@@ -409,6 +451,7 @@ export function createSupabaseRepositories(client: SupabaseClient): Repositories
   return {
     athlete,
     assessment,
+    milestone,
     proficiency,
     readiness,
     workout,

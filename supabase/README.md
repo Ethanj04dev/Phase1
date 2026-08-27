@@ -23,6 +23,8 @@ Open the SQL Editor in the Supabase dashboard and run each file in order:
 3. [`migrations/0003_target_readiness.sql`](migrations/0003_target_readiness.sql)
    — one nullable column on `readiness_scores` holding the Target-aware score
    for the same instant. Additive, and it rewrites no existing row.
+4. [`migrations/0004_milestone_completions.sql`](migrations/0004_milestone_completions.sql)
+   — the athlete's own preparation checklist. Additive, and safe to re-run.
 
 Verify afterwards in Database → Tables that each table shows **RLS enabled**.
 If any table is missing it, stop and fix that before pointing the app at the

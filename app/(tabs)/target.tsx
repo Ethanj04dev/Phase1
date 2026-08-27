@@ -183,6 +183,13 @@ export default function TargetScreen() {
                 />
                 <Divider />
                 <NavRow
+                  title="Milestones"
+                  subtitle="Your own record of where you are in the process"
+                  meta={`${target.milestones.length}`}
+                  onPress={() => router.push('/target/milestones')}
+                />
+                <Divider />
+                <NavRow
                   title="Pipeline"
                   subtitle="The shape of the journey"
                   meta={target.pipeline.some((s) => s.isPlaceholder) ? 'Unverified' : undefined}

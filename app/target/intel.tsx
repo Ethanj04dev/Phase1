@@ -4,7 +4,8 @@ import { AsyncBoundary } from '@/components/feedback/AsyncBoundary';
 import { Screen } from '@/components/layout/Screen';
 import { Card } from '@/components/primitives/Card';
 import { Text } from '@/components/primitives/Text';
-import type { IntelCategory } from '@/domain/target/types';
+import type { Source } from '@/domain/target/provenance';
+import type { IntelArticle, IntelCategory, TargetDefinition } from '@/domain/target/types';
 import { useTarget } from '@/features/target/useTarget';
 import { useTheme } from '@/theme';
 
@@ -18,6 +19,20 @@ const CATEGORY_LABELS: Record<IntelCategory, string> = {
   faq: 'Common questions',
   terminology: 'Terminology',
 };
+
+/**
+ * The sources an article actually cites.
+ *
+ * An id with no matching source is dropped rather than rendered as a dangling
+ * reference. A content test already asserts that verified figures point at
+ * real sources; this is the same rule applied where prose does the claiming.
+ */
+function sourcesFor(target: TargetDefinition, article: IntelArticle): readonly Source[] {
+  return (article.sourceIds ?? []).flatMap((id) => {
+    const source = target.sources.find((candidate) => candidate.id === id);
+    return source ? [source] : [];
+  });
+}
 
 export default function CareerIntelScreen() {
   const theme = useTheme();
@@ -64,11 +79,13 @@ export default function CareerIntelScreen() {
                         {paragraph}
                       </Text>
                     ))}
-                    {article.sourceIds && article.sourceIds.length > 0 ? (
-                      <Text variant="caption" color="textTertiary">
-                        {`Sources: ${article.sourceIds.length}`}
+                    {/* Named, not counted. "Sources: 2" is not a citation,
+                        and an athlete cannot check a number. */}
+                    {sourcesFor(target, article).map((source) => (
+                      <Text key={source.id} variant="caption" color="textTertiary">
+                        {`${source.title} — ${source.organization}`}
                       </Text>
-                    ) : null}
+                    ))}
                   </Card>
                 </View>
               ))}

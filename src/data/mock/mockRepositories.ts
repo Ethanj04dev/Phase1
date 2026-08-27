@@ -3,12 +3,14 @@ import type { AthleteProfile } from '@/domain/athlete/types';
 import { getGoalOrDefault } from '@/domain/goals/catalog';
 import { calculateReadiness, calculateTrend } from '@/domain/readiness/score';
 import type { ReadinessSnapshot } from '@/domain/readiness/types';
+import type { MilestoneCompletion } from '@/domain/target/milestones';
 import type { ProficiencyRating } from '@/domain/target/proficiency';
 import { ok, type Result } from '@/domain/types';
 
 import type {
   AssessmentRepository,
   AthleteRepository,
+  MilestoneRepository,
   ProficiencyRepository,
   ReadinessRepository,
   Repositories,
@@ -112,6 +114,27 @@ const proficiency: ProficiencyRepository = {
   },
 };
 
+let extraMilestones: readonly MilestoneCompletion[] = [];
+
+const milestone: MilestoneRepository = {
+  listCompletions: () => delayed([...extraMilestones]),
+  setCompleted: (athleteId, milestoneId, completed) => {
+    const without = extraMilestones.filter((entry) => entry.milestoneId !== milestoneId);
+    extraMilestones = completed
+      ? [
+          ...without,
+          {
+            id: `mock-milestone-${without.length}`,
+            athleteId,
+            milestoneId,
+            completedAt: new Date().toISOString(),
+          },
+        ]
+      : without;
+    return delayed(undefined);
+  },
+};
+
 /**
  * Builds the readiness history by scoring the athlete as they stood after each
  * round of testing. Nothing is hardcoded: change a demo performance and the
@@ -177,6 +200,7 @@ const training: TrainingRepository = createContentTrainingRepository(
 export const mockRepositories: Repositories = {
   athlete,
   assessment,
+  milestone,
   proficiency,
   readiness,
   training,
@@ -188,4 +212,5 @@ export function resetMockRepositories(): void {
   profile = { ...demoProfile };
   extraResults = [];
   extraRatings = [];
+  extraMilestones = [];
 }

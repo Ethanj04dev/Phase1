@@ -4,6 +4,7 @@ import type { AssessmentResult } from '@/domain/assessment/types';
 import type { AthleteProfile } from '@/domain/athlete/types';
 import { calculateTrend } from '@/domain/readiness/score';
 import type { ReadinessCalculation, ReadinessSnapshot } from '@/domain/readiness/types';
+import type { MilestoneCompletion } from '@/domain/target/milestones';
 import type {
   NewProficiencyRating,
   ProficiencyRating,
@@ -16,6 +17,7 @@ import type {
   AthleteRepository,
   NewAssessmentResult,
   NewAthleteProfile,
+  MilestoneRepository,
   ProficiencyRepository,
   ReadinessRepository,
   Repositories,
@@ -180,6 +182,34 @@ const proficiency: ProficiencyRepository = {
   },
 };
 
+// --- Milestones --------------------------------------------------------------
+
+async function loadMilestones(): Promise<Result<readonly MilestoneCompletion[]>> {
+  const stored = await readRecord<MilestoneCompletion[]>(StorageKeys.milestoneCompletions);
+  return stored.ok ? ok(stored.value ?? []) : stored;
+}
+
+const milestone: MilestoneRepository = {
+  listCompletions: async () => loadMilestones(),
+
+  setCompleted: async (athleteId, milestoneId, completed) => {
+    const stored = await loadMilestones();
+    if (!stored.ok) {
+      return stored;
+    }
+
+    // Filtering first makes both directions idempotent: completing twice
+    // cannot leave two rows, and uncompleting something absent is a no-op.
+    const without = stored.value.filter((entry) => entry.milestoneId !== milestoneId);
+    const next = completed
+      ? [...without, { id: newId(), athleteId, milestoneId, completedAt: now() }]
+      : without;
+
+    const written = await writeRecord(StorageKeys.milestoneCompletions, next);
+    return written.ok ? ok(undefined) : written;
+  },
+};
+
 // --- Readiness ---------------------------------------------------------------
 
 async function loadSnapshots(): Promise<Result<readonly ReadinessSnapshot[]>> {
@@ -245,6 +275,7 @@ const readiness: ReadinessRepository = {
 export const localRepositories: Repositories = {
   athlete,
   assessment,
+  milestone,
   proficiency,
   readiness,
   // Programme content is authored and ships with the app; only the athlete's

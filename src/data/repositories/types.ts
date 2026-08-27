@@ -1,5 +1,6 @@
 import type { AssessmentEventId, AssessmentResult } from '@/domain/assessment/types';
 import type { AthleteProfile } from '@/domain/athlete/types';
+import type { MilestoneCompletion } from '@/domain/target/milestones';
 import type {
   NewProficiencyRating,
   ProficiencyRating,
@@ -134,6 +135,24 @@ export interface ProficiencyRepository {
   ): Promise<Result<readonly ProficiencyRating[]>>;
 }
 
+/**
+ * The athlete's own preparation checklist.
+ *
+ * A toggle rather than an append-only log, because a milestone is a current
+ * fact about someone's life, not a performance history. Marking one undone
+ * deletes the row: there is nothing worth keeping about a step someone has
+ * told us they did not actually take.
+ */
+export interface MilestoneRepository {
+  listCompletions(athleteId: Uuid): Promise<Result<readonly MilestoneCompletion[]>>;
+  /** Idempotent in both directions, so a double tap cannot create two rows. */
+  setCompleted(
+    athleteId: Uuid,
+    milestoneId: string,
+    completed: boolean,
+  ): Promise<Result<void>>;
+}
+
 export interface WorkoutRepository {
   /**
    * The single session in progress, if any.
@@ -157,6 +176,7 @@ export interface WorkoutRepository {
 export interface Repositories {
   athlete: AthleteRepository;
   assessment: AssessmentRepository;
+  milestone: MilestoneRepository;
   proficiency: ProficiencyRepository;
   readiness: ReadinessRepository;
   training: TrainingRepository;

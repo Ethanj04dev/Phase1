@@ -11,11 +11,13 @@
 -- storage would eventually mean sharing a screen. A self-rating must never be
 -- rendered as a test result.
 --
--- Run this in the Supabase SQL editor. It is additive and touches nothing that
--- already exists.
+-- Run this in the Supabase SQL editor. It is additive, touches nothing that
+-- already exists, and is safe to run more than once: a first attempt that
+-- stopped part-way through leaves the table in place, and Postgres would
+-- otherwise abort the re-run before reaching the policies.
 -- ---------------------------------------------------------------------------
 
-create table public.proficiency_ratings (
+create table if not exists public.proficiency_ratings (
   id uuid primary key default gen_random_uuid(),
   athlete_id uuid not null references public.athlete_profiles (id) on delete cascade,
   -- Domain and skill ids are owned by the app catalog, not by the database, so
@@ -34,23 +36,30 @@ create table public.proficiency_ratings (
 -- Append-only, like assessment results: re-rating inserts a new row so the
 -- athlete can see that treading went from developing to competent over a
 -- winter. There is deliberately no update policy.
-create index proficiency_ratings_athlete_recorded_idx
+create index if not exists proficiency_ratings_athlete_recorded_idx
   on public.proficiency_ratings (athlete_id, recorded_at desc);
 
-create index proficiency_ratings_skill_idx
+create index if not exists proficiency_ratings_skill_idx
   on public.proficiency_ratings (athlete_id, skill_id, recorded_at desc);
 
--- Enabled in the same block as the table, never as a follow-up step.
+-- Idempotent: a no-op when it is already on.
 alter table public.proficiency_ratings enable row level security;
 
+-- Dropped and recreated rather than created conditionally, so re-running this
+-- file guarantees the policy matches what is written here rather than whatever
+-- an earlier attempt left behind. Inside the editor's transaction there is no
+-- window where the table sits unprotected.
+drop policy if exists "athletes read own proficiency ratings" on public.proficiency_ratings;
 create policy "athletes read own proficiency ratings"
   on public.proficiency_ratings for select
   using (athlete_id = public.current_athlete_id());
 
+drop policy if exists "athletes insert own proficiency ratings" on public.proficiency_ratings;
 create policy "athletes insert own proficiency ratings"
   on public.proficiency_ratings for insert
   with check (athlete_id = public.current_athlete_id());
 
+drop policy if exists "athletes delete own proficiency ratings" on public.proficiency_ratings;
 create policy "athletes delete own proficiency ratings"
   on public.proficiency_ratings for delete
   using (athlete_id = public.current_athlete_id());

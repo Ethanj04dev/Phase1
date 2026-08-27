@@ -141,11 +141,17 @@ The Supabase two-account isolation test is unfinished. This refactor does not
 block it, and it stays outstanding: no athlete data should reach real users
 until it passes.
 
-`0002_proficiency_ratings.sql` and `0003_target_readiness.sql` both need
-running against the live project. Until they are, a signed-in athlete cannot
-save skill ratings and their snapshots carry no Target score. Water confidence
-reads as unmeasured and Progress says the last score predates the Target;
-both are handled states rather than breakage.
+`0004_milestone_completions.sql` needs running against the live project. Until
+it is, a signed-in athlete cannot mark milestones; everything else is
+unaffected. It is the only table with an update policy, because the write is an
+upsert on a unique athlete-and-step pair rather than an append.
+
+`athlete_profiles.goal_id` becomes `target_id` in a later migration, now
+numbered `0005`.
+
+`0002_proficiency_ratings.sql` and `0003_target_readiness.sql` have been run
+against the live project and verified: RLS enabled, three policies, and the
+`target_readiness` column present.
 
 Snapshots are now recorded on both scales, and Progress reads the Target one.
 Legacy snapshots are kept but never plotted: the same athlete scored 73 on the
