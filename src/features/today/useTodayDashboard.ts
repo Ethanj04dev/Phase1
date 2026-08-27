@@ -5,24 +5,26 @@ import type { ProgramPosition } from '@/data/repositories/types';
 import type { AthleteProfile } from '@/domain/athlete/types';
 import { getGoalOrDefault } from '@/domain/goals/catalog';
 import type { Goal } from '@/domain/goals/types';
-import type { ReadinessSnapshot, ReadinessTrend } from '@/domain/readiness/types';
 import type { ResolvedWorkoutDay } from '@/domain/training/types';
 import { err, ok, type Result } from '@/domain/types';
+import { loadTargetSnapshot, type TargetSnapshot } from '@/features/target/targetSnapshot';
 import { useAsyncResource, type AsyncResource } from '@/lib/useAsyncResource';
 
-/** Everything the Today screen renders, resolved in one pass. */
-export interface TodayDashboard {
+/**
+ * Everything the Today screen renders, resolved in one pass.
+ *
+ * Extends the Target snapshot rather than computing its own readiness. Today
+ * and the Target tab now show the same number and recommend the same work,
+ * because they are reading the same object.
+ */
+export interface TodayDashboard extends TargetSnapshot {
   profile: AthleteProfile;
   goal: Goal;
-  readiness: ReadinessSnapshot | null;
-  trend: ReadinessTrend | null;
   position: ProgramPosition | null;
   today: ResolvedWorkoutDay | null;
   streakDays: number;
   weeklyCompletion: number;
 }
-
-const READINESS_TREND_WINDOW_DAYS = 30;
 
 const NO_PROFILE_ERROR = {
   code: 'not_found' as const,
@@ -36,7 +38,7 @@ const NO_PROFILE_ERROR = {
  * single coherent error rather than four partial states.
  */
 export function useTodayDashboard(): AsyncResource<TodayDashboard> {
-  const { athlete, readiness, training } = useRepositories();
+  const { athlete, assessment, proficiency, training } = useRepositories();
 
   const fetcher = useCallback(async (): Promise<Result<TodayDashboard>> => {
     const profileResult = await athlete.getCurrentProfile();
@@ -48,16 +50,15 @@ export function useTodayDashboard(): AsyncResource<TodayDashboard> {
       return err(NO_PROFILE_ERROR);
     }
 
-    const [latest, trend, position, today, streak, completion] = await Promise.all([
-      readiness.getLatest(profile.id),
-      readiness.getTrend(profile.id, READINESS_TREND_WINDOW_DAYS),
+    const [snapshot, position, today, streak, completion] = await Promise.all([
+      loadTargetSnapshot({ assessment, proficiency, training }, profile),
       training.getPosition(profile.id),
       training.getToday(profile.id),
       training.getStreakDays(profile.id),
       training.getWeeklyCompletion(profile.id),
     ]);
 
-    for (const result of [latest, trend, position, today, streak, completion]) {
+    for (const result of [snapshot, position, today, streak, completion]) {
       if (!result.ok) {
         return result;
       }
@@ -65,21 +66,20 @@ export function useTodayDashboard(): AsyncResource<TodayDashboard> {
 
     // The loop above proves every result succeeded, but TypeScript cannot
     // narrow across a heterogeneous array, so each is re-checked cheaply here.
-    if (!latest.ok || !trend.ok || !position.ok || !today.ok || !streak.ok || !completion.ok) {
+    if (!snapshot.ok || !position.ok || !today.ok || !streak.ok || !completion.ok) {
       return err(NO_PROFILE_ERROR);
     }
 
     return ok({
+      ...snapshot.value,
       profile,
       goal: getGoalOrDefault(profile.goalId),
-      readiness: latest.value,
-      trend: trend.value,
       position: position.value,
       today: today.value,
       streakDays: streak.value,
       weeklyCompletion: completion.value,
     });
-  }, [athlete, readiness, training]);
+  }, [assessment, athlete, proficiency, training]);
 
   return useAsyncResource(fetcher);
 }

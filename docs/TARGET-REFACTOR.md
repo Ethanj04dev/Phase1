@@ -149,6 +149,12 @@ than an edit to `0001`, since `0001` has already been run. It is now numbered
 signed-in athlete can save skill ratings. Until then water confidence reads as
 unmeasured for them, which the readiness model already handles; nothing breaks.
 
+Today no longer shows a readiness trend. The stored snapshots come from the
+legacy four-category engine, and rendering that delta under a Target-aware
+score would put two different scales in one sentence. Improvement over time
+returns on Progress once Target-aware snapshots are being recorded, which is
+step 10.
+
 Safety notices currently surface on the skill-rating screen. Surfacing them on
 the water *sessions* themselves is step 9 work, and it is not done. The rating
 screen is where an athlete decides what to practise, so it is the right first
