@@ -73,7 +73,7 @@ export default function BaselineScreen() {
           <Text variant="labelSm" color={tested === 0 ? 'textTertiary' : 'accent'}>
             {outcome.calculation
               ? `${formatPercent(outcome.calculation.coverage)} COVERAGE`
-              : 'NO SCORE YET'}
+              : 'No score yet'}
           </Text>
         </View>
       </View>

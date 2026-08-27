@@ -135,6 +135,28 @@ preference, and it outranks completeness.
 
 ---
 
+## Design pass: what changed and what did not
+
+The uppercase came from two `Text` variants, `label` and `labelSm`, which were
+condensed, tracked at 1.7-1.9 and forced to uppercase. Fixing them in the type
+system rather than screen by screen changed 53 call sites at once, including
+every button, badge, tab label and chart caption.
+
+Uppercase now only happens where the string itself is uppercase, which makes it
+a decision at the call site. The literals that were written for a shouting
+variant were rewritten as prose.
+
+Condensed survives on the metric scale, where it belongs: big numbers want
+density. Mono survives on dates, intervals and splits, which are read as data.
+A screen sweep confirms the only remaining uppercase in the running app is the
+`PHASE 1` wordmark and date stamps like `AUG 20`.
+
+Card borders stay. The spec asks for fewer borders, and rows, chips and section
+headers lost theirs; but a card on a near-black ground needs its edge to read
+as a surface at all, and there is a contrast test asserting exactly that.
+Removing them would be following the letter of the note past the point where it
+helps.
+
 ## Carried over, still open
 
 The Supabase two-account isolation test is unfinished. This refactor does not

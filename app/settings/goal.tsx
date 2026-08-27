@@ -94,7 +94,7 @@ export default function EditGoalScreen() {
                         key={goal.id}
                         title={goal.name}
                         subtitle={goal.description}
-                        meta={goal.id === current ? 'CURRENT' : undefined}
+                        meta={goal.id === current ? 'Current' : undefined}
                         selected={chosen === goal.id}
                         onPress={() => setSelected(goal.id)}
                       />

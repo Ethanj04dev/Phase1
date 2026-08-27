@@ -62,11 +62,11 @@ function verdictColor(theme: Theme, verdict: RepVerdict): string {
 }
 
 const VERDICT_LABEL: Record<RepVerdict, string> = {
-  on_target: 'ON TARGET',
+  on_target: 'On target',
   // Not praise: on a controlled interval, well under the window usually means
   // burning a session that was meant to be held back.
-  faster: 'UNDER',
-  slower: 'OVER',
+  faster: 'Under',
+  slower: 'Over',
   unknown: '',
 };
 
@@ -206,7 +206,7 @@ export function BlockLogger({ block, session, results, onLog, onClear }: BlockLo
           }}
         >
           <Text variant="labelSm" color="textTertiary">
-            {target.estimated ? 'TARGET (ESTIMATED)' : 'TARGET'}
+            {target.estimated ? 'Target (estimated)' : 'Target'}
           </Text>
           <Text variant="metricMd" color="accent">
             {formatDurationRange(target.lowSeconds, target.highSeconds)}
@@ -216,7 +216,7 @@ export function BlockLogger({ block, session, results, onLog, onClear }: BlockLo
 
       {distance ? (
         <Text variant="monoSm" color="textTertiary">
-          {formatDistance(distance).toUpperCase()}
+          {formatDistance(distance)}
           {block.kind === 'ruck' ? ` @ ${block.loadPounds} LB` : ''}
         </Text>
       ) : null}

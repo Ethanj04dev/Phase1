@@ -8,11 +8,17 @@ export interface SectionHeaderProps {
   title: string;
   /** Right-aligned metadata — a count, a date, a status. */
   trailing?: ReactNode;
-  /** Thin rule that runs from the label to the trailing slot. */
+  /**
+   * Thin rule running from the label to the trailing slot.
+   *
+   * Off by default now. A rule on every section drew the eye to the dividers
+   * rather than to the content, which is the same complaint that took borders
+   * off the navigable rows.
+   */
   rule?: boolean;
 }
 
-export function SectionHeader({ title, trailing, rule = true }: SectionHeaderProps) {
+export function SectionHeader({ title, trailing, rule = false }: SectionHeaderProps) {
   const theme = useTheme();
 
   return (
@@ -24,7 +30,7 @@ export function SectionHeader({ title, trailing, rule = true }: SectionHeaderPro
         marginBottom: theme.spacing.md,
       }}
     >
-      <Text variant="label" color="textTertiary" accessibilityRole="header">
+      <Text variant="bodySm" color="textTertiary" accessibilityRole="header">
         {title}
       </Text>
       {rule ? (

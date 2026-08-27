@@ -1,7 +1,6 @@
 import { View } from 'react-native';
 
 import { Text } from '@/components/primitives/Text';
-import { formatPosition } from '@/lib/format';
 import { useTheme } from '@/theme';
 
 export interface StepIndicatorProps {
@@ -42,8 +41,8 @@ export function StepIndicator({ step, total }: StepIndicatorProps) {
           />
         ))}
       </View>
-      <Text variant="monoSm" color="textTertiary">
-        {`${formatPosition('STEP', step)} / ${String(total).padStart(2, '0')}`}
+      <Text variant="labelSm" color="textTertiary">
+        {`Step ${step} of ${total}`}
       </Text>
     </View>
   );

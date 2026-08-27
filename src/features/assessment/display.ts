@@ -24,5 +24,5 @@ export function formatEventDelta(event: AssessmentEvent, delta: number): string 
 
 /** Trailing unit for a value, or null when the formatted value already reads clearly. */
 export function eventUnitLabel(event: AssessmentEvent): string | null {
-  return event.unit === 'reps' ? 'REPS' : null;
+  return event.unit === 'reps' ? 'reps' : null;
 }

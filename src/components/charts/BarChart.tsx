@@ -111,8 +111,8 @@ export function BarChart({
         importantForAccessibility="no-hide-descendants"
         style={{ flexDirection: 'row', justifyContent: 'space-between' }}
       >
-        <Text variant="monoSm" color="textTertiary">
-          PEAK
+        <Text variant="labelSm" color="textTertiary">
+          Peak
         </Text>
         <Text variant="monoSm" color="textSecondary">
           {formatValue(max)}

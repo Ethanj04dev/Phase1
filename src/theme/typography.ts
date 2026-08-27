@@ -116,24 +116,35 @@ const caption: TextStyle = {
   lineHeight: 18,
 };
 
-// --- Operational labels -----------------------------------------------------
-// Condensed and widely tracked, so they read as markings stamped on a plate
-// rather than as UI captions.
+// --- Labels -----------------------------------------------------------------
+//
+// These were condensed, widely tracked and forced to uppercase, so they read
+// as markings stamped on a plate. Across a whole interface that turned every
+// button, badge and caption into shouting, which is a costume rather than a
+// voice: it made the product look like a fake military HUD instead of the
+// instrument it is meant to be.
+//
+// So the transform is gone and the tracking is nearly gone. What is left is a
+// small emphasis label in the prose face. Anything that genuinely wants to
+// read as stamped data -- a date, an interval, a split -- uses `mono`, which
+// is where that character belongs.
+//
+// Uppercase now happens only where the string itself is uppercase, which
+// makes it a deliberate decision at the call site rather than a side effect
+// of picking a size.
 
 const label: TextStyle = {
-  fontFamily: fontFamilies.condensedBold,
-  fontSize: 12.5,
-  lineHeight: 16,
-  letterSpacing: 1.7,
-  textTransform: 'uppercase',
+  fontFamily: fontFamilies.sansSemiBold,
+  fontSize: 13,
+  lineHeight: 17,
+  letterSpacing: 0.1,
 };
 
 const labelSm: TextStyle = {
-  fontFamily: fontFamilies.condensedBold,
-  fontSize: 10.5,
-  lineHeight: 14,
-  letterSpacing: 1.9,
-  textTransform: 'uppercase',
+  fontFamily: fontFamilies.sansSemiBold,
+  fontSize: 11.5,
+  lineHeight: 15,
+  letterSpacing: 0.2,
 };
 
 // --- Monospace --------------------------------------------------------------

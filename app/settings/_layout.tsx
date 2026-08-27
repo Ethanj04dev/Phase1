@@ -18,8 +18,8 @@ export default function SettingsLayout() {
       }}
     >
       <Stack.Screen name="goal" options={{ title: 'Objective' }} />
-      <Stack.Screen name="track" options={{ title: 'Training Track' }} />
-      <Stack.Screen name="training" options={{ title: 'Training Background' }} />
+      <Stack.Screen name="track" options={{ title: 'Training track' }} />
+      <Stack.Screen name="training" options={{ title: 'Training background' }} />
     </Stack>
   );
 }

@@ -4,7 +4,6 @@ import {
   formatDuration,
   formatDurationRange,
   formatPercent,
-  formatPosition,
 } from './format';
 
 describe('formatDuration', () => {
@@ -67,12 +66,6 @@ describe('formatPercent', () => {
   });
 });
 
-describe('formatPosition', () => {
-  it('zero-pads to two digits', () => {
-    expect(formatPosition('WEEK', 4)).toBe('WEEK 04');
-    expect(formatPosition('DAY', 12)).toBe('DAY 12');
-  });
-});
 
 describe('formatDateStamp', () => {
   it('renders an uppercase month and padded day', () => {

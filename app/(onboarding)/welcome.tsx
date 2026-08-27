@@ -18,7 +18,7 @@ export default function WelcomeScreen() {
       footer={
         <View style={{ gap: theme.spacing.lg }}>
           <Button
-            label="Get Started"
+            label="Get started"
             size="lg"
             onPress={() => router.push('/goal')}
             testID="get-started"

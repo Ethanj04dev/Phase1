@@ -33,9 +33,9 @@ export function EventProgressRow({ progress, onPress }: EventProgressRowProps) {
 
   const changeLabel =
     improvement === null
-      ? 'FIRST TEST'
+      ? 'First test'
       : improvement === 0
-        ? 'NO CHANGE'
+        ? 'No change'
         : `${improved ? '+' : '-'}${formatEventDelta(event, improvement)}`;
 
   const accessibilityLabel = [
@@ -71,7 +71,7 @@ export function EventProgressRow({ progress, onPress }: EventProgressRowProps) {
           {event.name}
         </Text>
         <Text variant="monoSm" color="textTertiary">
-          {`${history.length} ${history.length === 1 ? 'TEST' : 'TESTS'}`}
+          {`${history.length} ${history.length === 1 ? 'test' : 'tests'}`}
         </Text>
       </View>
 

@@ -78,8 +78,8 @@ export default function EventHistoryScreen() {
                     }}
                   >
                     {improvement === 0
-                      ? 'NO CHANGE SINCE FIRST TEST'
-                      : `${improved ? 'IMPROVED' : 'DOWN'} ${formatEventDelta(event, improvement)} SINCE FIRST TEST`}
+                      ? 'No change since first test'
+                      : `${improved ? 'Improved' : 'Down'} ${formatEventDelta(event, improvement)} since first test`}
                   </Text>
                 )}
               </View>

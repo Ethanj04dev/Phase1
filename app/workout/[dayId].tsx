@@ -33,7 +33,7 @@ export default function WorkoutOverviewScreen() {
       footer={
         hasSessions ? (
           <Button
-            label="Begin Session"
+            label="Begin session"
             size="lg"
             accessibilityHint="Starts logging this session"
             onPress={() => router.push({ pathname: '/workout/active', params: { dayId } })}
@@ -50,9 +50,9 @@ export default function WorkoutOverviewScreen() {
             <View style={{ gap: theme.spacing.sm }}>
               <Text variant="labelSm" color="textTertiary">
                 {day.restDay
-                  ? 'REST DAY'
-                  : `${totalEstimatedMinutes(day.sessions)} MIN · ${day.sessions.length} ${
-                      day.sessions.length === 1 ? 'SESSION' : 'SESSIONS'
+                  ? 'Rest day'
+                  : `${totalEstimatedMinutes(day.sessions)} min · ${day.sessions.length} ${
+                      day.sessions.length === 1 ? 'session' : 'sessions'
                     }`}
               </Text>
               <Text variant="title" accessibilityRole="header">
@@ -69,7 +69,7 @@ export default function WorkoutOverviewScreen() {
                   title={SESSION_MODALITY_LABELS[session.modality]}
                   trailing={
                     <Text variant="labelSm" color="textTertiary">
-                      {`${session.estimatedMinutes} MIN`}
+                      {`${session.estimatedMinutes} min`}
                     </Text>
                   }
                 />

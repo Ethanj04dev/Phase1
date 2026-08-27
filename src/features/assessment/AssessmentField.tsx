@@ -60,7 +60,7 @@ export function AssessmentField({ event, value, onChange }: AssessmentFieldProps
         value={text}
         onChangeText={handleChange}
         placeholder={isDuration ? 'MM:SS' : '0'}
-        suffix={isDuration ? undefined : 'REPS'}
+        suffix={isDuration ? undefined : 'reps'}
         keyboardType={isDuration ? 'numbers-and-punctuation' : 'number-pad'}
         helper={invalid ? undefined : event.protocol}
         error={
@@ -90,7 +90,7 @@ export function AssessmentField({ event, value, onChange }: AssessmentFieldProps
         }}
       >
         <Text variant="labelSm" color={deferred ? 'accent' : 'textTertiary'}>
-          {deferred ? 'TESTING LATER' : 'TEST LATER'}
+          {deferred ? 'Testing later' : 'Test later'}
         </Text>
       </Pressable>
     </View>

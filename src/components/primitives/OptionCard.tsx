@@ -74,7 +74,7 @@ export function OptionCard({
         ) : null}
       </View>
       {meta ? (
-        <Text variant="mono" color="textTertiary">
+        <Text variant="labelSm" color="textTertiary">
           {meta}
         </Text>
       ) : null}

@@ -91,7 +91,7 @@ export default function ActiveWorkoutScreen() {
       }}
       footer={
         <Button
-          label="Finish Session"
+          label="Finish session"
           size="lg"
           loading={saving}
           onPress={handleFinish}
@@ -112,7 +112,7 @@ export default function ActiveWorkoutScreen() {
             Elapsed
           </Text>
           <Text variant="labelSm" color={running ? 'accent' : 'textTertiary'}>
-            {running ? 'RUNNING' : 'PAUSED'}
+            {running ? 'Running' : 'Paused'}
           </Text>
         </View>
         <Text variant="display" accessibilityLabel={`Elapsed time ${formatDuration(elapsed)}`}>
@@ -141,7 +141,7 @@ export default function ActiveWorkoutScreen() {
             title={SESSION_MODALITY_LABELS[workoutSession.modality]}
             trailing={
               <Text variant="labelSm" color="textTertiary">
-                {workoutSession.title.toUpperCase()}
+                {workoutSession.title}
               </Text>
             }
           />

@@ -76,7 +76,7 @@ export default function EditTrackScreen() {
                   key={track.id}
                   title={track.name}
                   subtitle={track.summary}
-                  meta={track.id === current ? 'CURRENT' : undefined}
+                  meta={track.id === current ? 'Current' : undefined}
                   selected={chosen === track.id}
                   onPress={() => setSelected(track.id)}
                 />
@@ -93,8 +93,8 @@ export default function EditTrackScreen() {
                 <View style={{ gap: theme.spacing.sm }}>
                   {track.focus.map((item) => (
                     <View key={item} style={{ flexDirection: 'row', gap: theme.spacing.md }}>
-                      <Text variant="mono" color="accent">
-                        /
+                      <Text variant="bodySm" color="accent">
+                        ·
                       </Text>
                       <Text variant="bodySm" color="textSecondary" style={{ flex: 1 }}>
                         {item}

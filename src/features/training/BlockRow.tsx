@@ -101,7 +101,7 @@ export function BlockRow({ block, results }: BlockRowProps) {
           }}
         >
           <Text variant="labelSm" color="textTertiary">
-            {target.estimated ? 'TARGET (ESTIMATED)' : 'TARGET'}
+            {target.estimated ? 'Target (estimated)' : 'Target'}
           </Text>
           <Text variant="metricMd" color="accent">
             {formatDurationRange(target.lowSeconds, target.highSeconds)}
@@ -140,7 +140,7 @@ export function BlockRow({ block, results }: BlockRowProps) {
 
       {rest ? (
         <Text variant="monoSm" color="textTertiary">
-          {rest.toUpperCase()}
+          {rest}
         </Text>
       ) : null}
 

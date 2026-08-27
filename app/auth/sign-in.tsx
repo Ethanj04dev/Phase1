@@ -101,10 +101,10 @@ export default function SignInScreen() {
           <Button
             label={
               mode === 'sign_in'
-                ? 'Sign In'
+                ? 'Sign in'
                 : awaitingConfirmation
                   ? 'Create Another Account'
-                  : 'Create Account'
+                  : 'Create account'
             }
             size="lg"
             disabled={!canSubmit}
