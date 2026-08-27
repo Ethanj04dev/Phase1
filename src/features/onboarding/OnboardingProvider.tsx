@@ -19,6 +19,7 @@ import {
 import { EMPTY_ONBOARDING_DRAFT, type OnboardingDraft } from '@/domain/athlete/types';
 import type { ExperienceLevel } from '@/domain/types';
 import type { GoalId } from '@/domain/goals/types';
+import { recordReadinessSnapshot } from '@/features/readiness/recordSnapshot';
 
 export type ExperienceField = 'runningExperience' | 'swimmingExperience' | 'ruckingExperience';
 
@@ -48,7 +49,7 @@ const OnboardingContext = createContext<OnboardingContextValue | null>(null);
  * is written until the athlete confirms on the final screen.
  */
 export function OnboardingProvider({ children }: { children: ReactNode }) {
-  const { athlete, assessment, readiness } = useRepositories();
+  const { athlete, assessment, proficiency, readiness, training } = useRepositories();
   const [draft, setDraft] = useState<OnboardingDraft>(EMPTY_ONBOARDING_DRAFT);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -98,7 +99,10 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
     setSubmitError(null);
 
     try {
-      const { goal, calculation, recommendation } = computeOnboardingOutcome(draft);
+      // The preview calculation is not reused here. The first stored snapshot
+      // is computed after the results are written, from the repository, so it
+      // is scored the same way every later snapshot will be.
+      const { goal, recommendation } = computeOnboardingOutcome(draft);
 
       const created = await athlete.createProfile({
         displayName: 'Athlete',
@@ -130,12 +134,16 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
         }
       }
 
-      if (calculation) {
-        const snapshot = await readiness.record(profile.id, calculation);
-        if (!snapshot.ok) {
-          setSubmitError(snapshot.error.message);
-          return false;
-        }
+      // Recorded after the baseline results are written, so the first
+      // snapshot scores the athlete as they actually are rather than as they
+      // were a moment before they told us anything.
+      const snapshot = await recordReadinessSnapshot(
+        { assessment, proficiency, readiness, training },
+        profile,
+      );
+      if (!snapshot.ok) {
+        setSubmitError(snapshot.error.message);
+        return false;
       }
 
       const finalised = await athlete.updateProfile(profile.id, {
@@ -150,7 +158,7 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
     } finally {
       setSubmitting(false);
     }
-  }, [assessment, athlete, draft, readiness]);
+  }, [assessment, athlete, draft, proficiency, readiness, training]);
 
   const value = useMemo(
     () => ({

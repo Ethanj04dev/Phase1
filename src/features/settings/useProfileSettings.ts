@@ -1,9 +1,8 @@
 import { useCallback, useState } from 'react';
 
 import { useRepositories } from '@/data/repositoryContext';
-import { getGoalOrDefault } from '@/domain/goals/catalog';
-import { calculateReadiness } from '@/domain/readiness/score';
 import type { AthleteProfile } from '@/domain/athlete/types';
+import { recordReadinessSnapshot } from '@/features/readiness/recordSnapshot';
 import { useAsyncResource, type AsyncResource } from '@/lib/useAsyncResource';
 
 export interface ProfileSettingsState {
@@ -36,7 +35,7 @@ export function useAthleteProfile(): AsyncResource<AthleteProfile | null> {
  * explaining it.
  */
 export function useUpdateProfile() {
-  const { athlete, assessment, readiness } = useRepositories();
+  const { athlete, assessment, proficiency, readiness, training } = useRepositories();
   const [state, setState] = useState<ProfileSettingsState>({
     saving: false,
     error: null,
@@ -70,8 +69,14 @@ export function useUpdateProfile() {
         return updated.value;
       }
 
-      const results = await assessment.listResults(current.id);
-      if (!results.ok) {
+      // Rescored against the new goal, which is also a new Target and so a
+      // new set of weights. The updated profile is passed rather than the one
+      // captured before the write.
+      const recorded = await recordReadinessSnapshot(
+        { assessment, proficiency, readiness, training },
+        updated.value,
+      );
+      if (!recorded.ok) {
         // The profile edit succeeded; failing to rescore is not worth
         // reporting as a failed save, but it must not be silent either.
         setState({
@@ -82,24 +87,14 @@ export function useUpdateProfile() {
         return updated.value;
       }
 
-      const calculation = calculateReadiness(
-        getGoalOrDefault(updated.value.goalId),
-        results.value,
-      );
-      if (!calculation) {
-        setState({ saving: false, error: null, recalculatedTo: null });
-        return updated.value;
-      }
-
-      const recorded = await readiness.record(current.id, calculation);
       setState({
         saving: false,
-        error: recorded.ok ? null : 'Saved, but we could not update your readiness score.',
-        recalculatedTo: recorded.ok ? calculation.overall : null,
+        error: null,
+        recalculatedTo: recorded.value?.target?.overall ?? recorded.value?.overall ?? null,
       });
       return updated.value;
     },
-    [assessment, athlete, readiness],
+    [assessment, athlete, proficiency, readiness, training],
   );
 
   return { update, ...state };

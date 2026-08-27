@@ -1,4 +1,3 @@
-import { router } from 'expo-router';
 import { useState } from 'react';
 import { View } from 'react-native';
 
@@ -11,6 +10,7 @@ import { Text } from '@/components/primitives/Text';
 import { TRAINING_TRACKS, type TrainingTrackId } from '@/domain/athlete/types';
 import { useAthleteProfile, useUpdateProfile } from '@/features/settings/useProfileSettings';
 import { useTheme } from '@/theme';
+import { goBack } from '@/lib/navigation';
 
 export default function EditTrackScreen() {
   const theme = useTheme();
@@ -26,7 +26,7 @@ export default function EditTrackScreen() {
     if (!chosen) return;
     const updated = await update({ trackId: chosen });
     if (updated) {
-      router.back();
+      goBack('/profile');
     }
   };
 

@@ -141,19 +141,22 @@ The Supabase two-account isolation test is unfinished. This refactor does not
 block it, and it stays outstanding: no athlete data should reach real users
 until it passes.
 
-`athlete_profiles.goal_id` becomes `target_id`, which is a migration rather
-than an edit to `0001`, since `0001` has already been run. It is now numbered
-`0003`, because `0002` was taken by `proficiency_ratings`.
+`0002_proficiency_ratings.sql` and `0003_target_readiness.sql` both need
+running against the live project. Until they are, a signed-in athlete cannot
+save skill ratings and their snapshots carry no Target score. Water confidence
+reads as unmeasured and Progress says the last score predates the Target;
+both are handled states rather than breakage.
 
-`0002_proficiency_ratings.sql` needs running against the live project before a
-signed-in athlete can save skill ratings. Until then water confidence reads as
-unmeasured for them, which the readiness model already handles; nothing breaks.
+Snapshots are now recorded on both scales, and Progress reads the Target one.
+Legacy snapshots are kept but never plotted: the same athlete scored 73 on the
+old four-category scale and 68 on the Target scale at the same instant, which
+is exactly why a single line through both would be a lie.
 
-Today no longer shows a readiness trend. The stored snapshots come from the
-legacy four-category engine, and rendering that delta under a Target-aware
-score would put two different scales in one sentence. Improvement over time
-returns on Progress once Target-aware snapshots are being recorded, which is
-step 10.
+`athlete_profiles.goal_id` becomes `target_id` in a later migration. That is
+now `0004`, because `0003` was taken by `target_readiness`.
+
+Today still shows no trend. It could now, but Progress is where improvement
+over time belongs, and Today is deliberately one loud question.
 
 Safety notices currently surface on the skill-rating screen. Surfacing them on
 the water *sessions* themselves is step 9 work, and it is not done. The rating

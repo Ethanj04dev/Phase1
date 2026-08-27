@@ -1,4 +1,3 @@
-import { router } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
 import { View } from 'react-native';
 
@@ -14,6 +13,7 @@ import { PERFORMANCE_CATEGORY_LABELS, type PerformanceCategory } from '@/domain/
 import { AssessmentField } from '@/features/assessment/AssessmentField';
 import { useLogAssessment } from '@/features/assessment/useLogAssessment';
 import { useTheme } from '@/theme';
+import { goBack } from '@/lib/navigation';
 
 const CATEGORY_ORDER: readonly PerformanceCategory[] = [
   'calisthenics',
@@ -53,7 +53,7 @@ export default function NewAssessmentScreen() {
     const outcome = await log(payload);
     if (outcome) {
       // Back to Progress, which refetches on focus and shows the new numbers.
-      router.back();
+      goBack('/progress');
     }
   };
 

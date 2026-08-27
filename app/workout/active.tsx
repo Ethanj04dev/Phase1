@@ -13,6 +13,7 @@ import { BlockLogger } from '@/features/workout/BlockLogger';
 import { useActiveSession, useElapsed } from '@/features/workout/useActiveSession';
 import { formatDuration } from '@/lib/format';
 import { useTheme } from '@/theme';
+import { goBack } from '@/lib/navigation';
 
 const RPE_OPTIONS = [4, 5, 6, 7, 8, 9, 10] as const;
 
@@ -71,7 +72,7 @@ export default function ActiveWorkoutScreen() {
             label="Go back"
             variant="secondary"
             fullWidth={false}
-            onPress={() => router.back()}
+            onPress={() => goBack('/train')}
           />
         </View>
       </Screen>

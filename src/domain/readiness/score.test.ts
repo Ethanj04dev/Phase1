@@ -42,6 +42,7 @@ function snapshot(overall: number, recordedAt: string): ReadinessSnapshot {
     priorityCategory: null,
     coverage: 1,
     benchmarkVersion: BENCHMARK_VERSION,
+    target: null,
   };
 }
 

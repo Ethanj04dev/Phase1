@@ -1,4 +1,3 @@
-import { router } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
 import { View } from 'react-native';
 
@@ -25,6 +24,7 @@ import {
 import type { TargetDomain } from '@/domain/target/types';
 import { useTarget } from '@/features/target/useTarget';
 import { formatDateStamp } from '@/lib/format';
+import { goBack } from '@/lib/navigation';
 import { useTheme } from '@/theme';
 
 /**
@@ -225,14 +225,7 @@ export default function SkillsScreen() {
             }
             setDrafts({});
             reload();
-            // Opened from the Target tab in normal use, but a deep link has no
-            // history to go back to and would leave the athlete stranded on a
-            // screen they just finished with.
-            if (router.canGoBack()) {
-              router.back();
-            } else {
-              router.replace('/target');
-            }
+            goBack('/target');
           };
 
           return (

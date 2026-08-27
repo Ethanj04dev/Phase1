@@ -308,6 +308,7 @@ export function createSupabaseRepositories(client: SupabaseClient): Repositories
           priority_category: calculation.priorityCategory,
           coverage: calculation.coverage,
           benchmark_version: calculation.benchmarkVersion,
+          target_readiness: calculation.target,
         })
         .select('*')
         .single();

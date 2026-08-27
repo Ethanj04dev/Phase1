@@ -14,10 +14,13 @@ import {
   baselineWithin,
   biggestDecline,
   biggestGain,
-  categoryMovement,
-  type CategoryMovement,
+  domainMovement,
+  type DomainMovement,
 } from '@/domain/readiness/movement';
 import type { ReadinessSnapshot, ReadinessTrend } from '@/domain/readiness/types';
+import type { RoadToReady } from '@/domain/target/roadToReady';
+import type { TargetDefinition } from '@/domain/target/types';
+import { loadTargetSnapshot } from '@/features/target/targetSnapshot';
 import { volumeToDate, weeklyVolume, type WeeklyVolume } from '@/domain/training/volume';
 import { err, ok, type Result } from '@/domain/types';
 import { useAsyncResource, type AsyncResource } from '@/lib/useAsyncResource';
@@ -28,12 +31,30 @@ export interface ProgressOverview {
   records: readonly PersonalRecord[];
   progress: readonly EventProgress[];
   readiness: ReadinessSnapshot | null;
+  /**
+   * Movement on the Target scale, derived from Target-aware snapshots only.
+   *
+   * Not the stored legacy trend: a delta measured on one scale printed under a
+   * score from another is worse than no delta at all.
+   */
   trend: ReadinessTrend | null;
+  target: TargetDefinition | null;
+  road: RoadToReady | null;
   /** Oldest first, ready to plot. */
   readinessHistory: readonly ReadinessSnapshot[];
-  movements: readonly CategoryMovement[];
-  gain: CategoryMovement | null;
-  decline: CategoryMovement | null;
+  /**
+   * History scored against the athlete's current Target, oldest first.
+   *
+   * Filtered rather than converted. Snapshots from another Target, or from
+   * before Targets existed, describe a different scale and cannot share an
+   * axis with these.
+   */
+  targetHistory: readonly ReadinessSnapshot[];
+  /** Snapshots left out of the chart because they use a different scale. */
+  offScaleCount: number;
+  movements: readonly DomainMovement[];
+  gain: DomainMovement | null;
+  decline: DomainMovement | null;
   volume: readonly WeeklyVolume[];
   program: ProgramSummary | null;
   position: ProgramPosition | null;
@@ -49,7 +70,7 @@ const NO_PROFILE_ERROR = {
 };
 
 export function useProgressOverview(): AsyncResource<ProgressOverview> {
-  const { athlete, assessment, readiness, training, workout } = useRepositories();
+  const { athlete, assessment, proficiency, readiness, training, workout } = useRepositories();
 
   const fetcher = useCallback(async (): Promise<Result<ProgressOverview>> => {
     const profileResult = await athlete.getCurrentProfile();
@@ -64,7 +85,7 @@ export function useProgressOverview(): AsyncResource<ProgressOverview> {
     const [
       resultsOutcome,
       latestOutcome,
-      trendOutcome,
+      targetOutcome,
       historyOutcome,
       workoutsOutcome,
       programOutcome,
@@ -72,7 +93,7 @@ export function useProgressOverview(): AsyncResource<ProgressOverview> {
     ] = await Promise.all([
       assessment.listResults(profile.id, { limit: HISTORY_PAGE_SIZE }),
       readiness.getLatest(profile.id),
-      readiness.getTrend(profile.id, READINESS_TREND_WINDOW_DAYS),
+      loadTargetSnapshot({ assessment, proficiency, training }, profile),
       readiness.listHistory(profile.id, { limit: HISTORY_PAGE_SIZE }),
       workout.listResults(profile.id, { limit: HISTORY_PAGE_SIZE }),
       training.getProgram(profile.id),
@@ -81,7 +102,7 @@ export function useProgressOverview(): AsyncResource<ProgressOverview> {
 
     if (!resultsOutcome.ok) return resultsOutcome;
     if (!latestOutcome.ok) return latestOutcome;
-    if (!trendOutcome.ok) return trendOutcome;
+    if (!targetOutcome.ok) return targetOutcome;
     if (!historyOutcome.ok) return historyOutcome;
     if (!workoutsOutcome.ok) return workoutsOutcome;
     if (!programOutcome.ok) return programOutcome;
@@ -98,7 +119,32 @@ export function useProgressOverview(): AsyncResource<ProgressOverview> {
       READINESS_TREND_WINDOW_DAYS,
       new Date().toISOString(),
     );
-    const movements = categoryMovement(latestOutcome.value, baseline);
+    const movements = domainMovement(latestOutcome.value, baseline);
+
+    // The chart plots one scale. A snapshot recorded against a different
+    // Target, or before Targets existed, is real history and is kept, but it
+    // measures something else and cannot share an axis.
+    const currentTargetId = latestOutcome.value?.target?.targetId ?? null;
+    const targetHistory = currentTargetId
+      ? chronology.filter((snapshot) => snapshot.target?.targetId === currentTargetId)
+      : [];
+
+    // Measured across Target-aware snapshots only, so the delta and the score
+    // it sits under are the same kind of number.
+    const targetBaseline = baselineWithin(
+      targetHistory,
+      READINESS_TREND_WINDOW_DAYS,
+      new Date().toISOString(),
+    );
+    const currentTargetScore = latestOutcome.value?.target?.overall ?? null;
+    const targetTrend: ReadinessTrend | null =
+      currentTargetScore === null
+        ? null
+        : {
+            delta: currentTargetScore - (targetBaseline?.target?.overall ?? currentTargetScore),
+            windowDays: READINESS_TREND_WINDOW_DAYS,
+            comparedTo: targetBaseline?.recordedAt ?? null,
+          };
 
     const program = programOutcome.value;
     const position = positionOutcome.value;
@@ -112,8 +158,12 @@ export function useProgressOverview(): AsyncResource<ProgressOverview> {
       records: buildPersonalRecords(ASSESSMENT_EVENTS, results),
       progress: buildAllEventProgress(ASSESSMENT_EVENTS, results),
       readiness: latestOutcome.value,
-      trend: trendOutcome.value,
+      trend: targetTrend,
+      target: targetOutcome.value.target,
+      road: targetOutcome.value.road,
       readinessHistory: chronology,
+      targetHistory,
+      offScaleCount: chronology.length - targetHistory.length,
       movements,
       gain: biggestGain(movements),
       decline: biggestDecline(movements),
@@ -123,7 +173,7 @@ export function useProgressOverview(): AsyncResource<ProgressOverview> {
       program,
       position,
     });
-  }, [assessment, athlete, readiness, training, workout]);
+  }, [assessment, athlete, proficiency, readiness, training, workout]);
 
   return useAsyncResource(fetcher);
 }

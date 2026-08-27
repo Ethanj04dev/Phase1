@@ -208,6 +208,9 @@ export function calculateReadiness(
     // Emphasis weights sum to 1, so covered weight is already a fraction.
     coverage: Math.min(1, coveredWeight),
     benchmarkVersion: BENCHMARK_VERSION,
+    // This engine scores goal categories and knows nothing about Targets.
+    // The caller pairs it with a Target calculation where one exists.
+    target: null,
   };
 }
 

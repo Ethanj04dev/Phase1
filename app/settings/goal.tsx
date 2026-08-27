@@ -1,4 +1,3 @@
-import { router } from 'expo-router';
 import { useState } from 'react';
 import { View } from 'react-native';
 
@@ -13,6 +12,7 @@ import { GOALS } from '@/domain/goals/catalog';
 import { SERVICE_BRANCH_LABELS, type GoalId, type ServiceBranch } from '@/domain/goals/types';
 import { useAthleteProfile, useUpdateProfile } from '@/features/settings/useProfileSettings';
 import { useTheme } from '@/theme';
+import { goBack } from '@/lib/navigation';
 
 const BRANCH_ORDER: readonly ServiceBranch[] = [
   'air_force',
@@ -36,7 +36,7 @@ export default function EditGoalScreen() {
     if (!chosen) return;
     const updated = await update({ goalId: chosen });
     if (updated) {
-      router.back();
+      goBack('/profile');
     }
   };
 

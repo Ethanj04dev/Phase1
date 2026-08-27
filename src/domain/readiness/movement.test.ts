@@ -1,6 +1,13 @@
 import type { CategoryScores } from '@/domain/types';
 
-import { baselineWithin, biggestDecline, biggestGain, categoryMovement } from './movement';
+import {
+  baselineWithin,
+  biggestDecline,
+  biggestGain,
+  categoryMovement,
+  domainMovement,
+} from './movement';
+import type { DomainScores } from './targetScore';
 import type { ReadinessSnapshot } from './types';
 
 function snapshot(
@@ -18,6 +25,7 @@ function snapshot(
     priorityCategory: null,
     coverage: 1,
     benchmarkVersion: 1,
+    target: null,
   };
 }
 
@@ -42,7 +50,7 @@ describe('categoryMovement', () => {
 
   it('reports a signed delta per category', () => {
     const movements = categoryMovement(LATEST, EARLIER);
-    const byCategory = new Map(movements.map((m) => [m.category, m]));
+    const byCategory = new Map(movements.map((m) => [m.key, m]));
     expect(byCategory.get('running')?.delta).toBe(10);
     expect(byCategory.get('swimming')?.delta).toBe(-2);
     expect(byCategory.get('rucking')?.delta).toBe(0);
@@ -58,13 +66,13 @@ describe('categoryMovement', () => {
     const partial = snapshot('2026-08-25T00:00:00.000Z', 70, { running: 72 });
     const movements = categoryMovement(partial, EARLIER);
     expect(movements).toHaveLength(1);
-    expect(movements[0]?.category).toBe('running');
+    expect(movements[0]?.key).toBe('running');
   });
 
   it('handles a category that is new since the earlier snapshot', () => {
     const before = snapshot('2026-08-01T00:00:00.000Z', 60, { running: 62 });
     const movements = categoryMovement(LATEST, before);
-    const swimming = movements.find((m) => m.category === 'swimming');
+    const swimming = movements.find((m) => m.key === 'swimming');
     expect(swimming?.previous).toBeNull();
     expect(swimming?.delta).toBeNull();
   });
@@ -74,13 +82,13 @@ describe('biggestGain and biggestDecline', () => {
   const movements = categoryMovement(LATEST, EARLIER);
 
   it('finds the largest improvement', () => {
-    expect(biggestGain(movements)?.category).toBe('running');
+    expect(biggestGain(movements)?.key).toBe('running');
     expect(biggestGain(movements)?.delta).toBe(10);
   });
 
   // An athlete whose swim slipped while everything else improved needs telling.
   it('finds the largest decline', () => {
-    expect(biggestDecline(movements)?.category).toBe('swimming');
+    expect(biggestDecline(movements)?.key).toBe('swimming');
     expect(biggestDecline(movements)?.delta).toBe(-2);
   });
 
@@ -118,5 +126,71 @@ describe('baselineWithin', () => {
     expect(baselineWithin(ordered, 30, now)?.id).toBe(
       baselineWithin([...ordered].reverse(), 30, now)?.id,
     );
+  });
+});
+
+// --- Domain movement --------------------------------------------------------
+
+function targetSnapshot(
+  recordedAt: string,
+  targetId: string,
+  domains: DomainScores,
+): ReadinessSnapshot {
+  return {
+    ...snapshot(recordedAt, 0, {}),
+    target: {
+      targetId,
+      overall: 0,
+      domains,
+      strongestDomain: null,
+      priorityDomain: null,
+      coverage: 1,
+    },
+  };
+}
+
+describe('domain movement', () => {
+  const EARLIER_PJ = targetSnapshot('2026-08-01T00:00:00.000Z', 'pararescue', {
+    swimming: 40,
+    running: 70,
+  });
+  const LATER_PJ = targetSnapshot('2026-08-20T00:00:00.000Z', 'pararescue', {
+    swimming: 55,
+    running: 64,
+    water_confidence: 63,
+  });
+
+  it('reports the change in each domain', () => {
+    const movements = domainMovement(LATER_PJ, EARLIER_PJ);
+    expect(movements.find((m) => m.key === 'swimming')?.delta).toBe(15);
+    expect(movements.find((m) => m.key === 'running')?.delta).toBe(-6);
+  });
+
+  it('reports a newly measured domain as having nothing to compare against', () => {
+    const water = domainMovement(LATER_PJ, EARLIER_PJ).find(
+      (m) => m.key === 'water_confidence',
+    );
+    expect(water?.previous).toBeNull();
+    expect(water?.delta).toBeNull();
+  });
+
+  // Changing career changes what is measured, not the athlete.
+  it('refuses to compare across different targets', () => {
+    const earlierOther = targetSnapshot('2026-08-01T00:00:00.000Z', 'other_career', {
+      swimming: 90,
+    });
+    for (const movement of domainMovement(LATER_PJ, earlierOther)) {
+      expect(movement.delta).toBeNull();
+    }
+  });
+
+  it('returns nothing when the latest snapshot has no target score', () => {
+    expect(domainMovement(EARLIER, EARLIER_PJ)).toEqual([]);
+  });
+
+  it('finds the biggest gain and the biggest decline', () => {
+    const movements = domainMovement(LATER_PJ, EARLIER_PJ);
+    expect(biggestGain(movements)?.key).toBe('swimming');
+    expect(biggestDecline(movements)?.key).toBe('running');
   });
 });

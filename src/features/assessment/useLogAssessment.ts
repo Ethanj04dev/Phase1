@@ -3,8 +3,8 @@ import { useCallback, useState } from 'react';
 import { useRepositories } from '@/data/repositoryContext';
 import type { NewAssessmentResult } from '@/data/repositories/types';
 import type { AssessmentResult } from '@/domain/assessment/types';
-import { getGoalOrDefault } from '@/domain/goals/catalog';
-import { calculateReadiness } from '@/domain/readiness/score';
+import type { ReadinessCalculation, ReadinessSnapshot } from '@/domain/readiness/types';
+import { recordReadinessSnapshot } from '@/features/readiness/recordSnapshot';
 
 export interface LogAssessmentOutcome {
   recorded: readonly AssessmentResult[];
@@ -20,6 +20,22 @@ interface LogAssessmentState {
 }
 
 /**
+ * The score to show the athlete.
+ *
+ * Prefers the Target scale, because that is the number every other screen
+ * shows them. Falling back to the legacy category score for an athlete whose
+ * career has no Target yet keeps those twelve pipelines working; mixing the
+ * two within a single before-and-after would not, so both ends of the
+ * comparison go through here.
+ */
+function scoreOf(snapshot: ReadinessCalculation | ReadinessSnapshot | null): number | null {
+  if (!snapshot) {
+    return null;
+  }
+  return snapshot.target?.overall ?? snapshot.overall;
+}
+
+/**
  * Records a batch of results and rolls readiness forward.
  *
  * Readiness is recalculated from the athlete's *full* history rather than the
@@ -31,7 +47,7 @@ interface LogAssessmentState {
  * before-and-after guess.
  */
 export function useLogAssessment() {
-  const { athlete, assessment, readiness } = useRepositories();
+  const { athlete, assessment, proficiency, readiness, training } = useRepositories();
   const [state, setState] = useState<LogAssessmentState>({
     submitting: false,
     error: null,
@@ -60,11 +76,9 @@ export function useLogAssessment() {
           return null;
         }
 
-        const goal = getGoalOrDefault(profile.goalId);
-
         const previousSnapshot = await readiness.getLatest(profile.id);
         const readinessBefore = previousSnapshot.ok
-          ? (previousSnapshot.value?.overall ?? null)
+          ? scoreOf(previousSnapshot.value)
           : null;
 
         const recorded = await assessment.recordResults(profile.id, entries);
@@ -73,25 +87,20 @@ export function useLogAssessment() {
           return null;
         }
 
-        const allResults = await assessment.listResults(profile.id);
-        if (!allResults.ok) {
-          setState({ submitting: false, error: allResults.error.message });
+        // Recalculated from the athlete's whole history, not this batch.
+        const snapshot = await recordReadinessSnapshot(
+          { assessment, proficiency, readiness, training },
+          profile,
+        );
+        if (!snapshot.ok) {
+          setState({ submitting: false, error: snapshot.error.message });
           return null;
-        }
-
-        const calculation = calculateReadiness(goal, allResults.value);
-        if (calculation) {
-          const snapshot = await readiness.record(profile.id, calculation);
-          if (!snapshot.ok) {
-            setState({ submitting: false, error: snapshot.error.message });
-            return null;
-          }
         }
 
         setState({ submitting: false, error: null });
         return {
           recorded: recorded.value,
-          readinessAfter: calculation?.overall ?? null,
+          readinessAfter: scoreOf(snapshot.value),
           readinessBefore,
         };
       } catch {
@@ -102,7 +111,7 @@ export function useLogAssessment() {
         return null;
       }
     },
-    [assessment, athlete, readiness],
+    [assessment, athlete, proficiency, readiness, training],
   );
 
   return { log, submitting: state.submitting, error: state.error };

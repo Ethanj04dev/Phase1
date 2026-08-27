@@ -20,6 +20,9 @@ Open the SQL Editor in the Supabase dashboard and run each file in order:
 2. [`migrations/0002_proficiency_ratings.sql`](migrations/0002_proficiency_ratings.sql)
    — self-assessed skill levels for water confidence. Additive; it touches
    nothing `0001` created.
+3. [`migrations/0003_target_readiness.sql`](migrations/0003_target_readiness.sql)
+   — one nullable column on `readiness_scores` holding the Target-aware score
+   for the same instant. Additive, and it rewrites no existing row.
 
 Verify afterwards in Database → Tables that each table shows **RLS enabled**.
 If any table is missing it, stop and fix that before pointing the app at the

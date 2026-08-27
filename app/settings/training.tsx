@@ -1,4 +1,3 @@
-import { router } from 'expo-router';
 import { useState } from 'react';
 import { View } from 'react-native';
 
@@ -13,6 +12,7 @@ import { EXPERIENCE_LEVEL_LABELS, type ExperienceLevel } from '@/domain/types';
 import { DISCIPLINES, TRAINING_DAY_OPTIONS } from '@/features/settings/trainingBackground';
 import { useAthleteProfile, useUpdateProfile } from '@/features/settings/useProfileSettings';
 import { useTheme } from '@/theme';
+import { goBack } from '@/lib/navigation';
 
 type Draft = Pick<
   AthleteProfile,
@@ -45,7 +45,7 @@ export default function EditTrainingScreen() {
     if (!working) return;
     const updated = await update(working);
     if (updated) {
-      router.back();
+      goBack('/profile');
     }
   };
 

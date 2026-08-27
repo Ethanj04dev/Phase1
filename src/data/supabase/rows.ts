@@ -1,7 +1,7 @@
 import type { AssessmentEventId, AssessmentResult } from '@/domain/assessment/types';
 import type { AthleteProfile, TrainingTrackId } from '@/domain/athlete/types';
 import type { GoalId } from '@/domain/goals/types';
-import type { ReadinessSnapshot } from '@/domain/readiness/types';
+import type { ReadinessSnapshot, TargetReadinessRecord } from '@/domain/readiness/types';
 import type { PreparationDomainId, ProficiencyLevel } from '@/domain/target/domains';
 import type { ProficiencyRating } from '@/domain/target/proficiency';
 import type { ExerciseResult, WorkoutResult } from '@/domain/training/types';
@@ -102,6 +102,8 @@ export interface ReadinessScoreRow {
   priority_category: string | null;
   coverage: number;
   benchmark_version: number;
+  /** Target-aware half. Null on rows written before Targets existed. */
+  target_readiness: TargetReadinessRecord | null;
 }
 
 export function toReadinessSnapshot(row: ReadinessScoreRow): ReadinessSnapshot {
@@ -115,6 +117,7 @@ export function toReadinessSnapshot(row: ReadinessScoreRow): ReadinessSnapshot {
     priorityCategory: (row.priority_category as PerformanceCategory | null) ?? null,
     coverage: Number(row.coverage),
     benchmarkVersion: row.benchmark_version,
+    target: row.target_readiness ?? null,
   };
 }
 
