@@ -4,13 +4,13 @@ import { Pressable, View } from 'react-native';
 
 import { AsyncBoundary } from '@/components/feedback/AsyncBoundary';
 import { Screen } from '@/components/layout/Screen';
-import { SectionHeader } from '@/components/layout/SectionHeader';
 import { Button } from '@/components/primitives/Button';
 import { Card } from '@/components/primitives/Card';
 import { Divider } from '@/components/primitives/Divider';
 import { Text } from '@/components/primitives/Text';
 import { branding } from '@/config/branding';
 import { disclaimers } from '@/config/disclaimers';
+import { findTarget } from '@/data/content/targets';
 import { findTrack } from '@/domain/athlete/types';
 import { getGoalOrDefault } from '@/domain/goals/catalog';
 import { SERVICE_BRANCH_LABELS } from '@/domain/goals/types';
@@ -20,6 +20,26 @@ import { useAthleteProfile } from '@/features/settings/useProfileSettings';
 import { useResetData } from '@/features/settings/useResetData';
 import { formatDateStamp } from '@/lib/format';
 import { useTheme } from '@/theme';
+
+/**
+ * Settings, and the disclosures this product owes anyone using it.
+ *
+ * Profile used to carry the career as well: branch, pipeline, what you are
+ * preparing for. That now lives on Target, where it has room to be explained.
+ * What is left is the athlete's own configuration -- how they train, what
+ * account they are on, what the app is allowed to claim -- plus one row back
+ * to the Target so the two are not strangers.
+ */
+
+/** A section label. Plain text rather than a stamped header, per the design pass. */
+function SectionLabel({ children }: { children: string }) {
+  const theme = useTheme();
+  return (
+    <Text variant="bodySm" color="textTertiary" style={{ marginBottom: theme.spacing.md }}>
+      {children}
+    </Text>
+  );
+}
 
 interface DetailRowProps {
   label: string;
@@ -57,9 +77,10 @@ function DetailRow({ label, value, onPress, hint }: DetailRowProps) {
         <Text variant="headline" numberOfLines={1}>
           {value}
         </Text>
+        {/* Same chevron as every other navigable row in the app. */}
         {onPress ? (
-          <Text variant="mono" color="accent">
-            {'>'}
+          <Text variant="body" color="textTertiary">
+            ›
           </Text>
         ) : null}
       </View>
@@ -137,33 +158,65 @@ export default function ProfileScreen() {
         {(profile) => {
           if (!profile) return null;
           const goal = getGoalOrDefault(profile.goalId);
+          // Content lookup, not a fetch: the definition ships with the app.
+          const target = findTarget(profile.goalId);
           const track = findTrack(profile.trackId);
 
           return (
             <>
               <View>
-                <SectionHeader title="Objective" />
+                <SectionLabel>Target</SectionLabel>
                 <Card padded={false}>
                   <DetailRow
                     label="Preparing for"
-                    value={goal.name}
+                    value={target?.name ?? goal.name}
                     hint="Change what you are training for"
                     onPress={() => router.push('/settings/goal')}
                   />
                   <Divider />
                   <DetailRow label="Branch" value={SERVICE_BRANCH_LABELS[goal.branch]} />
-                  <Divider />
+                  {/* Only offered where there is something to open. The other
+                      twelve careers have no Target screen to send anyone to. */}
+                  {target ? (
+                    <>
+                      <Divider />
+                      <DetailRow
+                        label="Details"
+                        value="Open target"
+                        hint="Demands, pipeline, milestones and career intel"
+                        onPress={() => router.push('/target')}
+                      />
+                    </>
+                  ) : null}
+                </Card>
+              </View>
+
+              <View>
+                <SectionLabel>Training</SectionLabel>
+                <Card padded={false}>
                   <DetailRow
                     label="Track"
                     value={track?.name ?? 'Not set'}
                     hint="Change your training track"
                     onPress={() => router.push('/settings/track')}
                   />
+                  <Divider />
+                  <DetailRow
+                    label="Days per week"
+                    value={`${profile.trainingDaysPerWeek}`}
+                    hint="Update your training background"
+                    onPress={() => router.push('/settings/training')}
+                  />
+                  <Divider />
+                  <DetailRow
+                    label="Started"
+                    value={formatDateStamp(new Date(profile.createdAt))}
+                  />
                 </Card>
               </View>
 
               <View>
-                <SectionHeader title="Training Background" />
+                <SectionLabel>Experience</SectionLabel>
                 <Card padded={false}>
                   <DetailRow
                     label="Running"
@@ -185,23 +238,6 @@ export default function ProfileScreen() {
                     hint="Update your training background"
                     onPress={() => router.push('/settings/training')}
                   />
-                  <Divider />
-                  <DetailRow
-                    label="Training days"
-                    value={`${profile.trainingDaysPerWeek} per week`}
-                    hint="Update your training background"
-                    onPress={() => router.push('/settings/training')}
-                  />
-                </Card>
-              </View>
-
-              <View>
-                <SectionHeader title="Programme" />
-                <Card padded={false}>
-                  <DetailRow
-                    label="Started"
-                    value={formatDateStamp(new Date(profile.createdAt))}
-                  />
                 </Card>
               </View>
             </>
@@ -209,30 +245,11 @@ export default function ProfileScreen() {
         }}
       </AsyncBoundary>
 
-      {/* Required disclosures. Present from the first build, not bolted on later. */}
-      <View>
-        <SectionHeader title="About" />
-        <Card style={{ gap: theme.spacing.lg }}>
-          <Text variant="caption" color="textSecondary">
-            {disclaimers.affiliation}
-          </Text>
-          <Text variant="caption" color="textSecondary">
-            {disclaimers.readiness}
-          </Text>
-          <Text variant="caption" color="textSecondary">
-            {disclaimers.training}
-          </Text>
-          <Text variant="caption" color="textTertiary">
-            {disclaimers.medical}
-          </Text>
-        </Card>
-      </View>
-
       {/* Only shown when a backend is configured. With none, there is no
           account to sign out of and the row would be a dead end. */}
       {authStatus !== 'disabled' ? (
         <View>
-          <SectionHeader title="Account" />
+          <SectionLabel>Account</SectionLabel>
           <Card style={{ gap: theme.spacing.lg }}>
             <Text variant="bodySm" color="textSecondary">
               {authStatus === 'signed_in'
@@ -240,7 +257,7 @@ export default function ProfileScreen() {
                 : 'Sign in to keep your training if you change phones.'}
             </Text>
             <Button
-              label={authStatus === 'signed_in' ? 'Sign Out' : 'Sign In'}
+              label={authStatus === 'signed_in' ? 'Sign out' : 'Sign in'}
               variant="secondary"
               onPress={async () => {
                 if (authStatus === 'signed_in') {
@@ -254,13 +271,34 @@ export default function ProfileScreen() {
         </View>
       ) : null}
 
+      {/* Required disclosures. Present from the first build, not bolted on
+          later, and deliberately above the destructive action rather than
+          buried under it. */}
+      <View>
+        <SectionLabel>What this product is</SectionLabel>
+        <Card style={{ gap: theme.spacing.lg }}>
+          <Text variant="bodySm" color="textSecondary">
+            {disclaimers.affiliation}
+          </Text>
+          <Text variant="bodySm" color="textSecondary">
+            {disclaimers.readiness}
+          </Text>
+          <Text variant="bodySm" color="textSecondary">
+            {disclaimers.training}
+          </Text>
+          <Text variant="caption" color="textTertiary">
+            {disclaimers.medical}
+          </Text>
+        </Card>
+      </View>
+
       {/*
         Destructive and unrecoverable, so it takes two deliberate taps rather
         than a native alert, which react-native-web does not render reliably
         and which is easy to dismiss by reflex.
       */}
       <View>
-        <SectionHeader title="Data" />
+        <SectionLabel>Data</SectionLabel>
         <Card style={{ gap: theme.spacing.lg }}>
           {confirmingReset ? (
             <>
@@ -274,7 +312,7 @@ export default function ProfileScreen() {
                 </Text>
               ) : null}
               <Button
-                label="Delete Everything"
+                label="Delete everything"
                 variant="destructive"
                 loading={resetting}
                 onPress={handleReset}
@@ -293,7 +331,7 @@ export default function ProfileScreen() {
                 onboarding.
               </Text>
               <Button
-                label="Reset All Data"
+                label="Reset all data"
                 variant="secondary"
                 onPress={() => setConfirmingReset(true)}
                 testID="reset-data"

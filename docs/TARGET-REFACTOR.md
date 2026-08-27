@@ -141,10 +141,14 @@ The Supabase two-account isolation test is unfinished. This refactor does not
 block it, and it stays outstanding: no athlete data should reach real users
 until it passes.
 
-`0004_milestone_completions.sql` needs running against the live project. Until
-it is, a signed-in athlete cannot mark milestones; everything else is
-unaffected. It is the only table with an update policy, because the write is an
-upsert on a unique athlete-and-step pair rather than an append.
+`0004_milestone_completions.sql` has been run and verified: RLS enabled, four
+policies. It is the only athlete table with an update policy, because the write
+is an upsert on a unique athlete-and-step pair rather than an append.
+
+The athlete's display name is still hardcoded to "Athlete" by onboarding and is
+neither shown nor editable. Profile deliberately does not add a name field:
+nothing in the product renders a name, and a settings row for a value no screen
+uses is a worse gap than the missing name.
 
 `athlete_profiles.goal_id` becomes `target_id` in a later migration, now
 numbered `0005`.
