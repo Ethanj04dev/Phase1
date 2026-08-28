@@ -12,6 +12,16 @@ export interface AssessmentFieldProps {
   /** Stored value in the event unit, or undefined when deferred. */
   value: number | undefined;
   onChange: (value: number | null) => void;
+  /**
+   * Protocol text under the field. Off where the screen already shows the
+   * protocol in its own card, so it does not print twice.
+   */
+  showProtocol?: boolean;
+  /**
+   * The inline defer control. Off where the surrounding flow has its own
+   * skip affordance; two ways to skip on one screen is one too many.
+   */
+  deferrable?: boolean;
 }
 
 /**
@@ -21,7 +31,13 @@ export interface AssessmentFieldProps {
  * has never swum 500m should not have to invent a number, and the readiness
  * engine handles the gap honestly through coverage.
  */
-export function AssessmentField({ event, value, onChange }: AssessmentFieldProps) {
+export function AssessmentField({
+  event,
+  value,
+  onChange,
+  showProtocol = true,
+  deferrable = true,
+}: AssessmentFieldProps) {
   const theme = useTheme();
   const isDuration = event.unit === 'seconds';
 
@@ -62,7 +78,7 @@ export function AssessmentField({ event, value, onChange }: AssessmentFieldProps
         placeholder={isDuration ? 'MM:SS' : '0'}
         suffix={isDuration ? undefined : 'reps'}
         keyboardType={isDuration ? 'numbers-and-punctuation' : 'number-pad'}
-        helper={invalid ? undefined : event.protocol}
+        helper={invalid || !showProtocol ? undefined : event.protocol}
         error={
           invalid
             ? isDuration
@@ -73,6 +89,7 @@ export function AssessmentField({ event, value, onChange }: AssessmentFieldProps
         testID={`baseline-${event.id}`}
       />
 
+      {deferrable ? (
       <Pressable
         accessibilityRole="button"
         accessibilityLabel={`Test ${event.name} later`}
@@ -93,6 +110,7 @@ export function AssessmentField({ event, value, onChange }: AssessmentFieldProps
           {deferred ? 'Testing later' : 'Test later'}
         </Text>
       </Pressable>
+      ) : null}
     </View>
   );
 }

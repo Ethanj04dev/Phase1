@@ -23,6 +23,7 @@ export default function AssessmentLayout() {
       }}
     >
       <Stack.Screen name="new" options={{ title: 'Log assessment' }} />
+      <Stack.Screen name="test-day" options={{ title: 'Test day' }} />
       <Stack.Screen name="[eventId]" options={{ title: 'History' }} />
     </Stack>
   );

@@ -1,3 +1,4 @@
+import { router } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
 import { View } from 'react-native';
 
@@ -96,6 +97,23 @@ export default function NewAssessmentScreen() {
         <Text variant="body" color="textSecondary">
           Enter only what you tested today. Anything you leave blank keeps its previous result,
           and your readiness updates as soon as you save.
+        </Text>
+      </Card>
+
+      {/* The guided alternative: running the whole battery deserves a flow,
+          not a form. This screen stays for the quick single-event retest. */}
+      <Card
+        onPress={() => router.push('/assessment/test-day')}
+        accessibilityLabel="Test day mode. Run the full battery with protocol and stopwatch, one event at a time"
+        style={{ gap: theme.spacing.xxs }}
+      >
+        <Text variant="headline">Running the full battery?</Text>
+        <Text variant="bodySm" color="textSecondary">
+          Test day mode walks the events one at a time, protocol on screen, with a
+          stopwatch for the timed ones.
+        </Text>
+        <Text variant="caption" color="accent">
+          Start test day ›
         </Text>
       </Card>
 
