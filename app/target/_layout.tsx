@@ -18,6 +18,7 @@ export default function TargetDetailLayout() {
       }}
     >
       <Stack.Screen name="road" options={{ title: 'Road to ready' }} />
+      <Stack.Screen name="evidence" options={{ title: 'How it is computed' }} />
       <Stack.Screen name="fitness" options={{ title: 'Fitness' }} />
       <Stack.Screen name="skills" options={{ title: 'Skills' }} />
       <Stack.Screen name="demands" options={{ title: 'Physical demands' }} />

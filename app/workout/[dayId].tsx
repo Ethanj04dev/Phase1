@@ -12,6 +12,7 @@ import { totalEstimatedMinutes } from '@/domain/training/describe';
 import { SESSION_MODALITY_LABELS } from '@/domain/training/types';
 import { BlockRow } from '@/features/training/BlockRow';
 import { useWorkoutDay } from '@/features/training/useWorkoutDay';
+import { sessionsIncludeWater, WaterSafetyNotice } from '@/features/training/WaterSafetyNotice';
 import { useTheme } from '@/theme';
 
 export default function WorkoutOverviewScreen() {
@@ -62,6 +63,8 @@ export default function WorkoutOverviewScreen() {
                 {day.description}
               </Text>
             </View>
+
+            {sessionsIncludeWater(day.sessions) ? <WaterSafetyNotice /> : null}
 
             {day.sessions.map((session) => (
               <View key={session.id}>

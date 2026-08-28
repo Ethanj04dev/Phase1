@@ -96,6 +96,17 @@ export default function TargetScreen() {
                         {`The open section is the ${formatPercent(1 - readiness.coverage)} of this target not yet measured.`}
                       </Text>
                     ) : null}
+                    {/* The audit trail. A score you cannot check is a verdict;
+                        this one is arithmetic, and it says so. */}
+                    <Text
+                      variant="caption"
+                      color="accent"
+                      accessibilityRole="button"
+                      accessibilityHint="Shows exactly how this score is calculated"
+                      onPress={() => router.push('/target/evidence')}
+                    >
+                      How this number is computed ›
+                    </Text>
                   </>
                 ) : (
                   <Text variant="body" color="textSecondary">

@@ -12,6 +12,7 @@ import { SESSION_MODALITY_LABELS } from '@/domain/training/types';
 import { BlockLogger } from '@/features/workout/BlockLogger';
 import { useActiveSession, useElapsed } from '@/features/workout/useActiveSession';
 import { formatDuration } from '@/lib/format';
+import { sessionsIncludeWater, WaterSafetyNotice } from '@/features/training/WaterSafetyNotice';
 import { useTheme } from '@/theme';
 import { goBack } from '@/lib/navigation';
 
@@ -128,12 +129,14 @@ export default function ActiveWorkoutScreen() {
 
       <View style={{ gap: theme.spacing.sm }}>
         <Text variant="labelSm" color="textTertiary">
-          IN PROGRESS
+          In progress
         </Text>
         <Text variant="title" accessibilityRole="header">
           {day.title}
         </Text>
       </View>
+
+      {sessionsIncludeWater(day.sessions) ? <WaterSafetyNotice /> : null}
 
       {day.sessions.map((workoutSession) => (
         <View key={workoutSession.id}>

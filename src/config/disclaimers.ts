@@ -13,6 +13,9 @@ export const disclaimers = {
     'Physical training carries a risk of injury. Train within your ability, progress gradually, and consult a qualified medical professional before starting a new training program.',
 
   medical: 'Phase 1 does not provide medical advice, diagnosis, or treatment.',
+
+  water:
+    'Never train in water alone, including easy surface swimming. Anything below the surface needs qualified in-water supervision.',
 } as const;
 
 /** Condensed line for footers and dense screens. */
