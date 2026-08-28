@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import {
+  Image,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
@@ -97,6 +98,19 @@ export function Screen({
         },
       ]}
     >
+      {/*
+        The grain. A 64px deterministic noise tile (4KB) repeated across the
+        ground at near-invisible opacity — the difference between "dark mode"
+        and anodized metal. Ground only, never on cards, and hidden from
+        assistive technology because it says nothing.
+      */}
+      <Image
+        source={require('../../../assets/grain.png')}
+        resizeMode="repeat"
+        style={styles.grain}
+        accessibilityElementsHidden
+        importantForAccessibility="no-hide-descendants"
+      />
       {avoidKeyboard ? (
         <KeyboardAvoidingView
           // iOS insets the view; Android already resizes the window, so
@@ -115,4 +129,10 @@ export function Screen({
 
 const styles = StyleSheet.create({
   flex: { flex: 1 },
+  grain: {
+    ...StyleSheet.absoluteFillObject,
+    width: undefined,
+    height: undefined,
+    opacity: 0.03,
+  },
 });

@@ -63,6 +63,15 @@ export const darkColors = {
   // Data visualisation track/fill defaults.
   trackEmpty: palette.black500,
 
+  // --- Machined surface treatment -------------------------------------------
+  // A 1px top-edge catching light is how a physical instrument's plates read.
+  // Decoration is banned, but this is not decoration: it is what separates
+  // surfaces once borders stop doing that job alone.
+  edgeHighlight: 'rgba(255, 255, 255, 0.05)',
+  // Phosphor for the single active data stroke a screen is allowed. Blue400
+  // at low alpha, used as a shadow/glow colour, never on text.
+  glowAccent: 'rgba(78, 131, 204, 0.35)',
+
   // Scrims and overlays.
   overlay: 'rgba(0, 0, 0, 0.86)',
   transparent: 'transparent',

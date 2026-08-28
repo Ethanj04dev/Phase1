@@ -1,6 +1,7 @@
 import { router } from 'expo-router';
 import { Pressable, View } from 'react-native';
 
+import { ReadinessGauge } from '@/components/charts/ReadinessGauge';
 import { AsyncBoundary } from '@/components/feedback/AsyncBoundary';
 import { Screen } from '@/components/layout/Screen';
 import { Wordmark } from '@/components/layout/Wordmark';
@@ -198,18 +199,20 @@ export default function TodayScreen() {
                         : 'Readiness not yet available'
                     }
                     onPress={() => router.push('/target')}
-                    style={{ flex: 1, gap: theme.spacing.xxs }}
+                    style={{ flex: 1.3, gap: theme.spacing.xxs, alignItems: 'flex-start' }}
                   >
                     <Text variant="caption" color="textTertiary">
                       Readiness
                     </Text>
                     {data.readiness && band ? (
-                      <>
-                        <Text variant="metricMd">{data.readiness.overall}</Text>
-                        <Text variant="caption" color="textTertiary">
-                          {READINESS_BAND_LABELS[band]}
-                        </Text>
-                      </>
+                      // The honest gauge at pocket size: the same instrument
+                      // as Target, quiet here because the session is the hero.
+                      <ReadinessGauge
+                        score={data.readiness.overall}
+                        coverage={data.readiness.coverage}
+                        size={96}
+                        accessibilityLabel={`Readiness ${data.readiness.overall} out of 100, ${READINESS_BAND_LABELS[band]}`}
+                      />
                     ) : (
                       <Text variant="bodySm" color="textSecondary">
                         Not yet

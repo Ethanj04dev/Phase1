@@ -4,6 +4,7 @@ import type { ReactNode } from 'react';
 import { useTheme, type Theme } from '@/theme';
 
 import { Text } from './Text';
+import { Animated, usePressScale } from './usePressScale';
 
 export type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'destructive';
 export type ButtonSize = 'sm' | 'md' | 'lg';
@@ -81,6 +82,7 @@ export function Button({
   const theme = useTheme();
   const colors = variantColors(theme, variant);
   const inactive = disabled || loading;
+  const press = usePressScale(!inactive);
 
   const container = (pressed: boolean): ViewStyle => ({
     height: HEIGHTS[size],
@@ -98,16 +100,18 @@ export function Button({
   });
 
   return (
-    <Pressable
-      accessibilityRole="button"
-      accessibilityLabel={label}
-      accessibilityHint={accessibilityHint}
-      accessibilityState={{ disabled: inactive, busy: loading }}
-      disabled={inactive}
-      onPress={onPress}
-      testID={testID}
-      style={({ pressed }) => [styles.base, container(pressed)]}
-    >
+    <Animated.View style={[press.style, fullWidth ? undefined : styles.hugContent]}>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={label}
+        accessibilityHint={accessibilityHint}
+        accessibilityState={{ disabled: inactive, busy: loading }}
+        disabled={inactive}
+        onPress={onPress}
+        {...press.handlers}
+        testID={testID}
+        style={({ pressed }) => [styles.base, container(pressed)]}
+      >
       {loading ? (
         <ActivityIndicator color={inactive ? theme.colors.textDisabled : colors.label} />
       ) : (
@@ -121,11 +125,15 @@ export function Button({
           </Text>
         </View>
       )}
-    </Pressable>
+      </Pressable>
+    </Animated.View>
   );
 }
 
 const styles = StyleSheet.create({
+  hugContent: {
+    alignSelf: 'flex-start',
+  },
   base: {
     alignItems: 'center',
     justifyContent: 'center',

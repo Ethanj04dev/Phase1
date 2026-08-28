@@ -1,5 +1,6 @@
 import { Pressable, View } from 'react-native';
 
+import { Animated, usePressScale } from '@/components/primitives/usePressScale';
 import { Text } from '@/components/primitives/Text';
 import { useTheme } from '@/theme';
 
@@ -32,13 +33,16 @@ export function NavRow({
   accessibilityHint,
 }: NavRowProps) {
   const theme = useTheme();
+  const press = usePressScale();
 
   return (
+    <Animated.View style={press.style}>
     <Pressable
       accessibilityRole="button"
       accessibilityLabel={subtitle ? `${title}. ${subtitle}` : title}
       accessibilityHint={accessibilityHint}
       onPress={onPress}
+      {...press.handlers}
       style={({ pressed }) => ({
         flexDirection: 'row',
         alignItems: 'center',
@@ -70,5 +74,6 @@ export function NavRow({
         ›
       </Text>
     </Pressable>
+    </Animated.View>
   );
 }

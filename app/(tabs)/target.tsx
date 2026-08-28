@@ -2,6 +2,7 @@ import { router, useFocusEffect } from 'expo-router';
 import { useCallback } from 'react';
 import { Pressable, View } from 'react-native';
 
+import { ReadinessGauge } from '@/components/charts/ReadinessGauge';
 import { AsyncBoundary } from '@/components/feedback/AsyncBoundary';
 import { NavRow } from '@/components/layout/NavRow';
 import { Screen } from '@/components/layout/Screen';
@@ -77,29 +78,24 @@ export default function TargetScreen() {
                 </Text>
               </View>
 
-              <Card style={{ gap: theme.spacing.sm }}>
-                <Text variant="bodySm" color="textTertiary">
-                  Readiness
-                </Text>
+              <Card style={{ gap: theme.spacing.sm, alignItems: 'center' }}>
                 {readiness && band ? (
                   <>
-                    <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: theme.spacing.md }}>
-                      <Text
-                        variant="metricXl"
-                        accessibilityLabel={`Readiness ${readiness.overall} out of 100, ${READINESS_BAND_LABELS[band]}`}
-                      >
-                        {readiness.overall}
-                      </Text>
-                      <Text variant="headline" color="accent">
-                        {READINESS_BAND_LABELS[band]}
-                      </Text>
-                    </View>
-                    <Text variant="bodySm" color="textSecondary">
+                    <ReadinessGauge
+                      score={readiness.overall}
+                      coverage={readiness.coverage}
+                      caption={READINESS_BAND_LABELS[band]}
+                      accessibilityLabel={`Readiness ${readiness.overall} out of 100, ${READINESS_BAND_LABELS[band]}, measured on ${formatPercent(readiness.coverage)} of this target`}
+                    />
+                    <Text variant="bodySm" color="textSecondary" align="center">
                       {READINESS_BAND_DESCRIPTIONS[band]}
                     </Text>
-                    <Text variant="caption" color="textTertiary">
-                      {`Based on ${formatPercent(readiness.coverage)} of what this target measures.`}
-                    </Text>
+                    {/* The gap in the arc, said in words as well as drawn. */}
+                    {readiness.coverage < 1 ? (
+                      <Text variant="caption" color="textTertiary" align="center">
+                        {`The open section is the ${formatPercent(1 - readiness.coverage)} of this target not yet measured.`}
+                      </Text>
+                    ) : null}
                   </>
                 ) : (
                   <Text variant="body" color="textSecondary">
