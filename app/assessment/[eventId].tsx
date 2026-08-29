@@ -52,7 +52,7 @@ export default function EventHistoryScreen() {
             <>
               <View style={{ gap: theme.spacing.sm }}>
                 <Text variant="labelSm" color="textTertiary">
-                  {event.shortName}
+                  Latest result
                 </Text>
                 {latest ? (
                   <Text
@@ -175,7 +175,7 @@ export default function EventHistoryScreen() {
                             </Text>
                             {record ? (
                               <Text variant="labelSm" color="accent">
-                                PERSONAL RECORD
+                                Personal record
                               </Text>
                             ) : null}
                           </View>

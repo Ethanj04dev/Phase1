@@ -103,7 +103,7 @@ export default function EditTrainingScreen() {
                   groupLabel="Training days per week"
                   options={TRAINING_DAY_OPTIONS}
                   selected={working.trainingDaysPerWeek}
-                  labelFor={(days) => `${days} DAYS`}
+                  labelFor={(days) => `${days} days`}
                   onSelect={(days) => setDraft({ ...working, trainingDaysPerWeek: days })}
                 />
               </View>
