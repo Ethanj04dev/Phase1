@@ -3,7 +3,7 @@ import { PREPARATION_DOMAINS, preparationDomain } from '@/domain/target/domains'
 import { isVerified, type Verified } from '@/domain/target/provenance';
 import { domainWeightsSumToOne, findDomain } from '@/domain/target/types';
 
-import { findTarget, hasTargetDefinition, PARARESCUE, RANGER, TARGETS } from './index';
+import { findTarget, hasTargetDefinition, PARARESCUE, RANGER, SEAL, TARGETS } from './index';
 
 /**
  * Content tests.
@@ -16,8 +16,8 @@ describe('target catalog', () => {
   it('finds a modelled target and reports an unmodelled one honestly', () => {
     expect(findTarget('pararescue')).toBe(PARARESCUE);
     expect(hasTargetDefinition('pararescue')).toBe(true);
-    expect(findTarget('navy_seal')).toBeUndefined();
-    expect(hasTargetDefinition('navy_seal')).toBe(false);
+    expect(findTarget('swcc')).toBeUndefined();
+    expect(hasTargetDefinition('swcc')).toBe(false);
   });
 
   it.each(TARGETS.map((t) => [t.id, t] as const))('%s has unique domain ids', (_id, target) => {
@@ -143,37 +143,64 @@ describe('official data is never fabricated', () => {
 });
 
 describe('water safety', () => {
-  const water = findDomain(PARARESCUE, 'water_confidence');
+  // Generalised over every water career the moment a second one existed. A
+  // Target cannot adopt the water domain and shed the safety rules with it.
+  const waterTargets = TARGETS.filter(
+    (target) => findDomain(target, 'water_confidence') !== undefined,
+  );
 
-  it('is a first-class domain, separate from swimming', () => {
-    expect(water).toBeDefined();
-    expect(findDomain(PARARESCUE, 'swimming')).toBeDefined();
-    expect(preparationDomain('water_confidence').measurement).toBe('proficiency');
+  it('covers the careers this suite believes it covers', () => {
+    // If a water Target were somehow excluded, every test below would pass
+    // vacuously for it. Pin the roster so that cannot happen silently.
+    expect(waterTargets.map((target) => target.id).sort()).toEqual([
+      'navy_seal',
+      'pararescue',
+    ]);
   });
 
-  it('gives every water skill a safety notice', () => {
-    for (const skill of water?.proficiencySkills ?? []) {
-      expect(skill.safetyNotice).toBeDefined();
-      expect((skill.safetyNotice ?? '').length).toBeGreaterThan(20);
+  it('is a first-class domain, separate from swimming', () => {
+    expect(preparationDomain('water_confidence').measurement).toBe('proficiency');
+    for (const target of waterTargets) {
+      expect(findDomain(target, 'swimming')).toBeDefined();
     }
   });
 
-  // The one that could actually kill someone.
-  it('requires supervision for underwater work and warns about blackout', () => {
-    const underwater = water?.proficiencySkills?.find((s) => s.id === 'underwater_comfort');
-    expect(underwater).toBeDefined();
-    expect(underwater?.requiresSupervision).toBe(true);
-    expect(underwater?.safetyNotice?.toLowerCase()).toContain('blackout');
-    expect(underwater?.safetyNotice?.toLowerCase()).toContain('never');
-  });
+  it.each(waterTargets.map((t) => [t.id, t] as const))(
+    '%s gives every water skill a safety notice',
+    (_id, target) => {
+      const skills = findDomain(target, 'water_confidence')?.proficiencySkills ?? [];
+      expect(skills.length).toBeGreaterThan(0);
+      for (const skill of skills) {
+        expect(skill.safetyNotice).toBeDefined();
+        expect((skill.safetyNotice ?? '').length).toBeGreaterThan(20);
+      }
+    },
+  );
 
-  it('states plainly that breath-hold performance is never measured', () => {
-    const article = PARARESCUE.intel.find((a) => a.id === 'water_safety');
-    expect(article).toBeDefined();
-    const text = (article?.body ?? []).join(' ').toLowerCase();
-    expect(text).toContain('breath-hold');
-    expect(text).toMatch(/does not measure|never/);
-  });
+  // The one that could actually kill someone.
+  it.each(waterTargets.map((t) => [t.id, t] as const))(
+    '%s requires supervision for underwater work and warns about blackout',
+    (_id, target) => {
+      const underwater = findDomain(target, 'water_confidence')?.proficiencySkills?.find(
+        (skill) => skill.id === 'underwater_comfort',
+      );
+      expect(underwater).toBeDefined();
+      expect(underwater?.requiresSupervision).toBe(true);
+      expect(underwater?.safetyNotice?.toLowerCase()).toContain('blackout');
+      expect(underwater?.safetyNotice?.toLowerCase()).toContain('never');
+    },
+  );
+
+  it.each(waterTargets.map((t) => [t.id, t] as const))(
+    '%s states plainly that breath-hold performance is never measured',
+    (_id, target) => {
+      const article = target.intel.find((entry) => entry.id === 'water_safety');
+      expect(article).toBeDefined();
+      const text = (article?.body ?? []).join(' ').toLowerCase();
+      expect(text).toContain('breath-hold');
+      expect(text).toMatch(/does not measure|never/);
+    },
+  );
 
   it('defines no breath-hold or underwater-distance assessment', () => {
     for (const target of TARGETS) {
@@ -197,6 +224,37 @@ describe('strength stays unscored until it can be measured safely', () => {
   it('says why in its rationale', () => {
     const strength = findDomain(PARARESCUE, 'strength');
     expect(strength?.rationale.toLowerCase()).toContain('maximal');
+  });
+});
+
+describe('seal is the swim-dominant profile', () => {
+  it('puts more combined weight in the water than any other target', () => {
+    const waterWeight = (target: (typeof TARGETS)[number]): number =>
+      (findDomain(target, 'swimming')?.weight ?? 0) +
+      (findDomain(target, 'water_confidence')?.weight ?? 0);
+    for (const target of TARGETS) {
+      if (target.id !== SEAL.id) {
+        expect(waterWeight(SEAL)).toBeGreaterThan(waterWeight(target));
+      }
+    }
+  });
+
+  it('sets the hardest swim benchmark in the catalog', () => {
+    const swimTargets = TARGETS.flatMap((target) => {
+      const benchmark = target.phase1Benchmarks.find((b) => b.eventId === 'swim_500m');
+      return benchmark ? [benchmark.target] : [];
+    });
+    const seal = SEAL.phase1Benchmarks.find((b) => b.eventId === 'swim_500m');
+    // Time event: lower is harder.
+    expect(seal?.target).toBe(Math.min(...swimTargets));
+  });
+
+  it('shares the water confidence skill set rather than forking it', () => {
+    const sealSkills = findDomain(SEAL, 'water_confidence')?.proficiencySkills;
+    const pjSkills = findDomain(PARARESCUE, 'water_confidence')?.proficiencySkills;
+    // Same reference, not merely equal content: one copy of the blackout
+    // warning, one place to edit it.
+    expect(sealSkills).toBe(pjSkills);
   });
 });
 

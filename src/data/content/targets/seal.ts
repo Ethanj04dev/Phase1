@@ -1,6 +1,4 @@
 import { unverified } from '@/domain/target/provenance';
-
-import { WATER_CONFIDENCE_SKILLS, WATER_SAFETY_ARTICLE } from './waterConfidenceSkills';
 import type {
   MilestoneDefinition,
   OfficialStandard,
@@ -10,40 +8,40 @@ import type {
   TargetDomain,
 } from '@/domain/target/types';
 
+import { WATER_CONFIDENCE_SKILLS, WATER_SAFETY_ARTICLE } from './waterConfidenceSkills';
+
 /**
- * Pararescue — the first fully modelled Target.
+ * Navy SEAL — the third Target, and the swim-dominant profile.
  *
- * Read this before editing:
+ * Pararescue proved the model, Ranger proved the no-water path; this one
+ * proves that two water careers can weight the same domains differently and
+ * share one set of water-confidence skills — which matters because the safety
+ * notices in that set are the most important prose in the product, and they
+ * must never fork.
  *
- * Every official figure here is `unverified`. That is not an oversight and not
- * a TODO to fill in with something plausible. Phase 1's entire credibility
- * rests on never presenting its own recommendation as a military requirement,
- * so an unsourced standard shows as "Verification required" until somebody
- * reads an authoritative document and cites it.
- *
- * What *is* authored here is Phase 1's own preparation methodology: which
- * domains matter and how much, what Phase 1 thinks an athlete should be able
- * to do to arrive prepared rather than merely eligible, and why. All of it is
- * labelled as Phase 1's opinion, because that is what it is.
+ * Same rules as everywhere: every official figure is `unverified` until a
+ * human cites an authoritative document, and everything authored here is
+ * Phase 1's own preparation judgement, labelled as exactly that.
  */
 
 // --- Preparation domains ----------------------------------------------------
 //
-// Weights sum to 1 and are Phase 1's judgement about where preparation time
-// pays off for this career, not a published weighting.
+// Swim-dominant: the water carries more combined weight than for any other
+// Target, and calisthenics sits higher than for Pararescue. Weights sum to 1
+// and are Phase 1's judgement, not a published weighting.
 
 const domains: readonly TargetDomain[] = [
   {
     id: 'swimming',
-    weight: 0.22,
+    weight: 0.26,
     demand: 'very_high',
     rationale:
-      'Water is the environment that most often ends a candidate early. Swimming fitness is the base everything else in the water is built on.',
+      'The single fitness this preparation cannot compromise on. Swim capacity is tested early, leaned on daily, and slow to build.',
     eventIds: ['swim_500m'],
   },
   {
     id: 'water_confidence',
-    weight: 0.2,
+    weight: 0.18,
     demand: 'very_high',
     rationale:
       'Being fit in the water and being comfortable in it are different things. Comfort is trainable, and it is usually the difference between performing and panicking.',
@@ -51,37 +49,35 @@ const domains: readonly TargetDomain[] = [
     proficiencySkills: WATER_CONFIDENCE_SKILLS,
   },
   {
-    id: 'running',
-    weight: 0.18,
-    demand: 'high',
-    rationale:
-      'Aerobic capacity underwrites everything else and recovers slowest if neglected.',
-    eventIds: ['run_1_mile', 'run_1_5_mile'],
-  },
-  {
     id: 'calisthenics',
-    weight: 0.15,
-    demand: 'high',
+    weight: 0.18,
+    demand: 'very_high',
     rationale:
-      'Repeatable body-weight strength endurance, tested directly and relied on constantly.',
+      'High-repetition body-weight work is tested directly and repeated relentlessly. The bar is higher here than for any other domain of its kind.',
     eventIds: ['pull_ups', 'push_ups', 'sit_ups'],
   },
   {
-    id: 'rucking',
-    weight: 0.1,
+    id: 'running',
+    weight: 0.16,
     demand: 'high',
     rationale:
-      'Moving under load is a durability problem as much as a fitness one, and the adaptation is slow.',
+      'Aerobic capacity underwrites everything else, on sand as much as on a track.',
+    eventIds: ['run_1_mile', 'run_1_5_mile'],
+  },
+  {
+    id: 'rucking',
+    weight: 0.08,
+    demand: 'moderate',
+    rationale:
+      'Load carriage matters, but for this preparation it follows water and running rather than leading them.',
     eventIds: ['ruck_3_mile'],
   },
   {
     id: 'strength',
-    weight: 0.07,
+    weight: 0.06,
     demand: 'moderate',
     rationale:
       'Enough usable strength to carry, climb and move load. Phase 1 does not score this from a maximal lift, so it stays unscored until a safe submaximal assessment exists.',
-    // Deliberately empty. A domain with no safe assessment carries no score
-    // rather than an invented one.
     eventIds: [],
   },
   {
@@ -96,54 +92,52 @@ const domains: readonly TargetDomain[] = [
 
 // --- Official standards -----------------------------------------------------
 //
-// All unverified, deliberately. See the note at the top of this file.
+// All unverified, deliberately: this career publishes an entry test, but its
+// current figures have not been sourced from an authoritative document, and a
+// plausible number is worse than an empty field.
 
 const officialStandards: readonly OfficialStandard[] = [
-  { eventId: 'pull_ups', requirement: unverified('Not yet sourced from an authoritative document.') },
+  { eventId: 'swim_500m', requirement: unverified('Not yet sourced from an authoritative document.') },
   { eventId: 'push_ups', requirement: unverified('Not yet sourced from an authoritative document.') },
   { eventId: 'sit_ups', requirement: unverified('Not yet sourced from an authoritative document.') },
+  { eventId: 'pull_ups', requirement: unverified('Not yet sourced from an authoritative document.') },
   { eventId: 'run_1_5_mile', requirement: unverified('Not yet sourced from an authoritative document.') },
-  { eventId: 'swim_500m', requirement: unverified('Not yet sourced from an authoritative document.') },
 ];
 
 // --- Phase 1 benchmarks -----------------------------------------------------
-//
-// Phase 1's own preparation targets. Explicitly not requirements: they are
-// where Phase 1 thinks an athlete should be to arrive prepared rather than
-// merely eligible.
 
 const phase1Benchmarks: readonly Phase1Benchmark[] = [
   {
     eventId: 'swim_500m',
-    target: 570,
+    target: 540,
     rationale:
-      'Comfortably inside ten minutes leaves capacity for skill work afterwards, rather than arriving at it already spent.',
+      'Nine minutes flat with capacity left over. For a swim-dominant preparation the benchmark leads the field, and it is the hardest one here on purpose.',
+  },
+  {
+    eventId: 'pull_ups',
+    target: 18,
+    rationale: 'Pulling reserve for a preparation that tests calisthenics relentlessly.',
+  },
+  {
+    eventId: 'push_ups',
+    target: 80,
+    rationale: 'Pushing endurance that holds up across repeated tests, not just one.',
+  },
+  {
+    eventId: 'sit_ups',
+    target: 80,
+    rationale: 'Trunk endurance sufficient to protect the back under load and in the water.',
   },
   {
     eventId: 'run_1_5_mile',
     target: 570,
     rationale:
-      'A 9:30 here indicates the aerobic base needed to absorb the running volume without breaking down.',
+      'A 9:30 indicates the aerobic base needed to absorb the running volume without breaking down.',
   },
   {
     eventId: 'run_1_mile',
     target: 390,
     rationale: 'Supports interval work at the paces the programme prescribes.',
-  },
-  {
-    eventId: 'pull_ups',
-    target: 20,
-    rationale: 'Enough pulling reserve that upper-body work is not the limiting factor.',
-  },
-  {
-    eventId: 'push_ups',
-    target: 75,
-    rationale: 'Pushing endurance that holds up late in a session rather than early.',
-  },
-  {
-    eventId: 'sit_ups',
-    target: 80,
-    rationale: 'Trunk endurance sufficient to protect the back under load.',
   },
   {
     eventId: 'ruck_3_mile',
@@ -155,8 +149,8 @@ const phase1Benchmarks: readonly Phase1Benchmark[] = [
 
 // --- Pipeline ---------------------------------------------------------------
 //
-// Structure only. Every stage is a placeholder: naming a real stage is itself
-// a claim, and this career's pipeline has not been sourced yet.
+// Structure only, as for every Target: naming a real stage is itself a claim,
+// and this career's pipeline has not been sourced yet.
 
 const pipeline: readonly PipelineStage[] = [
   {
@@ -177,14 +171,14 @@ const pipeline: readonly PipelineStage[] = [
     id: 'preparatory',
     name: 'Preparatory Stage',
     summary: 'Physical and technical preparation ahead of selection.',
-    emphasis: ['swimming', 'water_confidence', 'running'],
+    emphasis: ['swimming', 'water_confidence', 'calisthenics'],
     isPlaceholder: true,
   },
   {
     id: 'selection',
     name: 'Selection / Assessment',
     summary: 'The assessment phase that determines progression.',
-    emphasis: ['water_confidence', 'swimming', 'rucking'],
+    emphasis: ['water_confidence', 'swimming', 'running'],
     isPlaceholder: true,
   },
   {
@@ -204,9 +198,6 @@ const pipeline: readonly PipelineStage[] = [
 ];
 
 // --- Milestones -------------------------------------------------------------
-//
-// Personal admin the athlete tracks for themselves. Not official process
-// guidance, and deliberately optional: candidates arrive by different routes.
 
 const milestones: readonly MilestoneDefinition[] = [
   {
@@ -247,27 +238,29 @@ const milestones: readonly MilestoneDefinition[] = [
   },
 ];
 
-export const PARARESCUE: TargetDefinition = {
-  id: 'pararescue',
-  name: 'Pararescue',
-  shortName: 'PJ',
-  branch: 'air_force',
-  category: 'Air Force Special Warfare',
+// --- The definition ---------------------------------------------------------
+
+export const SEAL: TargetDefinition = {
+  id: 'navy_seal',
+  name: 'Navy SEAL',
+  shortName: 'SEAL',
+  branch: 'navy',
+  category: 'Naval Special Warfare',
   description:
-    'A water-heavy pipeline that demands swimming fitness, genuine comfort in the water, and the aerobic base to carry both.',
+    'A swim-dominant pipeline where water fitness, water comfort and relentless calisthenics carry the preparation, with running close behind.',
   domains,
   officialStandards,
   phase1Benchmarks,
   assessments: [
-    // Every assessment is currently a Phase 1 measure. Marking one "official"
-    // is itself a claim about how this career tests candidates, and that has
-    // not been sourced.
+    // Every assessment is a Phase 1 measure. Marking one "official" is itself
+    // a claim about how this career tests candidates, and that has not been
+    // sourced.
     { eventId: 'swim_500m', origin: 'phase1', domainId: 'swimming' },
-    { eventId: 'run_1_5_mile', origin: 'phase1', domainId: 'running' },
-    { eventId: 'run_1_mile', origin: 'phase1', domainId: 'running' },
     { eventId: 'pull_ups', origin: 'phase1', domainId: 'calisthenics' },
     { eventId: 'push_ups', origin: 'phase1', domainId: 'calisthenics' },
     { eventId: 'sit_ups', origin: 'phase1', domainId: 'calisthenics' },
+    { eventId: 'run_1_5_mile', origin: 'phase1', domainId: 'running' },
+    { eventId: 'run_1_mile', origin: 'phase1', domainId: 'running' },
     { eventId: 'ruck_3_mile', origin: 'phase1', domainId: 'rucking' },
   ],
   pipeline,
@@ -278,7 +271,7 @@ export const PARARESCUE: TargetDefinition = {
       category: 'preparation',
       title: 'How Phase 1 approaches this Target',
       body: [
-        'Phase 1 weights swimming and water confidence most heavily for this career, then running, then body-weight strength endurance and load carriage.',
+        'Phase 1 weights the water most heavily for this career — swimming fitness and water confidence together carry more of the score than for any other Target — with calisthenics and running close behind.',
         'That weighting is Phase 1’s own judgement about where preparation time pays off. It is not a published or official weighting, and it is visible so you can disagree with it.',
         'Your readiness score measures you against Phase 1 benchmarks only. It is not a prediction, and it does not guarantee selection.',
       ],
@@ -290,21 +283,10 @@ export const PARARESCUE: TargetDefinition = {
       title: 'Why some standards are blank',
       body: [
         'Official entry standards for this career field have not yet been sourced from an authoritative document, so Phase 1 shows them as requiring verification rather than filling them in with a plausible number.',
-        'A wrong official figure is worse than a missing one: you would train to it, and find out at the worst possible moment.',
-        'Phase 1 targets are shown alongside and are clearly labelled. They are preparation benchmarks written by Phase 1, not requirements.',
-      ],
-    },
-    {
-      id: 'pipeline_pending',
-      category: 'pipeline',
-      title: 'Why the pipeline is generic',
-      body: [
-        'The stages shown are generic structure, not this career’s actual pipeline. Naming a real stage is a claim, and that claim has not been verified.',
-        'Treat it as a shape to orient by, and confirm the specifics with a recruiter or an official source.',
+        'The figures you do see are Phase 1 preparation benchmarks, labelled as such, with the reasoning behind each one.',
+        'Confirm current official requirements with a recruiter or an official source.',
       ],
     },
   ],
-  // Nothing verified yet, so nothing to cite. This grows as standards are
-  // sourced, and every verified figure must point at an entry here.
   sources: [],
 };

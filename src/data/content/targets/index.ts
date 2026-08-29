@@ -2,6 +2,7 @@ import type { TargetDefinition, TargetId } from '@/domain/target/types';
 
 import { PARARESCUE } from './pararescue';
 import { RANGER } from './ranger';
+import { SEAL } from './seal';
 
 /**
  * The Target catalog.
@@ -15,7 +16,7 @@ import { RANGER } from './ranger';
  * remaining careers still run on the legacy goal catalog until each gets a
  * definition worth shipping: one genuinely right beats thirteen shallow.
  */
-export const TARGETS: readonly TargetDefinition[] = [PARARESCUE, RANGER];
+export const TARGETS: readonly TargetDefinition[] = [PARARESCUE, RANGER, SEAL];
 
 const TARGETS_BY_ID = new Map<TargetId, TargetDefinition>(
   TARGETS.map((target) => [target.id, target]),
@@ -30,4 +31,4 @@ export function hasTargetDefinition(id: TargetId): boolean {
   return TARGETS_BY_ID.has(id);
 }
 
-export { PARARESCUE, RANGER };
+export { PARARESCUE, RANGER, SEAL };
