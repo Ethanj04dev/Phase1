@@ -1,6 +1,6 @@
 import type { AssessmentEventId } from '@/domain/assessment/types';
 import type { GoalId } from '@/domain/goals/types';
-import type { ExperienceLevel, IsoDateTime, Uuid } from '@/domain/types';
+import type { ExperienceLevel, IsoDate, IsoDateTime, Uuid } from '@/domain/types';
 
 /**
  * Training tracks are the three programs the MVP ships. Keeping this a small
@@ -77,6 +77,13 @@ export interface AthleteProfile {
   swimmingExperience: ExperienceLevel;
   ruckingExperience: ExperienceLevel;
   trainingDaysPerWeek: number;
+  /**
+   * The athlete's own selection or ship date, if they have one. Optional and
+   * self-reported, like a milestone: Phase 1 records it, cannot verify it,
+   * and uses it only to anchor the countdown. Absent on records written
+   * before the field existed.
+   */
+  selectionDate?: IsoDate | null;
   onboardingCompleted: boolean;
   createdAt: IsoDateTime;
   updatedAt: IsoDateTime;

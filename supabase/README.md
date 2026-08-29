@@ -25,6 +25,8 @@ Open the SQL Editor in the Supabase dashboard and run each file in order:
    for the same instant. Additive, and it rewrites no existing row.
 4. [`migrations/0004_milestone_completions.sql`](migrations/0004_milestone_completions.sql)
    — the athlete's own preparation checklist. Additive, and safe to re-run.
+5. [`migrations/0005_selection_date.sql`](migrations/0005_selection_date.sql)
+   — one nullable date column on `athlete_profiles` for the countdown. Additive.
 
 Verify afterwards in Database → Tables that each table shows **RLS enabled**.
 If any table is missing it, stop and fix that before pointing the app at the

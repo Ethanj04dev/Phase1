@@ -20,6 +20,7 @@ export default function SettingsLayout() {
       <Stack.Screen name="goal" options={{ title: 'Objective' }} />
       <Stack.Screen name="track" options={{ title: 'Training track' }} />
       <Stack.Screen name="training" options={{ title: 'Training background' }} />
+      <Stack.Screen name="selection-date" options={{ title: 'Selection date' }} />
     </Stack>
   );
 }

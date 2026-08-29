@@ -20,6 +20,8 @@ export const demoProfile: AthleteProfile = {
   swimmingExperience: 'beginner',
   ruckingExperience: 'intermediate',
   trainingDaysPerWeek: 5,
+  // Roughly fourteen weeks past demoNow, so the countdown renders in demo.
+  selectionDate: '2026-12-01',
   onboardingCompleted: true,
   createdAt: '2026-07-28T12:00:00.000Z',
   updatedAt: '2026-08-25T08:00:00.000Z',

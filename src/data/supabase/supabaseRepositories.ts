@@ -101,6 +101,7 @@ export function createSupabaseRepositories(client: SupabaseClient): Repositories
           swimming_experience: input.swimmingExperience,
           rucking_experience: input.ruckingExperience,
           training_days_per_week: input.trainingDaysPerWeek,
+          selection_date: input.selectionDate ?? null,
           onboarding_completed: input.onboardingCompleted,
         })
         .select('*')
@@ -125,6 +126,7 @@ export function createSupabaseRepositories(client: SupabaseClient): Repositories
         row.rucking_experience = patch.ruckingExperience;
       if (patch.trainingDaysPerWeek !== undefined)
         row.training_days_per_week = patch.trainingDaysPerWeek;
+      if (patch.selectionDate !== undefined) row.selection_date = patch.selectionDate;
       if (patch.onboardingCompleted !== undefined)
         row.onboarding_completed = patch.onboardingCompleted;
 

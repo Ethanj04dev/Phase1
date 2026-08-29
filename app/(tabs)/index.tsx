@@ -10,6 +10,7 @@ import { Card } from '@/components/primitives/Card';
 import { Divider } from '@/components/primitives/Divider';
 import { Text } from '@/components/primitives/Text';
 import { READINESS_BAND_LABELS, readinessBand } from '@/domain/readiness/bands';
+import { countdownLabel, countdownTo } from '@/domain/target/countdown';
 import { preparationDomain } from '@/domain/target/domains';
 import type { RoadStep } from '@/domain/target/roadToReady';
 import { describeSession, totalEstimatedMinutes } from '@/domain/training/describe';
@@ -152,6 +153,9 @@ export default function TodayScreen() {
       <AsyncBoundary state={state} onRetry={reload}>
         {(data) => {
           const band = data.readiness ? readinessBand(data.readiness.overall) : null;
+          const countdown = countdownLabel(
+            countdownTo(data.profile.selectionDate, new Date().toISOString()),
+          );
 
           return (
             <>
@@ -174,6 +178,14 @@ export default function TodayScreen() {
                     ? `${data.target?.name ?? data.goal.name} · Week ${data.position.weekNumber} · Day ${data.position.dayNumber}`
                     : (data.target?.name ?? data.goal.name)}
                 </Text>
+                {/* The anchor. A candidate with fourteen weeks trains
+                    differently from one with forty, and this line keeps that
+                    fact in view every morning. */}
+                {countdown ? (
+                  <Text variant="bodySm" color="accent">
+                    {countdown}
+                  </Text>
+                ) : null}
               </View>
 
               <SessionHero day={data.today} />

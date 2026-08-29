@@ -175,6 +175,13 @@ export default function ProfileScreen() {
                   />
                   <Divider />
                   <DetailRow label="Branch" value={SERVICE_BRANCH_LABELS[goal.branch]} />
+                  <Divider />
+                  <DetailRow
+                    label="Selection date"
+                    value={profile.selectionDate ?? 'Not set'}
+                    hint="Set the date the countdown counts to"
+                    onPress={() => router.push('/settings/selection-date')}
+                  />
                   {/* Only offered where there is something to open. The other
                       twelve careers have no Target screen to send anyone to. */}
                   {target ? (

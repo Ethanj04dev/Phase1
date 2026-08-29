@@ -66,6 +66,7 @@ export async function migrateLocalData(client: SupabaseClient): Promise<Migratio
     runningExperience: profile.runningExperience,
     swimmingExperience: profile.swimmingExperience,
     ruckingExperience: profile.ruckingExperience,
+    selectionDate: profile.selectionDate ?? null,
     trainingDaysPerWeek: profile.trainingDaysPerWeek,
     onboardingCompleted: profile.onboardingCompleted,
   });

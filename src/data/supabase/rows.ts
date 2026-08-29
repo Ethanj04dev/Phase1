@@ -27,6 +27,7 @@ export interface AthleteProfileRow {
   swimming_experience: string;
   rucking_experience: string;
   training_days_per_week: number;
+  selection_date: string | null;
   onboarding_completed: boolean;
   created_at: string;
   updated_at: string;
@@ -45,6 +46,7 @@ export function toAthleteProfile(row: AthleteProfileRow): AthleteProfile {
     swimmingExperience: row.swimming_experience as ExperienceLevel,
     ruckingExperience: row.rucking_experience as ExperienceLevel,
     trainingDaysPerWeek: row.training_days_per_week,
+    selectionDate: row.selection_date,
     onboardingCompleted: row.onboarding_completed,
     createdAt: row.created_at,
     updatedAt: row.updated_at,

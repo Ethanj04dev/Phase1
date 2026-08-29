@@ -8,6 +8,7 @@ import { ProgressBar } from '@/components/primitives/ProgressBar';
 import { Text } from '@/components/primitives/Text';
 import { findAssessmentEvent } from '@/domain/assessment/types';
 import { PHASE1_TARGET_READINESS } from '@/domain/readiness/bands';
+import { countdownLabel, countdownTo } from '@/domain/target/countdown';
 import { preparationDomain } from '@/domain/target/domains';
 import type { RoadStep } from '@/domain/target/roadToReady';
 import { formatEventDelta, formatEventValue } from '@/features/assessment/display';
@@ -80,7 +81,7 @@ export default function RoadToReadyScreen() {
       }}
     >
       <AsyncBoundary state={state} onRetry={reload}>
-        {({ target, road, readiness }) => {
+        {({ target, road, readiness, profile }) => {
           if (!target || !road) {
             return (
               <Text variant="body" color="textSecondary">
@@ -89,8 +90,18 @@ export default function RoadToReadyScreen() {
             );
           }
 
+          const countdown = countdownLabel(
+            countdownTo(profile.selectionDate, new Date().toISOString()),
+          );
+
           return (
             <>
+              {/* The deadline the list is working against, when one exists. */}
+              {countdown ? (
+                <Text variant="headline" color="accent">
+                  {countdown}
+                </Text>
+              ) : null}
               <Text variant="body" color="textSecondary">
                 {`Ordered by how much readiness each area is holding, not by which is weakest. A gap in something ${target.shortName} leans on heavily is worth more than a bigger gap in something it barely touches.`}
               </Text>
