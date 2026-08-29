@@ -1,5 +1,6 @@
 import { View } from 'react-native';
 
+import { ProvenanceMark } from '@/components/data-display/ProvenanceMark';
 import { AsyncBoundary } from '@/components/feedback/AsyncBoundary';
 import { Screen } from '@/components/layout/Screen';
 import { Card } from '@/components/primitives/Card';
@@ -11,7 +12,7 @@ import {
   type AssessmentEvent,
 } from '@/domain/assessment/types';
 import { preparationDomain } from '@/domain/target/domains';
-import { verifiedValue, VERIFICATION_REQUIRED } from '@/domain/target/provenance';
+import { verifiedValue } from '@/domain/target/provenance';
 import {
   officialStandardFor,
   phase1BenchmarkFor,
@@ -98,16 +99,28 @@ function EventRow({
 
       {/* The official figure gets its own row rather than a third column,
           because a blank in a row of numbers reads as a missing value the app
-          failed to load, rather than as a claim nobody has verified. */}
+          failed to load, rather than as a claim nobody has verified. The mark
+          is the calibration sticker: solid and sourced, or hollow and
+          honest. */}
       <View style={{ gap: theme.spacing.xxs }}>
         <Text variant="caption" color="textTertiary">
           Official standard
         </Text>
-        <Text variant="bodySm" color={official === null ? 'statusCaution' : 'textPrimary'}>
-          {official === null
-            ? VERIFICATION_REQUIRED
-            : `${formatEventValue(event, official.value)}${official.qualifier ? ` — ${official.qualifier}` : ''}`}
-        </Text>
+        {official !== null ? (
+          <Text variant="bodySm" color="textPrimary">
+            {`${formatEventValue(event, official.value)}${official.qualifier ? ` — ${official.qualifier}` : ''}`}
+          </Text>
+        ) : null}
+        {standard ? (
+          <ProvenanceMark value={standard.requirement} sources={target.sources} />
+        ) : (
+          // A third state, worded differently on purpose. "Verification
+          // required" means a standard exists and has not been sourced; this
+          // means the career field is not known to test this event at all.
+          <Text variant="caption" color="textTertiary">
+            No official standard on file for this event.
+          </Text>
+        )}
       </View>
 
       {benchmark ? (

@@ -11,6 +11,8 @@ with expected as (
   select unnest(array[
     'athlete_profiles',
     'assessment_results',
+    'proficiency_ratings',
+    'milestone_completions',
     'readiness_scores',
     'workout_results',
     'exercise_results'
