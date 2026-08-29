@@ -41,7 +41,7 @@ export default function BaselineScreen() {
       }}
       footer={
         <Button
-          label={tested === 0 ? 'Skip Baseline' : 'See Readiness'}
+          label={tested === 0 ? 'Skip baseline' : 'See readiness'}
           size="lg"
           onPress={() => router.push('/result')}
           accessibilityHint={

@@ -67,7 +67,7 @@ export default function ExperienceScreen() {
           groupLabel="Training days per week"
           options={TRAINING_DAY_OPTIONS}
           selected={draft.trainingDaysPerWeek}
-          labelFor={(days) => `${days} DAYS`}
+          labelFor={(days) => `${days} days`}
           onSelect={setTrainingDays}
         />
       </View>

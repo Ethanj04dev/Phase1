@@ -1,8 +1,8 @@
 import { router } from 'expo-router';
 import { View } from 'react-native';
 
+import { ReadinessGauge } from '@/components/charts/ReadinessGauge';
 import { MetricTile } from '@/components/data-display/MetricTile';
-import { GridBackdrop } from '@/components/layout/GridBackdrop';
 import { Screen } from '@/components/layout/Screen';
 import { SectionHeader } from '@/components/layout/SectionHeader';
 import { Button } from '@/components/primitives/Button';
@@ -72,22 +72,21 @@ export default function ResultScreen() {
       </View>
 
       {calculation ? (
-        <Card padded={false} style={{ paddingVertical: theme.spacing.xxl }}>
-          <GridBackdrop divisions={8} opacity={0.35} />
-          <View style={{ paddingHorizontal: theme.spacing.lg, gap: theme.spacing.sm }}>
-            <Text variant="label" color="textTertiary">
-              Readiness
+        // The first number this product ever shows an athlete arrives on the
+        // signature instrument, open section and all. Honesty is the first
+        // impression, not something discovered later.
+        <Card style={{ gap: theme.spacing.sm, alignItems: 'center' }}>
+          <ReadinessGauge
+            score={calculation.overall}
+            coverage={calculation.coverage}
+            caption="Starting point"
+            accessibilityLabel={`Starting readiness ${calculation.overall} out of 100, measured on ${formatPercent(calculation.coverage)} of your profile`}
+          />
+          {calculation.coverage < 1 ? (
+            <Text variant="caption" color="textTertiary" align="center">
+              {`The open section is the ${formatPercent(1 - calculation.coverage)} of your profile you have not tested yet. It fills in as you do.`}
             </Text>
-            <Text
-              variant="display"
-              accessibilityLabel={`Starting readiness ${calculation.overall} out of 100`}
-            >
-              {calculation.overall}
-            </Text>
-            <Text variant="labelSm" color="textTertiary">
-              {`${formatPercent(calculation.coverage)} COVERAGE`}
-            </Text>
-          </View>
+          ) : null}
         </Card>
       ) : (
         <Card style={{ gap: theme.spacing.sm }}>

@@ -7,6 +7,7 @@ import { SectionHeader } from '@/components/layout/SectionHeader';
 import { Button } from '@/components/primitives/Button';
 import { Card } from '@/components/primitives/Card';
 import { OptionCard } from '@/components/primitives/OptionCard';
+import { hasTargetDefinition } from '@/data/content/targets';
 import { Text } from '@/components/primitives/Text';
 import { GOALS } from '@/domain/goals/catalog';
 import { SERVICE_BRANCH_LABELS, type GoalId, type ServiceBranch } from '@/domain/goals/types';
@@ -94,7 +95,13 @@ export default function EditGoalScreen() {
                         key={goal.id}
                         title={goal.name}
                         subtitle={goal.description}
-                        meta={goal.id === current ? 'Current' : undefined}
+                        meta={
+                          goal.id === current
+                            ? 'Current'
+                            : hasTargetDefinition(goal.id)
+                              ? 'Full target'
+                              : undefined
+                        }
                         selected={chosen === goal.id}
                         onPress={() => setSelected(goal.id)}
                       />
