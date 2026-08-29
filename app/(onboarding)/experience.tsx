@@ -33,13 +33,13 @@ export default function ExperienceScreen() {
           accessibilityHint={
             canAdvance('experience') ? undefined : 'Answer every question to continue'
           }
-          onPress={() => router.push('/baseline')}
+          onPress={() => router.push('/timeline')}
           testID="experience-continue"
         />
       }
     >
       <View style={{ gap: theme.spacing.lg }}>
-        <StepIndicator step={2} total={3} />
+        <StepIndicator step={2} total={4} />
         <Text variant="title" accessibilityRole="header">
           Your training background
         </Text>

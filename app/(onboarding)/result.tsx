@@ -15,6 +15,7 @@ import {
   PERFORMANCE_CATEGORY_LABELS,
   type PerformanceCategory,
 } from '@/domain/types';
+import { countdownLabel, countdownTo } from '@/domain/target/countdown';
 import { useOnboarding } from '@/features/onboarding/OnboardingProvider';
 import { formatPercent } from '@/lib/format';
 import { useTheme } from '@/theme';
@@ -23,7 +24,7 @@ const CAUTION_SCORE = 65;
 
 export default function ResultScreen() {
   const theme = useTheme();
-  const { outcome, submit, submitting, submitError } = useOnboarding();
+  const { draft, outcome, submit, submitting, submitError } = useOnboarding();
   const { calculation, goal, recommendation } = outcome;
   const track = findTrack(recommendation.trackId);
 
@@ -69,6 +70,16 @@ export default function ResultScreen() {
         <Text variant="title" accessibilityRole="header">
           {calculation ? 'Your starting point' : 'You are set up'}
         </Text>
+        {(() => {
+          const countdown = countdownLabel(
+            countdownTo(draft.selectionDate, new Date().toISOString()),
+          );
+          return countdown ? (
+            <Text variant="bodySm" color="accent">
+              {countdown}
+            </Text>
+          ) : null;
+        })()}
       </View>
 
       {calculation ? (

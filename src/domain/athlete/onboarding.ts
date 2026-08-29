@@ -81,7 +81,7 @@ export function computeOnboardingOutcome(draft: OnboardingDraft): OnboardingOutc
 
 // --- Step validation ---------------------------------------------------------
 
-export type OnboardingStep = 'goal' | 'experience' | 'baseline';
+export type OnboardingStep = 'goal' | 'experience' | 'timeline' | 'baseline';
 
 /** The baseline step is always satisfiable: every test can be deferred. */
 export function isStepComplete(draft: OnboardingDraft, step: OnboardingStep): boolean {
@@ -95,6 +95,10 @@ export function isStepComplete(draft: OnboardingDraft, step: OnboardingStep): bo
         draft.ruckingExperience !== null &&
         draft.trainingDaysPerWeek !== null
       );
+    case 'timeline':
+      // Optional by design: most athletes early in the process have no date,
+      // and inventing one to pass a gate would poison the countdown.
+      return true;
     case 'baseline':
       return true;
   }

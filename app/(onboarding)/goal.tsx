@@ -49,7 +49,7 @@ export default function GoalScreen() {
       }
     >
       <View style={{ gap: theme.spacing.lg }}>
-        <StepIndicator step={1} total={3} />
+        <StepIndicator step={1} total={4} />
         <Text variant="title" accessibilityRole="header">
           What are you preparing for?
         </Text>

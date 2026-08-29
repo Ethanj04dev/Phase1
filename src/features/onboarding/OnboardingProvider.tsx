@@ -30,6 +30,8 @@ interface OnboardingContextValue {
   setGoal: (goalId: GoalId) => void;
   setExperience: (field: ExperienceField, level: ExperienceLevel) => void;
   setTrainingDays: (days: number) => void;
+  /** Passing null clears it; the step is optional. */
+  setSelectionDate: (date: string | null) => void;
   /** Passing null clears the entry, which is how TEST LATER works. */
   setBaselineValue: (eventId: AssessmentEventId, value: number | null) => void;
   canAdvance: (step: OnboardingStep) => boolean;
@@ -66,6 +68,10 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
 
   const setTrainingDays = useCallback((trainingDaysPerWeek: number) => {
     setDraft((current) => ({ ...current, trainingDaysPerWeek }));
+  }, []);
+
+  const setSelectionDate = useCallback((selectionDate: string | null) => {
+    setDraft((current) => ({ ...current, selectionDate }));
   }, []);
 
   const setBaselineValue = useCallback((eventId: AssessmentEventId, value: number | null) => {
@@ -112,6 +118,7 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
         swimmingExperience: draft.swimmingExperience ?? 'none',
         ruckingExperience: draft.ruckingExperience ?? 'none',
         trainingDaysPerWeek: draft.trainingDaysPerWeek ?? 3,
+        selectionDate: draft.selectionDate,
         onboardingCompleted: false,
       });
 
@@ -167,6 +174,7 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
       setGoal,
       setExperience,
       setTrainingDays,
+      setSelectionDate,
       setBaselineValue,
       canAdvance,
       submit,
@@ -180,6 +188,7 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
       setBaselineValue,
       setExperience,
       setGoal,
+      setSelectionDate,
       setTrainingDays,
       submit,
       submitError,

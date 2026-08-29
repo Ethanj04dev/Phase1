@@ -108,6 +108,8 @@ export interface OnboardingDraft {
   swimmingExperience: ExperienceLevel | null;
   ruckingExperience: ExperienceLevel | null;
   trainingDaysPerWeek: number | null;
+  /** Optional. Most athletes early in the process do not have one yet. */
+  selectionDate: IsoDate | null;
   baseline: BaselineEntries;
 }
 
@@ -117,5 +119,6 @@ export const EMPTY_ONBOARDING_DRAFT: OnboardingDraft = {
   swimmingExperience: null,
   ruckingExperience: null,
   trainingDaysPerWeek: null,
+  selectionDate: null,
   baseline: {},
 };
