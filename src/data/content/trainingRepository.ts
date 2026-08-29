@@ -12,7 +12,7 @@ import type {
 } from '@/data/repositories/types';
 
 import { dayKey } from './buildProgram';
-import { programForTrack } from './programs';
+import { programForAthlete } from './programs';
 
 /**
  * Training repository backed by authored programme content.
@@ -58,7 +58,7 @@ export function createContentTrainingRepository(
       return { ok: false as const, error: NO_PROFILE };
     }
 
-    const built = programForTrack(profile.trackId);
+    const built = programForAthlete(profile.trackId, profile.goalId);
     const position = positionFor(profile.createdAt, now(), built.program.durationWeeks);
 
     return { ok: true as const, profile, built, position };

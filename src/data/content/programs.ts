@@ -1,6 +1,9 @@
 import type { TrainingTrackId } from '@/domain/athlete/types';
+import type { GoalId } from '@/domain/goals/types';
 
+import { adaptPlanForTarget } from './adaptPlan';
 import { buildProgram, type BuiltProgram, type TrackPlan, type WeekPlan } from './buildProgram';
+import { findTarget } from './targets';
 import {
   calisthenicsBlock,
   calisthenicsSession,
@@ -292,6 +295,38 @@ export function programForTrack(trackId: TrainingTrackId): BuiltProgram {
   if (!built) {
     throw new Error(`No programme authored for track ${trackId}`);
   }
+  return built;
+}
+
+// Adapted variants are built once per track on first use. The adaptation is
+// pure over the plan, so the cache key is only which shape came out.
+const ADAPTED_BY_TRACK = new Map<TrainingTrackId, BuiltProgram>();
+
+/**
+ * The programme this athlete actually trains.
+ *
+ * Target-aware: a Target with no swimming domain gets the land-adapted
+ * variant of its track, with every swim replaced by an easy aerobic run of
+ * the same duration. Everyone else gets the track as authored.
+ */
+export function programForAthlete(trackId: TrainingTrackId, goalId: GoalId): BuiltProgram {
+  const target = findTarget(goalId);
+  const plan = TRACK_PLANS.find((candidate) => candidate.trackId === trackId);
+  if (!plan) {
+    throw new Error(`No programme authored for track ${trackId}`);
+  }
+
+  const adapted = adaptPlanForTarget(plan, target);
+  if (adapted === plan) {
+    return programForTrack(trackId);
+  }
+
+  const cached = ADAPTED_BY_TRACK.get(trackId);
+  if (cached) {
+    return cached;
+  }
+  const built = buildProgram(adapted);
+  ADAPTED_BY_TRACK.set(trackId, built);
   return built;
 }
 
