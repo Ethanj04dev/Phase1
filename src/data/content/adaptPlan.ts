@@ -1,7 +1,7 @@
 import { findDomain, type TargetDefinition } from '@/domain/target/types';
 
 import type { DayPlan, SessionPlan, TrackPlan, WeekPlan } from './buildProgram';
-import { easyRunSession } from './sessions';
+import { easyRuckSession, easyRunSession } from './sessions';
 
 /**
  * Target-aware programme adaptation.
@@ -26,20 +26,57 @@ import { easyRunSession } from './sessions';
 /** Metres of easy running per minute, roughly a conversational 10:00 mile. */
 const EASY_RUN_METERS_PER_MINUTE = 160;
 
-function landSubstitute(swim: SessionPlan): SessionPlan {
-  const meters =
-    Math.max(16, Math.round((swim.estimatedMinutes * EASY_RUN_METERS_PER_MINUTE) / 100)) * 100;
-  return easyRunSession(meters, swim.estimatedMinutes);
+/** Metres of easy rucking per minute, roughly a 15:30 mile under light load. */
+const EASY_RUCK_METERS_PER_MINUTE = 105;
+
+/** Substitute-ruck load, deliberately below the 35lb assessment standard. */
+const EASY_RUCK_POUNDS = 25;
+
+/**
+ * How swims are replaced, decided by what the Target leans on hardest.
+ *
+ * For most land careers the swap is easy running: aerobic-for-aerobic, no
+ * added strain. Where rucking is the heaviest-weighted domain, one swim slot
+ * per week becomes an easy ruck instead -- lighter load than the assessment
+ * standard, meaningfully slower than assessed pace -- because for that
+ * career, time under the straps is the training intent the swim slot should
+ * serve. One per week, never more: this is a deliberate substitution, not a
+ * quiet spike in load-bearing volume.
+ */
+type SubstitutionStrategy = 'run_only' | 'ruck_forward';
+
+function strategyFor(target: TargetDefinition): SubstitutionStrategy {
+  const heaviest = [...target.domains].sort((a, b) => b.weight - a.weight)[0];
+  return heaviest?.id === 'rucking' ? 'ruck_forward' : 'run_only';
 }
 
-function adaptDay(day: DayPlan): DayPlan {
+function roundTo100(meters: number): number {
+  return Math.max(100, Math.round(meters / 100) * 100);
+}
+
+function runSubstitute(swim: SessionPlan): SessionPlan {
+  return easyRunSession(
+    roundTo100(swim.estimatedMinutes * EASY_RUN_METERS_PER_MINUTE),
+    swim.estimatedMinutes,
+  );
+}
+
+function ruckSubstitute(swim: SessionPlan): SessionPlan {
+  return easyRuckSession(
+    roundTo100(swim.estimatedMinutes * EASY_RUCK_METERS_PER_MINUTE),
+    EASY_RUCK_POUNDS,
+    swim.estimatedMinutes,
+  );
+}
+
+function adaptDay(day: DayPlan, substitute: (swim: SessionPlan) => SessionPlan): DayPlan {
   const sessions = day.sessions ?? [];
   if (!sessions.some((session) => session.modality === 'swimming')) {
     return day;
   }
 
   const adapted = sessions.map((session) =>
-    session.modality === 'swimming' ? landSubstitute(session) : session,
+    session.modality === 'swimming' ? substitute(session) : session,
   );
 
   return {
@@ -48,13 +85,26 @@ function adaptDay(day: DayPlan): DayPlan {
     // actually contains rather than leaving a label that lies.
     title: adapted.map((session) => session.title).join(' + '),
     description:
-      'Adapted for a land-focused target: easy aerobic running replaces the swim at the same duration.',
+      'Adapted for a land-focused target: easy aerobic work on foot replaces the swim at the same duration.',
     sessions: adapted,
   };
 }
 
-function adaptWeek(week: WeekPlan): WeekPlan {
-  return { ...week, days: week.days.map(adaptDay) };
+function adaptWeek(week: WeekPlan, strategy: SubstitutionStrategy): WeekPlan {
+  // The one-per-week budget for the ruck substitute. Spent on the first swim
+  // slot of the week; every later swim that week becomes a run.
+  let ruckBudget = strategy === 'ruck_forward' ? 1 : 0;
+
+  const days = week.days.map((day) => {
+    const hasSwim = (day.sessions ?? []).some((session) => session.modality === 'swimming');
+    if (hasSwim && ruckBudget > 0) {
+      ruckBudget -= 1;
+      return adaptDay(day, ruckSubstitute);
+    }
+    return adaptDay(day, runSubstitute);
+  });
+
+  return { ...week, days };
 }
 
 /** True when this athlete's programme should keep its swim sessions. */
@@ -68,15 +118,17 @@ export function adaptPlanForTarget(
   plan: TrackPlan,
   target: TargetDefinition | undefined,
 ): TrackPlan {
-  if (planKeepsSwimming(target)) {
+  if (planKeepsSwimming(target) || target === undefined) {
     // Same reference, not a copy: callers and tests can tell "unchanged"
     // from "rebuilt identically".
     return plan;
   }
 
+  const strategy = strategyFor(target);
+
   return {
     ...plan,
-    description: `${plan.description} Adapted for a land-focused target: swims are replaced with easy aerobic running.`,
-    weeks: plan.weeks.map(adaptWeek),
+    description: `${plan.description} Adapted for a land-focused target: swims are replaced with easy aerobic work on foot.`,
+    weeks: plan.weeks.map((week) => adaptWeek(week, strategy)),
   };
 }

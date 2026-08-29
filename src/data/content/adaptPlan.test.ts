@@ -1,5 +1,7 @@
-import { programForAthlete, programForTrack } from './programs';
+import { RUCK_ASSESSMENT_LOAD_POUNDS } from '@/domain/assessment/types';
 import type { ResolvedWorkoutDay } from '@/domain/training/types';
+
+import { programForAthlete, programForTrack } from './programs';
 
 function allDays(program: ReturnType<typeof programForTrack>): ResolvedWorkoutDay[] {
   return [...program.days.values()];
@@ -52,18 +54,65 @@ describe('target-aware programme adaptation', () => {
     }
   });
 
-  it('substitutes aerobic for aerobic, never adding load-bearing volume', () => {
-    const baseDays = allDays(base);
-    const rangerDays = allDays(ranger);
-    for (let index = 0; index < baseDays.length; index += 1) {
-      const original = baseDays[index];
-      const adapted = rangerDays[index];
-      if (!original || !adapted) continue;
+  // Ranger's heaviest domain is rucking, so its substitution is ruck-forward:
+  // one swim slot per week becomes an easy ruck, the rest become runs. The
+  // budget is the contract -- a deliberate substitution, never a quiet spike
+  // in load-bearing volume.
+  it('spends at most one ruck substitute per week, and runs for the rest', () => {
+    for (const [key, adapted] of ranger.days.entries()) {
+      const original = base.days.get(key);
+      if (!original) continue;
+      let rucksAdded = 0;
       for (let s = 0; s < original.sessions.length; s += 1) {
-        if (original.sessions[s]?.modality === 'swimming') {
-          expect(adapted.sessions[s]?.modality).toBe('running');
+        const from = original.sessions[s]?.modality;
+        const to = adapted.sessions[s]?.modality;
+        if (from === 'swimming') {
+          expect(['running', 'rucking']).toContain(to);
+          if (to === 'rucking') rucksAdded += 1;
         } else {
-          expect(adapted.sessions[s]?.modality).toBe(original.sessions[s]?.modality);
+          expect(to).toBe(from);
+        }
+      }
+      // Per-day check; the weekly budget is asserted below.
+      expect(rucksAdded).toBeLessThanOrEqual(1);
+    }
+
+    // Weekly budget: group by week number from the day key.
+    const addedPerWeek = new Map<string, number>();
+    for (const [key, adapted] of ranger.days.entries()) {
+      const original = base.days.get(key);
+      if (!original) continue;
+      const week = key.split(':')[0] ?? '';
+      for (let s = 0; s < original.sessions.length; s += 1) {
+        if (
+          original.sessions[s]?.modality === 'swimming' &&
+          adapted.sessions[s]?.modality === 'rucking'
+        ) {
+          addedPerWeek.set(week, (addedPerWeek.get(week) ?? 0) + 1);
+        }
+      }
+    }
+    expect(addedPerWeek.size).toBeGreaterThan(0);
+    for (const count of addedPerWeek.values()) {
+      expect(count).toBeLessThanOrEqual(1);
+    }
+  });
+
+  it('keeps every substituted ruck below the assessment load and off assessed pace', () => {
+    for (const [key, adapted] of ranger.days.entries()) {
+      const original = base.days.get(key);
+      if (!original) continue;
+      for (let s = 0; s < original.sessions.length; s += 1) {
+        if (
+          original.sessions[s]?.modality === 'swimming' &&
+          adapted.sessions[s]?.modality === 'rucking'
+        ) {
+          for (const block of adapted.sessions[s]?.blocks ?? []) {
+            if (block.kind !== 'ruck') continue;
+            expect(block.loadPounds).toBeLessThan(RUCK_ASSESSMENT_LOAD_POUNDS);
+            // Eased pace: meaningfully slower than the assessed ruck pace.
+            expect(block.target?.factor ?? 1).toBeGreaterThan(1.05);
+          }
         }
       }
     }

@@ -111,6 +111,23 @@ export function ruckBlock(meters: number, pounds: number): BlockPlan {
   };
 }
 
+/**
+ * A recovery-pace ruck. Meaningfully slower than the assessed pace and under
+ * lighter load, because this block exists as a conservative substitute --
+ * extra time under the straps, not extra strain.
+ */
+export function easyRuckBlock(meters: number, pounds: number): BlockPlan {
+  return {
+    kind: 'ruck',
+    name: 'Easy ruck',
+    distanceMeters: meters,
+    loadPounds: pounds,
+    // 12% slower than the athlete's assessed ruck pace, wide tolerance.
+    target: { basis: 'ruck_pace', factor: 1.12, toleranceSeconds: 90 },
+    notes: 'Conversational effort under the straps. This is aerobic time, not a pace piece.',
+  };
+}
+
 export function calisthenicsBlock(
   name: string,
   sets: number,
@@ -198,6 +215,15 @@ export function ruckSession(meters: number, pounds: number, minutes: number): Se
     title: 'Ruck',
     estimatedMinutes: minutes,
     blocks: [ruckBlock(meters, pounds)],
+  };
+}
+
+export function easyRuckSession(meters: number, pounds: number, minutes: number): SessionPlan {
+  return {
+    modality: 'rucking',
+    title: 'Easy Ruck',
+    estimatedMinutes: minutes,
+    blocks: [easyRuckBlock(meters, pounds)],
   };
 }
 
