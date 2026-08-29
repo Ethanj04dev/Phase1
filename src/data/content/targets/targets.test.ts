@@ -3,7 +3,7 @@ import { PREPARATION_DOMAINS, preparationDomain } from '@/domain/target/domains'
 import { isVerified, type Verified } from '@/domain/target/provenance';
 import { domainWeightsSumToOne, findDomain } from '@/domain/target/types';
 
-import { findTarget, hasTargetDefinition, PARARESCUE, TARGETS } from './index';
+import { findTarget, hasTargetDefinition, PARARESCUE, RANGER, TARGETS } from './index';
 
 /**
  * Content tests.
@@ -197,6 +197,33 @@ describe('strength stays unscored until it can be measured safely', () => {
   it('says why in its rationale', () => {
     const strength = findDomain(PARARESCUE, 'strength');
     expect(strength?.rationale.toLowerCase()).toContain('maximal');
+  });
+});
+
+describe('ranger models the no-water path', () => {
+  // The brief's own example: a Ranger candidate is never scored on swimming.
+  it('defines no water domains at all', () => {
+    expect(findDomain(RANGER, 'swimming')).toBeUndefined();
+    expect(findDomain(RANGER, 'water_confidence')).toBeUndefined();
+  });
+
+  it('weights load carriage heaviest', () => {
+    const weights = RANGER.domains.map((domain) => domain.weight);
+    expect(findDomain(RANGER, 'rucking')?.weight).toBe(Math.max(...weights));
+  });
+
+  // An empty list is a different claim from an unverified entry: no standard
+  // is on file, rather than a known standard awaiting a citation.
+  it('asserts no official standards rather than unverified ones', () => {
+    expect(RANGER.officialStandards).toHaveLength(0);
+  });
+
+  it('explains the absence of water scoring in its own words', () => {
+    const article = RANGER.intel.find((entry) => entry.id === 'no_swim');
+    expect(article).toBeDefined();
+    const text = (article?.body ?? []).join(' ').toLowerCase();
+    expect(text).toContain('swimming');
+    expect(text).toContain('breath-hold');
   });
 });
 

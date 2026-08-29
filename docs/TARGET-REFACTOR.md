@@ -159,6 +159,8 @@ helps.
 
 ## Carried over, still open
 
+Ranger is the second modelled Target, landed with zero application changes — the proof of the definition-not-application promise. Its athletes are never scored on water, its Fitness screen reads "no official standard on file" rather than "verification required" because none is asserted, and the generic content test suites ran their full battery over it automatically.
+
 The Supabase two-account isolation test is unfinished. This refactor does not
 block it, and it stays outstanding: no athlete data should reach real users
 until it passes.

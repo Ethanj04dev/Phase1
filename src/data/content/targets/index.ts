@@ -1,6 +1,7 @@
 import type { TargetDefinition, TargetId } from '@/domain/target/types';
 
 import { PARARESCUE } from './pararescue';
+import { RANGER } from './ranger';
 
 /**
  * The Target catalog.
@@ -9,12 +10,12 @@ import { PARARESCUE } from './pararescue';
  * If a new Target needs application changes, the model is wrong and the model
  * is what should change.
  *
- * Only Pararescue is modelled so far. The remaining careers still run on the
- * legacy goal catalog until the architecture is proven on this one, which is
- * deliberate: getting one Target genuinely right is worth more than thirteen
- * shallow ones.
+ * Pararescue proved the model; Ranger proved the promise, landing without a
+ * single application change and exercising the no-water path end to end. The
+ * remaining careers still run on the legacy goal catalog until each gets a
+ * definition worth shipping: one genuinely right beats thirteen shallow.
  */
-export const TARGETS: readonly TargetDefinition[] = [PARARESCUE];
+export const TARGETS: readonly TargetDefinition[] = [PARARESCUE, RANGER];
 
 const TARGETS_BY_ID = new Map<TargetId, TargetDefinition>(
   TARGETS.map((target) => [target.id, target]),
@@ -29,4 +30,4 @@ export function hasTargetDefinition(id: TargetId): boolean {
   return TARGETS_BY_ID.has(id);
 }
 
-export { PARARESCUE };
+export { PARARESCUE, RANGER };
