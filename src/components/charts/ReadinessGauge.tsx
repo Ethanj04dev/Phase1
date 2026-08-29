@@ -1,8 +1,15 @@
-import { View } from 'react-native';
+import { useEffect } from 'react';
+import { Platform, View } from 'react-native';
+import Animated, {
+  useAnimatedProps,
+  useSharedValue,
+  withDelay,
+  withTiming,
+} from 'react-native-reanimated';
 import Svg, { Line, Path } from 'react-native-svg';
 
 import { Text } from '@/components/primitives/Text';
-import { useTheme } from '@/theme';
+import { darkTheme, useTheme } from '@/theme';
 
 import {
   GAUGE_START_DEGREES,
@@ -22,6 +29,39 @@ export interface ReadinessGaugeProps {
   /** Rendered size in points. */
   size?: number;
   accessibilityLabel: string;
+}
+
+const AnimatedPath = Animated.createAnimatedComponent(Path);
+
+/**
+ * The draw-in: the score stroke sweeps from nothing to its reading once on
+ * mount, like a needle settling. Implemented as a dash the length of the arc
+ * whose offset animates to zero, on the UI thread.
+ *
+ * Native only. The Reanimated-to-SVG bridge on web is not something this
+ * product has verified, and a broken signature animation is worse than a
+ * still instrument; web renders the finished state.
+ */
+const DRAW_IN_ENABLED = Platform.OS !== 'web';
+
+function useDrawIn(pathLength: number) {
+  const offset = useSharedValue(DRAW_IN_ENABLED ? pathLength : 0);
+
+  useEffect(() => {
+    if (!DRAW_IN_ENABLED) {
+      return;
+    }
+    offset.value = pathLength;
+    offset.value = withDelay(
+      120,
+      withTiming(0, {
+        duration: darkTheme.motion.duration.reveal,
+        easing: darkTheme.motion.easing.entrance,
+      }),
+    );
+  }, [offset, pathLength]);
+
+  return useAnimatedProps(() => ({ strokeDashoffset: offset.value }));
 }
 
 const VIEWBOX = 100;
@@ -58,6 +98,11 @@ export function ReadinessGauge({
   const fillPath = gaugeArcPath(CENTER, RADIUS, GAUGE_START_DEGREES, arcs.scoreSweep);
   const ticks = gapTickAngles(arcs.gapSweep);
 
+  // Arc length in viewBox units, for the draw-in dash. Padded slightly so
+  // rounding never leaves a hairline of dash visible at rest.
+  const fillLength = (2 * Math.PI * RADIUS * arcs.scoreSweep) / 360 + 2;
+  const drawIn = useDrawIn(fillLength);
+
   return (
     <View
       accessibilityRole="image"
@@ -71,12 +116,14 @@ export function ReadinessGauge({
           on the live data stroke — never on text.
         */}
         {fillPath ? (
-          <Path
+          <AnimatedPath
             d={fillPath}
             stroke={theme.colors.glowAccent}
             strokeWidth={STROKE * 2.2}
             strokeLinecap="round"
             fill="none"
+            strokeDasharray={fillLength}
+            animatedProps={drawIn}
           />
         ) : null}
 
@@ -91,12 +138,14 @@ export function ReadinessGauge({
           />
         ) : null}
         {fillPath ? (
-          <Path
+          <AnimatedPath
             d={fillPath}
             stroke={theme.colors.accent}
             strokeWidth={STROKE}
             strokeLinecap="round"
             fill="none"
+            strokeDasharray={fillLength}
+            animatedProps={drawIn}
           />
         ) : null}
 

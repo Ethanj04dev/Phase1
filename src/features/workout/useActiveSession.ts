@@ -289,6 +289,11 @@ export function useActiveSession(dayId: string | undefined) {
       return null;
     }
 
+    // Session complete is the state change of the day. One notification-grade
+    // haptic, per the rule: meaningful changes only, never decoration.
+    if (Platform.OS !== 'web') {
+      void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    }
     setState((current) => ({ ...current, saving: false, session: null }));
     return completed.value;
   }, [state.session, workout]);
