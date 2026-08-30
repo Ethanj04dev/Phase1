@@ -1,5 +1,7 @@
 import type { AssessmentEventId, AssessmentResult } from '@/domain/assessment/types';
 import type { AthleteProfile, TrainingTrackId } from '@/domain/athlete/types';
+import type { StateCode } from '@/domain/candidate/states';
+import type { CandidateProfile, CandidateVisibility } from '@/domain/candidate/types';
 import type { GoalId } from '@/domain/goals/types';
 import type { ReadinessSnapshot, PipelineReadinessRecord } from '@/domain/readiness/types';
 import type { PreparationDomainId, ProficiencyLevel } from '@/domain/pipeline/domains';
@@ -48,6 +50,38 @@ export function toAthleteProfile(row: AthleteProfileRow): AthleteProfile {
     trainingDaysPerWeek: row.training_days_per_week,
     selectionDate: row.selection_date,
     onboardingCompleted: row.onboarding_completed,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
+}
+
+export interface CandidateProfileRow {
+  id: string;
+  user_id: string;
+  handle: string;
+  display_handle: string;
+  display_name: string | null;
+  pipeline_id: string;
+  state_code: string | null;
+  visibility: string;
+  bio: string | null;
+  avatar_url: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export function toCandidateProfile(row: CandidateProfileRow): CandidateProfile {
+  return {
+    id: row.id,
+    userId: row.user_id,
+    handle: row.handle,
+    displayHandle: row.display_handle,
+    displayName: row.display_name,
+    pipelineId: row.pipeline_id as GoalId,
+    stateCode: (row.state_code as StateCode | null) ?? null,
+    visibility: row.visibility as CandidateVisibility,
+    bio: row.bio,
+    avatarUrl: row.avatar_url,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };

@@ -17,7 +17,9 @@ export default function SettingsLayout() {
         contentStyle: { backgroundColor: darkTheme.colors.background },
       }}
     >
-      <Stack.Screen name="goal" options={{ title: 'Objective' }} />
+      <Stack.Screen name="index" options={{ title: 'Settings' }} />
+      <Stack.Screen name="identity" options={{ title: 'Identity' }} />
+      <Stack.Screen name="goal" options={{ title: 'Pipeline' }} />
       <Stack.Screen name="track" options={{ title: 'Training track' }} />
       <Stack.Screen name="training" options={{ title: 'Training background' }} />
       <Stack.Screen name="selection-date" options={{ title: 'Selection date' }} />

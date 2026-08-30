@@ -17,6 +17,9 @@ import {
   type OnboardingStep,
 } from '@/domain/athlete/onboarding';
 import { EMPTY_ONBOARDING_DRAFT, type OnboardingDraft } from '@/domain/athlete/types';
+import { validateHandle } from '@/domain/candidate/handle';
+import type { StateCode } from '@/domain/candidate/states';
+import type { CandidateVisibility } from '@/domain/candidate/types';
 import type { ExperienceLevel } from '@/domain/types';
 import type { GoalId } from '@/domain/goals/types';
 import { recordReadinessSnapshot } from '@/features/readiness/recordSnapshot';
@@ -28,6 +31,10 @@ interface OnboardingContextValue {
   /** Live preview of the readiness and track the draft would produce. */
   outcome: OnboardingOutcome;
   setGoal: (goalId: GoalId) => void;
+  setHandleInput: (handle: string) => void;
+  /** Passing null clears it; declaring a state is optional. */
+  setStateCode: (stateCode: StateCode | null) => void;
+  setVisibility: (visibility: CandidateVisibility) => void;
   setExperience: (field: ExperienceField, level: ExperienceLevel) => void;
   setTrainingDays: (days: number) => void;
   /** Passing null clears it; the step is optional. */
@@ -51,7 +58,7 @@ const OnboardingContext = createContext<OnboardingContextValue | null>(null);
  * is written until the athlete confirms on the final screen.
  */
 export function OnboardingProvider({ children }: { children: ReactNode }) {
-  const { athlete, assessment, proficiency, readiness, training } = useRepositories();
+  const { athlete, assessment, candidate, proficiency, readiness, training } = useRepositories();
   const [draft, setDraft] = useState<OnboardingDraft>(EMPTY_ONBOARDING_DRAFT);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -60,6 +67,18 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
 
   const setGoal = useCallback((goalId: GoalId) => {
     setDraft((current) => ({ ...current, goalId }));
+  }, []);
+
+  const setHandleInput = useCallback((handleInput: string) => {
+    setDraft((current) => ({ ...current, handleInput }));
+  }, []);
+
+  const setStateCode = useCallback((stateCode: StateCode | null) => {
+    setDraft((current) => ({ ...current, stateCode }));
+  }, []);
+
+  const setVisibility = useCallback((visibility: CandidateVisibility) => {
+    setDraft((current) => ({ ...current, visibility }));
   }, []);
 
   const setExperience = useCallback((field: ExperienceField, level: ExperienceLevel) => {
@@ -141,6 +160,29 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
         }
       }
 
+      // The competitive identity, created alongside the training profile.
+      // Validated again here rather than trusted from the step gate, so a
+      // future screen reordering cannot smuggle an unvalidated handle through.
+      const validated = validateHandle(draft.handleInput);
+      if (!validated.ok) {
+        setSubmitError(validated.message);
+        return false;
+      }
+      const identity = await candidate.create({
+        handle: validated.handle,
+        displayHandle: validated.displayHandle,
+        displayName: null,
+        pipelineId: goal.id,
+        stateCode: draft.stateCode,
+        visibility: draft.visibility,
+        bio: null,
+        avatarUrl: null,
+      });
+      if (!identity.ok) {
+        setSubmitError(identity.error.message);
+        return false;
+      }
+
       // Recorded after the baseline results are written, so the first
       // snapshot scores the athlete as they actually are rather than as they
       // were a moment before they told us anything.
@@ -165,13 +207,16 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
     } finally {
       setSubmitting(false);
     }
-  }, [assessment, athlete, draft, proficiency, readiness, training]);
+  }, [assessment, athlete, candidate, draft, proficiency, readiness, training]);
 
   const value = useMemo(
     () => ({
       draft,
       outcome,
       setGoal,
+      setHandleInput,
+      setStateCode,
+      setVisibility,
       setExperience,
       setTrainingDays,
       setSelectionDate,
@@ -188,8 +233,11 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
       setBaselineValue,
       setExperience,
       setGoal,
+      setHandleInput,
       setSelectionDate,
+      setStateCode,
       setTrainingDays,
+      setVisibility,
       submit,
       submitError,
       submitting,

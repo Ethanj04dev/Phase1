@@ -21,6 +21,12 @@ export function formatDateStamp(date: Date): string {
   return `${month} ${String(date.getDate()).padStart(2, '0')}`;
 }
 
+/** Month-and-year stamp, e.g. "AUG 2026". For durable facts like "since". */
+export function formatMonthYear(date: Date): string {
+  const month = MONTHS[date.getMonth()] ?? '---';
+  return `${month} ${date.getFullYear()}`;
+}
+
 /**
  * Clock format for durations. Under an hour reads "9:28"; an hour or more
  * reads "1:04:12". Negative or non-finite input renders as a dash placeholder.

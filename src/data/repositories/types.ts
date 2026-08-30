@@ -1,5 +1,6 @@
 import type { AssessmentEventId, AssessmentResult } from '@/domain/assessment/types';
 import type { AthleteProfile } from '@/domain/athlete/types';
+import type { CandidateProfile } from '@/domain/candidate/types';
 import type { MilestoneCompletion } from '@/domain/pipeline/milestones';
 import type {
   NewProficiencyRating,
@@ -41,6 +42,36 @@ export interface AthleteRepository {
     id: Uuid,
     patch: Partial<Omit<AthleteProfile, 'id' | 'userId' | 'createdAt'>>,
   ): Promise<Result<AthleteProfile>>;
+}
+
+/** Fields identity setup supplies. Ids and timestamps are the repository's job. */
+export type NewCandidateProfile = Omit<
+  CandidateProfile,
+  'id' | 'userId' | 'createdAt' | 'updatedAt'
+>;
+
+/**
+ * The candidate's competitive identity, separate from the athlete's training
+ * configuration on purpose: the two change for different reasons and carry
+ * different privacy rules.
+ */
+export interface CandidateRepository {
+  getMine(): Promise<Result<CandidateProfile | null>>;
+  /**
+   * Claims a handle and creates the profile. Fails with code 'conflict' when
+   * the handle was taken between the availability check and the write —
+   * uniqueness is enforced where the data lives, not in the UI.
+   */
+  create(input: NewCandidateProfile): Promise<Result<CandidateProfile>>;
+  update(
+    id: Uuid,
+    patch: Partial<Omit<CandidateProfile, 'id' | 'userId' | 'createdAt' | 'updatedAt'>>,
+  ): Promise<Result<CandidateProfile>>;
+  /**
+   * Whether a normalized handle is free to claim. Advisory only — the answer
+   * can go stale before create() runs, which is why create() can conflict.
+   */
+  isHandleAvailable(handle: string): Promise<Result<boolean>>;
 }
 
 export interface ReadinessRepository {
@@ -176,6 +207,7 @@ export interface WorkoutRepository {
 export interface Repositories {
   athlete: AthleteRepository;
   assessment: AssessmentRepository;
+  candidate: CandidateRepository;
   milestone: MilestoneRepository;
   proficiency: ProficiencyRepository;
   readiness: ReadinessRepository;

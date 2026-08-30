@@ -39,7 +39,7 @@ export default function ExperienceScreen() {
       }
     >
       <View style={{ gap: theme.spacing.lg }}>
-        <StepIndicator step={2} total={4} />
+        <StepIndicator step={3} total={5} />
         <Text variant="title" accessibilityRole="header">
           Your training background
         </Text>

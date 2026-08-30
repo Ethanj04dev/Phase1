@@ -11,6 +11,8 @@ import { hasPipelineDefinition } from '@/data/content/pipelines';
 import { Text } from '@/components/primitives/Text';
 import { GOALS } from '@/domain/goals/catalog';
 import { SERVICE_BRANCH_LABELS, type GoalId, type ServiceBranch } from '@/domain/goals/types';
+import { useRepositories } from '@/data/repositoryContext';
+import { syncCandidatePipeline } from '@/features/candidate/syncCandidatePipeline';
 import { useAthleteProfile, useUpdateProfile } from '@/features/settings/useProfileSettings';
 import { useTheme } from '@/theme';
 import { goBack } from '@/lib/navigation';
@@ -25,9 +27,11 @@ const BRANCH_ORDER: readonly ServiceBranch[] = [
 
 export default function EditGoalScreen() {
   const theme = useTheme();
+  const { candidate } = useRepositories();
   const { state, reload } = useAthleteProfile();
   const { update, saving, error } = useUpdateProfile();
   const [selected, setSelected] = useState<GoalId | null>(null);
+  const [syncError, setSyncError] = useState<string | null>(null);
 
   const current = state.status === 'success' ? (state.data?.goalId ?? null) : null;
   const chosen = selected ?? current;
@@ -35,10 +39,19 @@ export default function EditGoalScreen() {
 
   const handleSave = async () => {
     if (!chosen) return;
+    setSyncError(null);
     const updated = await update({ goalId: chosen });
-    if (updated) {
-      goBack('/profile');
+    if (!updated) {
+      return;
     }
+    // The candidate identity carries the same pipeline. One account, one
+    // history: changing pipeline updates it in place rather than forking.
+    const synced = await syncCandidatePipeline(candidate, chosen);
+    if (!synced.ok) {
+      setSyncError(synced.error.message);
+      return;
+    }
+    goBack('/profile');
   };
 
   return (
@@ -52,9 +65,9 @@ export default function EditGoalScreen() {
       }}
       footer={
         <View style={{ gap: theme.spacing.md }}>
-          {error ? (
+          {error || syncError ? (
             <Text variant="caption" color="statusOffTarget">
-              {error}
+              {error ?? syncError}
             </Text>
           ) : null}
           <Button

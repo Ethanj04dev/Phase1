@@ -1,4 +1,5 @@
 import type { AssessmentEventId, AssessmentResult } from '@/domain/assessment/types';
+import { validateHandle } from '@/domain/candidate/handle';
 import { getGoalOrDefault } from '@/domain/goals/catalog';
 import type { Goal } from '@/domain/goals/types';
 import { calculateReadiness } from '@/domain/readiness/score';
@@ -81,13 +82,17 @@ export function computeOnboardingOutcome(draft: OnboardingDraft): OnboardingOutc
 
 // --- Step validation ---------------------------------------------------------
 
-export type OnboardingStep = 'goal' | 'experience' | 'timeline' | 'baseline';
+export type OnboardingStep = 'goal' | 'identity' | 'experience' | 'timeline' | 'baseline';
 
 /** The baseline step is always satisfiable: every test can be deferred. */
 export function isStepComplete(draft: OnboardingDraft, step: OnboardingStep): boolean {
   switch (step) {
     case 'goal':
       return draft.goalId !== null;
+    case 'identity':
+      // A valid handle is the one hard requirement. State is optional and
+      // visibility always holds a value.
+      return validateHandle(draft.handleInput).ok;
     case 'experience':
       return (
         draft.runningExperience !== null &&

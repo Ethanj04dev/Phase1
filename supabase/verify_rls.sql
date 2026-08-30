@@ -10,6 +10,7 @@
 with expected as (
   select unnest(array[
     'athlete_profiles',
+    'candidate_profiles',
     'assessment_results',
     'proficiency_ratings',
     'milestone_completions',
@@ -87,9 +88,24 @@ from information_schema.role_table_grants
 where grantee = 'anon'
   and table_schema = 'public'
   and table_name in (
-    'athlete_profiles','assessment_results','readiness_scores',
-    'workout_results','exercise_results'
+    'athlete_profiles','candidate_profiles','assessment_results',
+    'readiness_scores','workout_results','exercise_results'
   );
+
+-- 6. The public candidate view must expose only the agreed identity columns.
+--    A new column appearing here is a privacy decision, not a refactor.
+select
+  'public_candidate_profiles columns' as check_name,
+  case
+    when count(*) = 0 then 'FAIL — view missing'
+    when array_agg(column_name::text order by column_name) =
+         array['created_at','display_handle','display_name','handle','id','pipeline_id','state_code']
+      then 'PASS'
+    else 'FAIL — columns are ' || string_agg(column_name::text, ', ' order by column_name)
+  end as result
+from information_schema.columns
+where table_schema = 'public'
+  and table_name = 'public_candidate_profiles';
 
 -- 5. The ownership helper must be SECURITY DEFINER, or the policies that call
 --    it cannot read athlete_profiles to resolve ownership.

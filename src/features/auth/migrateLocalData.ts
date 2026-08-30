@@ -4,12 +4,20 @@ import { readRecord, StorageKeys } from '@/data/local/storage';
 import { createSupabaseRepositories } from '@/data/supabase/supabaseRepositories';
 import type { AssessmentResult } from '@/domain/assessment/types';
 import type { AthleteProfile } from '@/domain/athlete/types';
+import type { CandidateProfile } from '@/domain/candidate/types';
 import type { ReadinessSnapshot } from '@/domain/readiness/types';
 import type { WorkoutResult } from '@/domain/training/types';
 
 export interface MigrationOutcome {
   migrated: boolean;
   profile: boolean;
+  candidate: boolean;
+  /**
+   * Set when the locally chosen handle was already claimed by someone else.
+   * The rest of the migration still succeeds; the athlete picks a new handle
+   * from the profile screen. Losing a handle race must not cost the history.
+   */
+  handleConflict: boolean;
   assessments: number;
   snapshots: number;
   workouts: number;
@@ -19,6 +27,8 @@ export interface MigrationOutcome {
 const NOTHING_TO_DO: MigrationOutcome = {
   migrated: false,
   profile: false,
+  candidate: false,
+  handleConflict: false,
   assessments: 0,
   snapshots: 0,
   workouts: 0,
@@ -76,6 +86,33 @@ export async function migrateLocalData(client: SupabaseClient): Promise<Migratio
   const athleteId = created.value.id;
 
   const outcome: MigrationOutcome = { ...NOTHING_TO_DO, migrated: true, profile: true };
+
+  // The candidate identity travels with the training data. A handle that was
+  // free on-device can be taken by the time the account exists; that is a
+  // conflict to surface, never a reason to drop the athlete's history.
+  const localCandidate = await readRecord<CandidateProfile>(StorageKeys.candidateProfile);
+  if (localCandidate.ok && localCandidate.value) {
+    const existingCandidate = await repositories.candidate.getMine();
+    if (existingCandidate.ok && !existingCandidate.value) {
+      const claimed = await repositories.candidate.create({
+        handle: localCandidate.value.handle,
+        displayHandle: localCandidate.value.displayHandle,
+        displayName: localCandidate.value.displayName,
+        pipelineId: localCandidate.value.pipelineId,
+        stateCode: localCandidate.value.stateCode,
+        visibility: localCandidate.value.visibility,
+        bio: localCandidate.value.bio,
+        avatarUrl: null,
+      });
+      if (claimed.ok) {
+        outcome.candidate = true;
+      } else if (claimed.error.code === 'conflict') {
+        outcome.handleConflict = true;
+      } else {
+        return { ...outcome, error: 'Your candidate identity could not be transferred.' };
+      }
+    }
+  }
 
   const localResults = await readRecord<AssessmentResult[]>(StorageKeys.assessmentResults);
   if (localResults.ok && localResults.value?.length) {

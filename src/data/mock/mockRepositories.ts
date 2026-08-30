@@ -1,5 +1,6 @@
 import type { AssessmentResult } from '@/domain/assessment/types';
 import type { AthleteProfile } from '@/domain/athlete/types';
+import type { CandidateProfile } from '@/domain/candidate/types';
 import { getGoalOrDefault } from '@/domain/goals/catalog';
 import { calculateReadiness, calculateTrend } from '@/domain/readiness/score';
 import type { ReadinessSnapshot } from '@/domain/readiness/types';
@@ -10,6 +11,7 @@ import { ok, type Result } from '@/domain/types';
 import type {
   AssessmentRepository,
   AthleteRepository,
+  CandidateRepository,
   MilestoneRepository,
   ProficiencyRepository,
   ReadinessRepository,
@@ -188,6 +190,51 @@ const readiness: ReadinessRepository = {
     }),
 };
 
+// --- Candidate ---------------------------------------------------------------
+
+const demoCandidate: CandidateProfile = {
+  id: 'mock-candidate',
+  userId: demoProfile.userId,
+  handle: 'demo_candidate',
+  displayHandle: 'Demo_Candidate',
+  displayName: null,
+  pipelineId: demoProfile.goalId,
+  stateCode: 'FL',
+  visibility: 'private',
+  bio: null,
+  avatarUrl: null,
+  createdAt: demoProfile.createdAt,
+  updatedAt: demoProfile.createdAt,
+};
+
+let candidateProfile: CandidateProfile | null = { ...demoCandidate };
+
+const candidate: CandidateRepository = {
+  getMine: () => delayed<CandidateProfile | null>(candidateProfile),
+  create: (input) => {
+    candidateProfile = {
+      ...input,
+      id: demoCandidate.id,
+      userId: demoCandidate.userId,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+    return delayed(candidateProfile);
+  },
+  update: (id, patch) => {
+    candidateProfile = {
+      ...(candidateProfile ?? demoCandidate),
+      ...patch,
+      id,
+      updatedAt: new Date().toISOString(),
+    };
+    return delayed(candidateProfile);
+  },
+  isHandleAvailable: (handle) =>
+    // A deterministic taken handle so the availability UI can be exercised.
+    delayed(handle !== 'taken'),
+};
+
 // Programme content is authored and shared by every implementation; only the
 // athlete's position in it differs. There is no mock version to maintain.
 const workout: WorkoutRepository = createInMemoryWorkoutRepository();
@@ -200,6 +247,7 @@ const training: TrainingRepository = createContentTrainingRepository(
 export const mockRepositories: Repositories = {
   athlete,
   assessment,
+  candidate,
   milestone,
   proficiency,
   readiness,
@@ -210,6 +258,7 @@ export const mockRepositories: Repositories = {
 /** Restores demo state. Used by tests and by the developer reset action. */
 export function resetMockRepositories(): void {
   profile = { ...demoProfile };
+  candidateProfile = { ...demoCandidate };
   extraResults = [];
   extraRatings = [];
   extraMilestones = [];

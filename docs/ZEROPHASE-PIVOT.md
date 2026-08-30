@@ -322,12 +322,14 @@ New, because rankings raise the stakes:
 Each milestone ships runnable with gates green, per house rules. Brief's V1
 priorities (§20) are covered by M0–M4.
 
-- **M0 — Rebrand and reframe (small).** Branding file, app.json, docs, new
-  tab skeleton with placeholder Rankings/Test/Community screens that say
-  what is coming. Target → Pipeline rename in code. Nothing deleted yet.
-- **M1 — Candidate identity.** Handle claim (unique, moderated wordlist),
-  state, visibility; `candidate_profiles` table + migration; profile screen
-  reshaped into the résumé (self-reported data, clearly labelled).
+- **M0 — Rebrand and reframe (small). *(complete)*** Branding file, app.json,
+  docs, new tab skeleton with placeholder Rankings/Test/Community screens that
+  say what is coming. Target → Pipeline rename in code (M0b). Nothing deleted
+  yet.
+- **M1 — Candidate identity. *(complete — awaiting owner review)*** Handle
+  claim (unique, moderated wordlist), state, visibility; `candidate_profiles`
+  table + migration 0006; profile screen reshaped into the résumé
+  (self-reported data, clearly labelled).
 - **M2 — Attempts and the score.** `assessment_attempts` + `event_results`
   migration; Test tab from test-day flow; ScoringConfig + Zero Score engine
   (pure, tested, versioned) computing *preview* scores from self-reported

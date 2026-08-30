@@ -25,6 +25,7 @@ const KEY_PREFIX = 'phase1';
 
 export const StorageKeys = {
   athleteProfile: `${KEY_PREFIX}:athlete_profile`,
+  candidateProfile: `${KEY_PREFIX}:candidate_profile`,
   assessmentResults: `${KEY_PREFIX}:assessment_results`,
   milestoneCompletions: `${KEY_PREFIX}:milestone_completions`,
   proficiencyRatings: `${KEY_PREFIX}:proficiency_ratings`,

@@ -1,4 +1,6 @@
 import type { AssessmentEventId } from '@/domain/assessment/types';
+import type { StateCode } from '@/domain/candidate/states';
+import type { CandidateVisibility } from '@/domain/candidate/types';
 import type { GoalId } from '@/domain/goals/types';
 import type { ExperienceLevel, IsoDate, IsoDateTime, Uuid } from '@/domain/types';
 
@@ -104,6 +106,15 @@ export type BaselineEntries = Partial<Record<AssessmentEventId, number>>;
  */
 export interface OnboardingDraft {
   goalId: GoalId | null;
+  /**
+   * The handle exactly as typed, casing and all. Normalization and validation
+   * are the identity step's job; the draft keeps what the candidate wrote so
+   * going back shows their own text.
+   */
+  handleInput: string;
+  /** Self-declared, optional. State is the finest location ever asked for. */
+  stateCode: StateCode | null;
+  visibility: CandidateVisibility;
   runningExperience: ExperienceLevel | null;
   swimmingExperience: ExperienceLevel | null;
   ruckingExperience: ExperienceLevel | null;
@@ -115,6 +126,11 @@ export interface OnboardingDraft {
 
 export const EMPTY_ONBOARDING_DRAFT: OnboardingDraft = {
   goalId: null,
+  handleInput: '',
+  stateCode: null,
+  // Public is the default because rankings are the product, but the identity
+  // step presents the choice explicitly rather than burying it.
+  visibility: 'public',
   runningExperience: null,
   swimmingExperience: null,
   ruckingExperience: null,

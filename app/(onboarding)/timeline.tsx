@@ -72,7 +72,7 @@ export default function TimelineScreen() {
       }
     >
       <View style={{ gap: theme.spacing.lg }}>
-        <StepIndicator step={3} total={4} />
+        <StepIndicator step={4} total={5} />
         <Text variant="title" accessibilityRole="header">
           Do you have a selection date?
         </Text>

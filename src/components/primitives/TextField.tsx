@@ -21,6 +21,12 @@ export interface TextFieldProps {
   editable?: boolean;
   onSubmitEditing?: () => void;
   returnKeyType?: 'done' | 'next';
+  /** For identifier-like fields (handles) where autocasing corrupts input. */
+  autoCapitalize?: 'none' | 'sentences';
+  autoCorrect?: boolean;
+  maxLength?: number;
+  /** Grows to a taller, top-aligned field. For bios and notes. */
+  multiline?: boolean;
   testID?: string;
 }
 
@@ -37,6 +43,10 @@ export function TextField({
   editable = true,
   onSubmitEditing,
   returnKeyType = 'done',
+  autoCapitalize,
+  autoCorrect,
+  maxLength,
+  multiline = false,
   testID,
 }: TextFieldProps) {
   const theme = useTheme();
@@ -54,8 +64,9 @@ export function TextField({
     flex: 1,
     // Height rather than padding so the touch target is predictable and the
     // baseline does not shift when the suffix is present.
-    height: 52,
-    padding: 0,
+    ...(multiline
+      ? { minHeight: 88, paddingVertical: theme.spacing.md, textAlignVertical: 'top' as const }
+      : { height: 52, padding: 0 }),
   };
 
   return (
@@ -67,7 +78,7 @@ export function TextField({
       <View
         style={{
           flexDirection: 'row',
-          alignItems: 'center',
+          alignItems: multiline ? 'flex-start' : 'center',
           gap: theme.spacing.md,
           paddingHorizontal: theme.spacing.lg,
           borderRadius: theme.radii.md,
@@ -89,9 +100,12 @@ export function TextField({
           returnKeyType={returnKeyType}
           secureTextEntry={secureTextEntry}
           autoCapitalize={
-            secureTextEntry || keyboardType === 'email-address' ? 'none' : 'sentences'
+            autoCapitalize ??
+            (secureTextEntry || keyboardType === 'email-address' ? 'none' : 'sentences')
           }
-          autoCorrect={!secureTextEntry}
+          autoCorrect={autoCorrect ?? !secureTextEntry}
+          maxLength={maxLength}
+          multiline={multiline}
           selectionColor={theme.colors.accent}
           style={inputStyle}
           testID={testID}

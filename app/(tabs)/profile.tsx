@@ -1,5 +1,6 @@
+import Feather from '@expo/vector-icons/Feather';
 import { router, useFocusEffect } from 'expo-router';
-import { useCallback, useState } from 'react';
+import { useCallback } from 'react';
 import { Pressable, View } from 'react-native';
 
 import { AsyncBoundary } from '@/components/feedback/AsyncBoundary';
@@ -8,30 +9,59 @@ import { Button } from '@/components/primitives/Button';
 import { Card } from '@/components/primitives/Card';
 import { Divider } from '@/components/primitives/Divider';
 import { Text } from '@/components/primitives/Text';
-import { branding } from '@/config/branding';
-import { disclaimers } from '@/config/disclaimers';
-import { findPipeline } from '@/data/content/pipelines';
-import { findTrack } from '@/domain/athlete/types';
+import { RATING_LABEL } from '@/config/branding';
+import type { CandidateProfile } from '@/domain/candidate/types';
+import { findState } from '@/domain/candidate/states';
 import { getGoalOrDefault } from '@/domain/goals/catalog';
-import { SERVICE_BRANCH_LABELS } from '@/domain/goals/types';
-import { EXPERIENCE_LEVEL_LABELS } from '@/domain/types';
-import { useAuth } from '@/features/auth/AuthProvider';
-import { useAthleteProfile } from '@/features/settings/useProfileSettings';
-import { useResetData } from '@/features/settings/useResetData';
-import { formatDateStamp } from '@/lib/format';
+import { useCandidateProfile } from '@/features/candidate/useCandidateProfile';
+import { formatMonthYear } from '@/lib/format';
 import { useTheme } from '@/theme';
 
 /**
- * Settings, and the disclosures this product owes anyone using it.
+ * The candidate's competitive résumé.
  *
- * Profile used to carry the career as well: branch, pipeline, what you are
- * preparing for. That now lives on Target, where it has room to be explained.
- * What is left is the athlete's own configuration -- how they train, what
- * account they are on, what the app is allowed to claim -- plus one row back
- * to the Target so the two are not strangers.
+ * The hierarchy is deliberate: who you are, how good you are, whether the
+ * numbers can be trusted, what you have done, what you have earned. Nothing
+ * here fakes a value — a candidate with no verified performances sees em
+ * dashes and honest words, not placeholder numbers, because the first real
+ * number has to mean something.
+ *
+ * Configuration lives behind the gear. A national rank and a training-days
+ * picker do not belong on the same screen.
  */
 
-/** A section label. Plain text rather than a stamped header, per the design pass. */
+/** A labelled em-dash placeholder row: the honest empty state for a stat. */
+function StatRow({ label, note }: { label: string; note?: string }) {
+  const theme = useTheme();
+  return (
+    <View
+      style={{
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        gap: theme.spacing.lg,
+        minHeight: theme.minTouchTarget,
+        paddingVertical: theme.spacing.md,
+        paddingHorizontal: theme.spacing.lg,
+      }}
+    >
+      <Text variant="bodySm" color="textSecondary">
+        {label}
+      </Text>
+      <View style={{ alignItems: 'flex-end', flexShrink: 1 }}>
+        <Text variant="headline" color="textTertiary">
+          —
+        </Text>
+        {note ? (
+          <Text variant="caption" color="textTertiary">
+            {note}
+          </Text>
+        ) : null}
+      </View>
+    </View>
+  );
+}
+
 function SectionLabel({ children }: { children: string }) {
   const theme = useTheme();
   return (
@@ -41,96 +71,117 @@ function SectionLabel({ children }: { children: string }) {
   );
 }
 
-interface DetailRowProps {
-  label: string;
-  value: string;
-  onPress?: () => void;
-  hint?: string;
-}
-
-function DetailRow({ label, value, onPress, hint }: DetailRowProps) {
+function CandidateResume({ candidate }: { candidate: CandidateProfile }) {
   const theme = useTheme();
+  const goal = getGoalOrDefault(candidate.pipelineId);
+  const state = candidate.stateCode ? findState(candidate.stateCode) : undefined;
 
-  const body = (
-    <View
-      style={{
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        gap: theme.spacing.lg,
-        minHeight: theme.minTouchTarget,
-        paddingVertical: theme.spacing.lg,
-        paddingHorizontal: theme.spacing.lg,
-      }}
-    >
-      <Text variant="bodySm" color="textSecondary">
-        {label}
-      </Text>
-      <View
-        style={{
-          flexDirection: 'row',
-          alignItems: 'center',
-          gap: theme.spacing.sm,
-          flexShrink: 1,
-        }}
-      >
-        <Text variant="headline" numberOfLines={1}>
-          {value}
+  return (
+    <>
+      {/* WHO YOU ARE */}
+      <View style={{ gap: theme.spacing.xs }}>
+        <Text variant="display" accessibilityRole="header">
+          {`@${candidate.displayHandle}`}
         </Text>
-        {/* Same chevron as every other navigable row in the app. */}
-        {onPress ? (
-          <Text variant="body" color="textTertiary">
-            ›
+        {candidate.displayName ? (
+          <Text variant="body" color="textSecondary">
+            {candidate.displayName}
+          </Text>
+        ) : null}
+        <Text variant="labelSm" color="accent">
+          {`${goal.name.toUpperCase()} CANDIDATE`}
+        </Text>
+        <Text variant="bodySm" color="textTertiary">
+          {[
+            state?.name,
+            `Candidate since ${formatMonthYear(new Date(candidate.createdAt))}`,
+            candidate.visibility === 'private' ? 'Private profile' : null,
+          ]
+            .filter(Boolean)
+            .join('  ·  ')}
+        </Text>
+        {candidate.bio ? (
+          <Text variant="bodySm" color="textSecondary" style={{ marginTop: theme.spacing.xs }}>
+            {candidate.bio}
           </Text>
         ) : null}
       </View>
-    </View>
-  );
 
-  if (!onPress) {
-    return body;
-  }
+      {/* HOW GOOD YOU ARE */}
+      <View>
+        <SectionLabel>{RATING_LABEL.toUpperCase()}</SectionLabel>
+        <Card style={{ gap: theme.spacing.sm }}>
+          <Text variant="display" color="textTertiary">
+            —
+          </Text>
+          <Text variant="bodySm" color="textSecondary">
+            Earned through verified assessment results. The assessment system is the next
+            thing being built.
+          </Text>
+        </Card>
+      </View>
 
-  return (
-    <Pressable
-      accessibilityRole="button"
-      accessibilityLabel={`${label}: ${value}`}
-      accessibilityHint={hint}
-      onPress={onPress}
-      style={({ pressed }) => ({
-        backgroundColor: pressed ? theme.colors.surfacePressed : theme.colors.transparent,
-      })}
-    >
-      {body}
-    </Pressable>
+      <View>
+        <SectionLabel>RANKINGS</SectionLabel>
+        <Card padded={false}>
+          <StatRow label="National" note="Unranked" />
+          <Divider />
+          <StatRow label={state ? state.name : 'State'} note={state ? 'Unranked' : 'No state declared'} />
+        </Card>
+      </View>
+
+      {/* WHETHER THE NUMBERS CAN BE TRUSTED */}
+      <View>
+        <SectionLabel>VERIFICATION</SectionLabel>
+        <Card style={{ gap: theme.spacing.sm }}>
+          <Text variant="headline">Not yet verified</Text>
+          <Text variant="bodySm" color="textSecondary">
+            Results you submit start as self-reported. Only results that pass verification
+            can hold a rating or appear on a leaderboard.
+          </Text>
+        </Card>
+      </View>
+
+      {/* WHAT YOU HAVE DONE */}
+      <View>
+        <SectionLabel>VERIFIED RESULTS</SectionLabel>
+        <Card style={{ gap: theme.spacing.sm }}>
+          <Text variant="headline" color="textTertiary">
+            —
+          </Text>
+          <Text variant="bodySm" color="textSecondary">
+            No verified results yet.
+          </Text>
+        </Card>
+      </View>
+
+      {/* WHAT YOU HAVE EARNED */}
+      <View>
+        <SectionLabel>ACHIEVEMENTS</SectionLabel>
+        <Card style={{ gap: theme.spacing.sm }}>
+          <Text variant="headline" color="textTertiary">
+            —
+          </Text>
+          <Text variant="bodySm" color="textSecondary">
+            Nothing earned yet. Achievements come from verified performances, not from
+            logging in.
+          </Text>
+        </Card>
+      </View>
+    </>
   );
 }
 
 export default function ProfileScreen() {
   const theme = useTheme();
-  const { state, reload } = useAthleteProfile();
-  const { reset, resetting, error: resetError } = useResetData();
-  const { status: authStatus, signOut } = useAuth();
-  const [confirmingReset, setConfirmingReset] = useState(false);
+  const { state, reload } = useCandidateProfile();
 
-  // Edits happen on screens pushed over this one.
+  // Identity edits happen on screens pushed over this one.
   useFocusEffect(
     useCallback(() => {
       reload();
-      setConfirmingReset(false);
     }, [reload]),
   );
-
-  const handleReset = async () => {
-    const cleared = await reset();
-    if (cleared) {
-      // Straight to onboarding rather than back through the boot gate. Routing
-      // via the gate leaves the tab screens mounted for a frame while they
-      // refetch against now-empty storage, which surfaced as an error screen
-      // flashing up immediately after a successful reset.
-      router.replace('/welcome');
-    }
-  };
 
   return (
     <Screen
@@ -142,215 +193,57 @@ export default function ProfileScreen() {
         gap: theme.spacing.xl,
       }}
     >
-      <Text variant="title" accessibilityRole="header">
-        Profile
-      </Text>
-
-      <AsyncBoundary
-        state={state}
-        onRetry={reload}
-        isEmpty={(profile) => profile === null}
-        empty={{
-          title: 'No profile yet',
-          body: 'Complete onboarding to set your goal and training track.',
+      <View
+        style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'space-between',
         }}
       >
-        {(profile) => {
-          if (!profile) return null;
-          const goal = getGoalOrDefault(profile.goalId);
-          // Content lookup, not a fetch: the definition ships with the app.
-          const target = findPipeline(profile.goalId);
-          const track = findTrack(profile.trackId);
-
-          return (
-            <>
-              <View>
-                <SectionLabel>Target</SectionLabel>
-                <Card padded={false}>
-                  <DetailRow
-                    label="Preparing for"
-                    value={target?.name ?? goal.name}
-                    hint="Change what you are training for"
-                    onPress={() => router.push('/settings/goal')}
-                  />
-                  <Divider />
-                  <DetailRow label="Branch" value={SERVICE_BRANCH_LABELS[goal.branch]} />
-                  <Divider />
-                  <DetailRow
-                    label="Selection date"
-                    value={profile.selectionDate ?? 'Not set'}
-                    hint="Set the date the countdown counts to"
-                    onPress={() => router.push('/settings/selection-date')}
-                  />
-                  {/* Only offered where there is something to open. The other
-                      twelve careers have no Target screen to send anyone to. */}
-                  {target ? (
-                    <>
-                      <Divider />
-                      <DetailRow
-                        label="Details"
-                        value="Open target"
-                        hint="Demands, pipeline, milestones and career intel"
-                        onPress={() => router.push('/pipeline')}
-                      />
-                    </>
-                  ) : null}
-                </Card>
-              </View>
-
-              <View>
-                <SectionLabel>Training</SectionLabel>
-                <Card padded={false}>
-                  <DetailRow
-                    label="Track"
-                    value={track?.name ?? 'Not set'}
-                    hint="Change your training track"
-                    onPress={() => router.push('/settings/track')}
-                  />
-                  <Divider />
-                  <DetailRow
-                    label="Days per week"
-                    value={`${profile.trainingDaysPerWeek}`}
-                    hint="Update your training background"
-                    onPress={() => router.push('/settings/training')}
-                  />
-                  <Divider />
-                  <DetailRow
-                    label="Started"
-                    value={formatDateStamp(new Date(profile.createdAt))}
-                  />
-                </Card>
-              </View>
-
-              <View>
-                <SectionLabel>Experience</SectionLabel>
-                <Card padded={false}>
-                  <DetailRow
-                    label="Running"
-                    value={EXPERIENCE_LEVEL_LABELS[profile.runningExperience]}
-                    hint="Update your training background"
-                    onPress={() => router.push('/settings/training')}
-                  />
-                  <Divider />
-                  <DetailRow
-                    label="Swimming"
-                    value={EXPERIENCE_LEVEL_LABELS[profile.swimmingExperience]}
-                    hint="Update your training background"
-                    onPress={() => router.push('/settings/training')}
-                  />
-                  <Divider />
-                  <DetailRow
-                    label="Rucking"
-                    value={EXPERIENCE_LEVEL_LABELS[profile.ruckingExperience]}
-                    hint="Update your training background"
-                    onPress={() => router.push('/settings/training')}
-                  />
-                </Card>
-              </View>
-            </>
-          );
-        }}
-      </AsyncBoundary>
-
-      {/* Only shown when a backend is configured. With none, there is no
-          account to sign out of and the row would be a dead end. */}
-      {authStatus !== 'disabled' ? (
-        <View>
-          <SectionLabel>Account</SectionLabel>
-          <Card style={{ gap: theme.spacing.lg }}>
-            <Text variant="bodySm" color="textSecondary">
-              {authStatus === 'signed_in'
-                ? 'Your training is synced to your account.'
-                : 'Sign in to keep your training if you change phones.'}
-            </Text>
-            <Button
-              label={authStatus === 'signed_in' ? 'Sign out' : 'Sign in'}
-              variant="secondary"
-              onPress={async () => {
-                if (authStatus === 'signed_in') {
-                  await signOut();
-                }
-                router.replace('/auth/sign-in');
-              }}
-              testID="auth-action"
-            />
-          </Card>
-        </View>
-      ) : null}
-
-      {/* Required disclosures. Present from the first build, not bolted on
-          later, and deliberately above the destructive action rather than
-          buried under it. */}
-      <View>
-        <SectionLabel>What this product is</SectionLabel>
-        <Card style={{ gap: theme.spacing.lg }}>
-          <Text variant="bodySm" color="textSecondary">
-            {disclaimers.affiliation}
-          </Text>
-          <Text variant="bodySm" color="textSecondary">
-            {disclaimers.readiness}
-          </Text>
-          <Text variant="bodySm" color="textSecondary">
-            {disclaimers.training}
-          </Text>
-          <Text variant="caption" color="textTertiary">
-            {disclaimers.medical}
-          </Text>
-        </Card>
+        <Text variant="title" accessibilityRole="header">
+          Profile
+        </Text>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Settings"
+          accessibilityHint="Training configuration, account and data"
+          onPress={() => router.push('/settings')}
+          hitSlop={theme.spacing.sm}
+          style={({ pressed }) => ({
+            minWidth: theme.minTouchTarget,
+            minHeight: theme.minTouchTarget,
+            alignItems: 'center',
+            justifyContent: 'center',
+            opacity: pressed ? 0.6 : 1,
+          })}
+          testID="open-settings"
+        >
+          <Feather name="settings" size={20} color={theme.colors.textSecondary} />
+        </Pressable>
       </View>
 
-      {/*
-        Destructive and unrecoverable, so it takes two deliberate taps rather
-        than a native alert, which react-native-web does not render reliably
-        and which is easy to dismiss by reflex.
-      */}
-      <View>
-        <SectionLabel>Data</SectionLabel>
-        <Card style={{ gap: theme.spacing.lg }}>
-          {confirmingReset ? (
-            <>
-              <Text variant="bodySm" color="statusOffTarget">
-                This permanently deletes your profile, assessments, readiness history and logged
-                workouts on this device. It cannot be undone.
-              </Text>
-              {resetError ? (
-                <Text variant="caption" color="statusOffTarget">
-                  {resetError}
-                </Text>
-              ) : null}
-              <Button
-                label="Delete everything"
-                variant="destructive"
-                loading={resetting}
-                onPress={handleReset}
-                testID="confirm-reset"
-              />
-              <Button
-                label="Cancel"
-                variant="ghost"
-                onPress={() => setConfirmingReset(false)}
-              />
-            </>
+      <AsyncBoundary state={state} onRetry={reload}>
+        {(candidate) =>
+          candidate ? (
+            <CandidateResume candidate={candidate} />
           ) : (
-            <>
+            // A real state, not an error: training data can exist before a
+            // candidate identity does (pre-M1 onboarding, or a migration that
+            // hit a handle conflict). The fix is a claim, so offer the claim.
+            <Card style={{ gap: theme.spacing.lg }}>
+              <Text variant="headline">No candidate identity yet</Text>
               <Text variant="bodySm" color="textSecondary">
-                Everything is stored on this device. Deleting it starts you over from
-                onboarding.
+                Claim a handle to set up your profile. Your real name is never required.
               </Text>
               <Button
-                label="Reset all data"
-                variant="secondary"
-                onPress={() => setConfirmingReset(true)}
-                testID="reset-data"
+                label="Claim your handle"
+                onPress={() => router.push('/settings/identity')}
+                testID="claim-handle"
               />
-            </>
-          )}
-        </Card>
-      </View>
-
-      <Text variant="monoSm" color="textTertiary" align="center">
-        {`${branding.productName}  //  v1.0.0`}
-      </Text>
+            </Card>
+          )
+        }
+      </AsyncBoundary>
     </Screen>
   );
 }

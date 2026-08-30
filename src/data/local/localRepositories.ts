@@ -2,6 +2,7 @@ import * as Crypto from 'expo-crypto';
 
 import type { AssessmentResult } from '@/domain/assessment/types';
 import type { AthleteProfile } from '@/domain/athlete/types';
+import type { CandidateProfile } from '@/domain/candidate/types';
 import { calculateTrend } from '@/domain/readiness/score';
 import type { ReadinessCalculation, ReadinessSnapshot } from '@/domain/readiness/types';
 import type { MilestoneCompletion } from '@/domain/pipeline/milestones';
@@ -15,8 +16,10 @@ import { createContentTrainingRepository } from '@/data/content/trainingReposito
 import type {
   AssessmentRepository,
   AthleteRepository,
+  CandidateRepository,
   NewAssessmentResult,
   NewAthleteProfile,
+  NewCandidateProfile,
   MilestoneRepository,
   ProficiencyRepository,
   ReadinessRepository,
@@ -92,6 +95,62 @@ const athlete: AthleteRepository = {
     const written = await writeRecord(StorageKeys.athleteProfile, updated);
     return written.ok ? ok(updated) : written;
   },
+};
+
+// --- Candidate ---------------------------------------------------------------
+
+async function loadCandidate(): Promise<Result<CandidateProfile | null>> {
+  return readRecord<CandidateProfile>(StorageKeys.candidateProfile);
+}
+
+const CANDIDATE_NOT_FOUND = {
+  code: 'not_found' as const,
+  message: 'We could not find your candidate profile.',
+};
+
+const candidate: CandidateRepository = {
+  getMine: loadCandidate,
+
+  create: async (input: NewCandidateProfile) => {
+    const timestamp = now();
+    const existingProfile = await loadProfile();
+    const profile: CandidateProfile = {
+      ...input,
+      id: newId(),
+      // Tied to the athlete profile's owner where one exists, so the
+      // migration to an account moves both records under one identity.
+      userId: existingProfile.ok ? (existingProfile.value?.userId ?? newId()) : newId(),
+      createdAt: timestamp,
+      updatedAt: timestamp,
+    };
+
+    const written = await writeRecord(StorageKeys.candidateProfile, profile);
+    return written.ok ? ok(profile) : written;
+  },
+
+  update: async (id, patch) => {
+    const existing = await loadCandidate();
+    if (!existing.ok) {
+      return existing;
+    }
+    if (!existing.value) {
+      return err(CANDIDATE_NOT_FOUND);
+    }
+
+    const updated: CandidateProfile = {
+      ...existing.value,
+      ...patch,
+      id,
+      updatedAt: now(),
+    };
+
+    const written = await writeRecord(StorageKeys.candidateProfile, updated);
+    return written.ok ? ok(updated) : written;
+  },
+
+  // Local storage has one candidate: their own. A handle only becomes truly
+  // claimed when an account exists, and the UI says so.
+  isHandleAvailable: async () => ok(true),
 };
 
 // --- Assessments -------------------------------------------------------------
@@ -275,6 +334,7 @@ const readiness: ReadinessRepository = {
 export const localRepositories: Repositories = {
   athlete,
   assessment,
+  candidate,
   milestone,
   proficiency,
   readiness,

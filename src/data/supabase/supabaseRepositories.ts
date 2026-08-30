@@ -11,6 +11,7 @@ import { localWorkoutRepository as localDraftStore } from '@/data/local/workoutR
 import type {
   AssessmentRepository,
   AthleteRepository,
+  CandidateRepository,
   MilestoneRepository,
   ProficiencyRepository,
   ReadinessRepository,
@@ -22,6 +23,7 @@ import { friendlyMessage } from './client';
 import {
   toAssessmentResult,
   toAthleteProfile,
+  toCandidateProfile,
   toExerciseResult,
   toMilestoneCompletion,
   toProficiencyRating,
@@ -29,6 +31,7 @@ import {
   toWorkoutResult,
   type AssessmentResultRow,
   type AthleteProfileRow,
+  type CandidateProfileRow,
   type ExerciseResultRow,
   type MilestoneCompletionRow,
   type ProficiencyRatingRow,
@@ -450,9 +453,119 @@ export function createSupabaseRepositories(client: SupabaseClient): Repositories
     },
   };
 
+  /** Postgres unique-violation, which is how a lost handle race surfaces. */
+  function isUniqueViolation(cause: unknown): boolean {
+    return (
+      typeof cause === 'object' &&
+      cause !== null &&
+      'code' in cause &&
+      (cause as { code: unknown }).code === '23505'
+    );
+  }
+
+  const HANDLE_TAKEN: DomainError = {
+    code: 'conflict',
+    message: 'That handle was just taken. Choose another.',
+  };
+
+  const candidate: CandidateRepository = {
+    getMine: async () => {
+      const userId = await currentUserId();
+      if (!userId) {
+        return ok(null);
+      }
+
+      const { data, error } = await client
+        .from('candidate_profiles')
+        .select('*')
+        .eq('user_id', userId)
+        .maybeSingle();
+
+      if (error) {
+        return failure('We could not load your candidate profile.', error);
+      }
+      return ok(data ? toCandidateProfile(data as CandidateProfileRow) : null);
+    },
+
+    create: async (input) => {
+      const userId = await currentUserId();
+      if (!userId) {
+        return err({ code: 'unauthorized', message: 'You need to sign in first.' });
+      }
+
+      const { data, error } = await client
+        .from('candidate_profiles')
+        .insert({
+          user_id: userId,
+          handle: input.handle,
+          display_handle: input.displayHandle,
+          display_name: input.displayName,
+          pipeline_id: input.pipelineId,
+          state_code: input.stateCode,
+          visibility: input.visibility,
+          bio: input.bio,
+          avatar_url: input.avatarUrl,
+        })
+        .select('*')
+        .single();
+
+      if (error) {
+        return isUniqueViolation(error)
+          ? err({ ...HANDLE_TAKEN, cause: error })
+          : failure('We could not save your candidate profile.', error);
+      }
+      return ok(toCandidateProfile(data as CandidateProfileRow));
+    },
+
+    update: async (id, patch) => {
+      const row: Record<string, unknown> = {};
+      if (patch.handle !== undefined) row.handle = patch.handle;
+      if (patch.displayHandle !== undefined) row.display_handle = patch.displayHandle;
+      if (patch.displayName !== undefined) row.display_name = patch.displayName;
+      if (patch.pipelineId !== undefined) row.pipeline_id = patch.pipelineId;
+      if (patch.stateCode !== undefined) row.state_code = patch.stateCode;
+      if (patch.visibility !== undefined) row.visibility = patch.visibility;
+      if (patch.bio !== undefined) row.bio = patch.bio;
+      if (patch.avatarUrl !== undefined) row.avatar_url = patch.avatarUrl;
+
+      const { data, error } = await client
+        .from('candidate_profiles')
+        .update(row)
+        .eq('id', id)
+        .select('*')
+        .maybeSingle();
+
+      if (error) {
+        return isUniqueViolation(error)
+          ? err({ ...HANDLE_TAKEN, cause: error })
+          : failure('We could not save your changes.', error);
+      }
+      if (!data) {
+        return err({
+          code: 'not_found',
+          message: 'We could not find your candidate profile.',
+        });
+      }
+      return ok(toCandidateProfile(data as CandidateProfileRow));
+    },
+
+    isHandleAvailable: async (handle) => {
+      // SECURITY DEFINER function: availability must consider every profile,
+      // while RLS on the table only lets a user see their own row.
+      const { data, error } = await client.rpc('is_handle_available', {
+        candidate_handle: handle,
+      });
+      if (error) {
+        return failure('We could not check that handle.', error);
+      }
+      return ok(Boolean(data));
+    },
+  };
+
   return {
     athlete,
     assessment,
+    candidate,
     milestone,
     proficiency,
     readiness,

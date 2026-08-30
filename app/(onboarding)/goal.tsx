@@ -43,13 +43,13 @@ export default function GoalScreen() {
           accessibilityHint={
             canAdvance('goal') ? undefined : 'Select what you are preparing for first'
           }
-          onPress={() => router.push('/experience')}
+          onPress={() => router.push('/identity')}
           testID="goal-continue"
         />
       }
     >
       <View style={{ gap: theme.spacing.lg }}>
-        <StepIndicator step={1} total={4} />
+        <StepIndicator step={1} total={5} />
         <Text variant="title" accessibilityRole="header">
           What are you preparing for?
         </Text>

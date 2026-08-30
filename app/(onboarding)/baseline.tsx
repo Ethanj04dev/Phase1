@@ -52,7 +52,7 @@ export default function BaselineScreen() {
       }
     >
       <View style={{ gap: theme.spacing.lg }}>
-        <StepIndicator step={4} total={4} />
+        <StepIndicator step={5} total={5} />
         <Text variant="title" accessibilityRole="header">
           Where are you now?
         </Text>

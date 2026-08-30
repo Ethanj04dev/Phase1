@@ -67,6 +67,12 @@ export default function SignInScreen() {
       const outcome = await migrateLocalData(client);
       if (outcome.error) {
         setNotice(outcome.error);
+      } else if (outcome.handleConflict) {
+        // The history made it; only the handle race was lost. The notice
+        // names the fix rather than reading as a vague failure.
+        setNotice(
+          'Your training data was added, but your handle was already taken. Choose a new one from Profile.',
+        );
       } else if (outcome.migrated) {
         setNotice('Your existing training data has been added to this account.');
       }
