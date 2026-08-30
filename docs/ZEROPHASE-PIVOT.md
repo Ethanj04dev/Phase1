@@ -391,6 +391,22 @@ nobody can trust.
 6. **Training content is demoted, not deleted.** It becomes the Improve
    system connected to ranking weakness later. Legacy architecture does not
    get a vote on the new product's shape.
+7. **Assessment and training records stay separate (M2 review).** An event
+   performed inside a full assessment belongs to that assessment and never
+   overwrites or creates a standalone training PR. The two are different
+   contexts — later the UI may show TRAINING PB and ASSESSMENT PB side by
+   side, distinguishably.
+8. **Scoring curves are provisional (M2 review).** The shipped v1 curves are
+   development/testing estimates, marked `provenance: 'provisional'` in every
+   config, and are NOT production scoring standards. Real scoring models get
+   researched, designed, validated and calibrated separately before public
+   launch; nothing may make the provisional numbers hard to replace.
+9. **Deletion policy for attempts (M2 review).** Candidates may delete
+   attempts only while purely self-reported (already enforced by RLS). Once
+   an attempt enters the verification lifecycle — submitted, verified,
+   adjusted or rejected — it is not casually client-deletable; the audit
+   trail is preserved. Privacy/deletion mechanisms come later without
+   destroying verification integrity.
 
 **Naming:** the 0–1000 rating is NOT called Zero Score. Internal name
 `performanceRating`; UI label "Performance rating" via `RATING_LABEL` in the
