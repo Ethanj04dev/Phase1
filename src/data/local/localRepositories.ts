@@ -4,11 +4,11 @@ import type { AssessmentResult } from '@/domain/assessment/types';
 import type { AthleteProfile } from '@/domain/athlete/types';
 import { calculateTrend } from '@/domain/readiness/score';
 import type { ReadinessCalculation, ReadinessSnapshot } from '@/domain/readiness/types';
-import type { MilestoneCompletion } from '@/domain/target/milestones';
+import type { MilestoneCompletion } from '@/domain/pipeline/milestones';
 import type {
   NewProficiencyRating,
   ProficiencyRating,
-} from '@/domain/target/proficiency';
+} from '@/domain/pipeline/proficiency';
 import { err, ok, type Result, type Uuid } from '@/domain/types';
 
 import { createContentTrainingRepository } from '@/data/content/trainingRepository';

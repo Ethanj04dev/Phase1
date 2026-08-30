@@ -4,7 +4,7 @@ import { getGoalOrDefault } from '@/domain/goals/catalog';
 import { calculateReadiness } from '@/domain/readiness/score';
 import type { ReadinessCalculation, ReadinessSnapshot } from '@/domain/readiness/types';
 import { ok, type Result } from '@/domain/types';
-import { loadTargetSnapshot } from '@/features/target/targetSnapshot';
+import { loadPipelineSnapshot } from '@/features/pipeline/pipelineSnapshot';
 
 /**
  * Records one readiness snapshot, on both scales.
@@ -45,11 +45,11 @@ export async function buildReadinessCalculation(
   }
 
   const legacy = calculateReadiness(getGoalOrDefault(profile.goalId), resultsOutcome.value);
-  const snapshot = await loadTargetSnapshot({ assessment, proficiency, training }, profile);
+  const snapshot = await loadPipelineSnapshot({ assessment, proficiency, training }, profile);
 
   // A Target failure costs the Target half of the record, not the record.
   const targetReadiness = snapshot.ok ? snapshot.value.readiness : null;
-  const targetId = snapshot.ok ? (snapshot.value.target?.id ?? null) : null;
+  const targetId = snapshot.ok ? (snapshot.value.pipeline?.id ?? null) : null;
 
   const target =
     targetReadiness && targetId

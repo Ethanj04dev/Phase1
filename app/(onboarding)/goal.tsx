@@ -6,7 +6,7 @@ import { SectionHeader } from '@/components/layout/SectionHeader';
 import { StepIndicator } from '@/components/layout/StepIndicator';
 import { Button } from '@/components/primitives/Button';
 import { OptionCard } from '@/components/primitives/OptionCard';
-import { hasTargetDefinition } from '@/data/content/targets';
+import { hasPipelineDefinition } from '@/data/content/pipelines';
 import { Text } from '@/components/primitives/Text';
 import { GOALS } from '@/domain/goals/catalog';
 import { SERVICE_BRANCH_LABELS, type ServiceBranch } from '@/domain/goals/types';
@@ -76,7 +76,7 @@ export default function GoalScreen() {
                   // Honest labelling of depth. Two careers have full target
                   // profiles -- demands, pipeline, road to ready; the rest
                   // train on the goal catalog until theirs is built.
-                  meta={hasTargetDefinition(goal.id) ? 'Full target' : undefined}
+                  meta={hasPipelineDefinition(goal.id) ? 'Full target' : undefined}
                   selected={draft.goalId === goal.id}
                   onPress={() => setGoal(goal.id)}
                 />

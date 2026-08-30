@@ -1,10 +1,10 @@
 import type { AssessmentEventId, AssessmentResult } from '@/domain/assessment/types';
 import type { AthleteProfile } from '@/domain/athlete/types';
-import type { MilestoneCompletion } from '@/domain/target/milestones';
+import type { MilestoneCompletion } from '@/domain/pipeline/milestones';
 import type {
   NewProficiencyRating,
   ProficiencyRating,
-} from '@/domain/target/proficiency';
+} from '@/domain/pipeline/proficiency';
 import type {
   ReadinessCalculation,
   ReadinessSnapshot,

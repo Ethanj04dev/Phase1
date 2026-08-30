@@ -1,9 +1,9 @@
 import type { TrainingTrackId } from '@/domain/athlete/types';
 import type { GoalId } from '@/domain/goals/types';
 
-import { adaptPlanForTarget } from './adaptPlan';
+import { adaptPlanForPipeline } from './adaptPlan';
 import { buildProgram, type BuiltProgram, type TrackPlan, type WeekPlan } from './buildProgram';
-import { findTarget } from './targets';
+import { findPipeline } from './pipelines';
 import {
   calisthenicsBlock,
   calisthenicsSession,
@@ -310,13 +310,13 @@ const ADAPTED_BY_TRACK = new Map<TrainingTrackId, BuiltProgram>();
  * the same duration. Everyone else gets the track as authored.
  */
 export function programForAthlete(trackId: TrainingTrackId, goalId: GoalId): BuiltProgram {
-  const target = findTarget(goalId);
+  const target = findPipeline(goalId);
   const plan = TRACK_PLANS.find((candidate) => candidate.trackId === trackId);
   if (!plan) {
     throw new Error(`No programme authored for track ${trackId}`);
   }
 
-  const adapted = adaptPlanForTarget(plan, target);
+  const adapted = adaptPlanForPipeline(plan, target);
   if (adapted === plan) {
     return programForTrack(trackId);
   }

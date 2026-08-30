@@ -7,7 +7,7 @@ import {
   categoryMovement,
   domainMovement,
 } from './movement';
-import type { DomainScores } from './targetScore';
+import type { DomainScores } from './pipelineScore';
 import type { ReadinessSnapshot } from './types';
 
 function snapshot(

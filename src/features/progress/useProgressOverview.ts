@@ -18,9 +18,9 @@ import {
   type DomainMovement,
 } from '@/domain/readiness/movement';
 import type { ReadinessSnapshot, ReadinessTrend } from '@/domain/readiness/types';
-import type { RoadToReady } from '@/domain/target/roadToReady';
-import type { TargetDefinition } from '@/domain/target/types';
-import { loadTargetSnapshot } from '@/features/target/targetSnapshot';
+import type { RoadToReady } from '@/domain/pipeline/roadToReady';
+import type { PipelineDefinition } from '@/domain/pipeline/types';
+import { loadPipelineSnapshot } from '@/features/pipeline/pipelineSnapshot';
 import { volumeToDate, weeklyVolume, type WeeklyVolume } from '@/domain/training/volume';
 import { err, ok, type Result } from '@/domain/types';
 import { useAsyncResource, type AsyncResource } from '@/lib/useAsyncResource';
@@ -38,7 +38,7 @@ export interface ProgressOverview {
    * score from another is worse than no delta at all.
    */
   trend: ReadinessTrend | null;
-  target: TargetDefinition | null;
+  pipeline: PipelineDefinition | null;
   road: RoadToReady | null;
   /** Oldest first, ready to plot. */
   readinessHistory: readonly ReadinessSnapshot[];
@@ -49,7 +49,7 @@ export interface ProgressOverview {
    * before Targets existed, describe a different scale and cannot share an
    * axis with these.
    */
-  targetHistory: readonly ReadinessSnapshot[];
+  pipelineHistory: readonly ReadinessSnapshot[];
   /** Snapshots left out of the chart because they use a different scale. */
   offScaleCount: number;
   movements: readonly DomainMovement[];
@@ -93,7 +93,7 @@ export function useProgressOverview(): AsyncResource<ProgressOverview> {
     ] = await Promise.all([
       assessment.listResults(profile.id, { limit: HISTORY_PAGE_SIZE }),
       readiness.getLatest(profile.id),
-      loadTargetSnapshot({ assessment, proficiency, training }, profile),
+      loadPipelineSnapshot({ assessment, proficiency, training }, profile),
       readiness.listHistory(profile.id, { limit: HISTORY_PAGE_SIZE }),
       workout.listResults(profile.id, { limit: HISTORY_PAGE_SIZE }),
       training.getProgram(profile.id),
@@ -124,15 +124,15 @@ export function useProgressOverview(): AsyncResource<ProgressOverview> {
     // The chart plots one scale. A snapshot recorded against a different
     // Target, or before Targets existed, is real history and is kept, but it
     // measures something else and cannot share an axis.
-    const currentTargetId = latestOutcome.value?.target?.targetId ?? null;
-    const targetHistory = currentTargetId
-      ? chronology.filter((snapshot) => snapshot.target?.targetId === currentTargetId)
+    const currentPipelineId = latestOutcome.value?.target?.targetId ?? null;
+    const pipelineHistory = currentPipelineId
+      ? chronology.filter((snapshot) => snapshot.target?.targetId === currentPipelineId)
       : [];
 
     // Measured across Target-aware snapshots only, so the delta and the score
     // it sits under are the same kind of number.
     const targetBaseline = baselineWithin(
-      targetHistory,
+      pipelineHistory,
       READINESS_TREND_WINDOW_DAYS,
       new Date().toISOString(),
     );
@@ -159,11 +159,11 @@ export function useProgressOverview(): AsyncResource<ProgressOverview> {
       progress: buildAllEventProgress(ASSESSMENT_EVENTS, results),
       readiness: latestOutcome.value,
       trend: targetTrend,
-      target: targetOutcome.value.target,
+      pipeline: targetOutcome.value.pipeline,
       road: targetOutcome.value.road,
       readinessHistory: chronology,
-      targetHistory,
-      offScaleCount: chronology.length - targetHistory.length,
+      pipelineHistory,
+      offScaleCount: chronology.length - pipelineHistory.length,
       movements,
       gain: biggestGain(movements),
       decline: biggestDecline(movements),

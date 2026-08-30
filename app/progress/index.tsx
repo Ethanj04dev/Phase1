@@ -12,8 +12,8 @@ import { Card } from '@/components/primitives/Card';
 import { Divider } from '@/components/primitives/Divider';
 import { Text } from '@/components/primitives/Text';
 import { PHASE1_TARGET_READINESS, READINESS_BAND_LABELS, readinessBand } from '@/domain/readiness/bands';
-import { preparationDomain } from '@/domain/target/domains';
-import type { RoadToReady } from '@/domain/target/roadToReady';
+import { preparationDomain } from '@/domain/pipeline/domains';
+import type { RoadToReady } from '@/domain/pipeline/roadToReady';
 import { formatEventValue } from '@/features/assessment/display';
 import { EventProgressRow } from '@/features/progress/EventProgressRow';
 import { useProgressOverview } from '@/features/progress/useProgressOverview';
@@ -54,7 +54,7 @@ function RoadProgress({ road }: { road: RoadToReady }) {
           variant="caption"
           color="accent"
           accessibilityRole="button"
-          onPress={() => router.push('/target/road')}
+          onPress={() => router.push('/pipeline/road')}
         >
           See the full list ›
         </Text>
@@ -146,20 +146,20 @@ export default function ProgressScreen() {
                       {`Zero Phase suggests ${PHASE1_TARGET_READINESS} before selection${
                         coverage === null
                           ? ''
-                          : `. Based on ${formatPercent(coverage)} of what this target measures`
+                          : `. Based on ${formatPercent(coverage)} of what this pipeline measures`
                       }.`}
                     </Text>
                   </>
-                ) : data.readiness && data.target ? (
-                  // A Target exists, but the stored score predates it. Showing
+                ) : data.readiness && data.pipeline ? (
+                  // A pipeline exists, but the stored score predates it. Showing
                   // the old number here would present one scale as the other.
                   <Text variant="body" color="textSecondary">
-                    Your last score was recorded before this target was set up, on a
+                    Your last score was recorded before this pipeline was set up, on a
                     different set of weights. Log an assessment to score yourself against
-                    {` ${data.target.name}`}.
+                    {` ${data.pipeline.name}`}.
                   </Text>
                 ) : data.readiness ? (
-                  // No Target definition at all. Saying which is better than
+                  // No pipeline definition at all. Saying which is better than
                   // showing a number from another scale as though it belonged.
                   <Text variant="body" color="textSecondary">
                     Your career does not have a full target definition yet, so there is no
@@ -174,7 +174,7 @@ export default function ProgressScreen() {
 
               {data.road ? <RoadProgress road={data.road} /> : null}
 
-              {data.targetHistory.length > 1 ? (
+              {data.pipelineHistory.length > 1 ? (
                 <View>
                   <Text
                     variant="bodySm"
@@ -185,11 +185,11 @@ export default function ProgressScreen() {
                   </Text>
                   <Card>
                     <LineChart
-                      values={data.targetHistory.map(
+                      values={data.pipelineHistory.map(
                         (snapshot) => snapshot.target?.overall ?? 0,
                       )}
                       formatValue={(value) => String(Math.round(value))}
-                      accessibilityLabel={`Readiness across ${data.targetHistory.length} assessments, currently ${score ?? 0}`}
+                      accessibilityLabel={`Readiness across ${data.pipelineHistory.length} assessments, currently ${score ?? 0}`}
                     />
                   </Card>
                   {data.offScaleCount > 0 ? (

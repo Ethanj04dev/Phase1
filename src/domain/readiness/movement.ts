@@ -1,4 +1,4 @@
-import { PREPARATION_DOMAINS, type PreparationDomainId } from '@/domain/target/domains';
+import { PREPARATION_DOMAINS, type PreparationDomainId } from '@/domain/pipeline/domains';
 import { PERFORMANCE_CATEGORIES, type PerformanceCategory } from '@/domain/types';
 
 import type { ReadinessSnapshot } from './types';

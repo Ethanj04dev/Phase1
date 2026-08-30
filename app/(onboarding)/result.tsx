@@ -15,7 +15,7 @@ import {
   PERFORMANCE_CATEGORY_LABELS,
   type PerformanceCategory,
 } from '@/domain/types';
-import { countdownLabel, countdownTo } from '@/domain/target/countdown';
+import { countdownLabel, countdownTo } from '@/domain/pipeline/countdown';
 import { useOnboarding } from '@/features/onboarding/OnboardingProvider';
 import { formatPercent } from '@/lib/format';
 import { useTheme } from '@/theme';

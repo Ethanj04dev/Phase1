@@ -1,8 +1,8 @@
 import { View } from 'react-native';
 
 import { Text } from '@/components/primitives/Text';
-import type { Source, Verified } from '@/domain/target/provenance';
-import { VERIFICATION_REQUIRED } from '@/domain/target/provenance';
+import type { Source, Verified } from '@/domain/pipeline/provenance';
+import { VERIFICATION_REQUIRED } from '@/domain/pipeline/provenance';
 import { useTheme } from '@/theme';
 
 export interface ProvenanceMarkProps {

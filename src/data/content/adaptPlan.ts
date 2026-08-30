@@ -1,4 +1,4 @@
-import { findDomain, type TargetDefinition } from '@/domain/target/types';
+import { findDomain, type PipelineDefinition } from '@/domain/pipeline/types';
 
 import type { DayPlan, SessionPlan, TrackPlan, WeekPlan } from './buildProgram';
 import { easyRuckSession, easyRunSession } from './sessions';
@@ -45,7 +45,7 @@ const EASY_RUCK_POUNDS = 25;
  */
 type SubstitutionStrategy = 'run_only' | 'ruck_forward';
 
-function strategyFor(target: TargetDefinition): SubstitutionStrategy {
+function strategyFor(target: PipelineDefinition): SubstitutionStrategy {
   const heaviest = [...target.domains].sort((a, b) => b.weight - a.weight)[0];
   return heaviest?.id === 'rucking' ? 'ruck_forward' : 'run_only';
 }
@@ -108,15 +108,15 @@ function adaptWeek(week: WeekPlan, strategy: SubstitutionStrategy): WeekPlan {
 }
 
 /** True when this athlete's programme should keep its swim sessions. */
-export function planKeepsSwimming(target: TargetDefinition | undefined): boolean {
+export function planKeepsSwimming(target: PipelineDefinition | undefined): boolean {
   // No Target definition means no domain model to adapt on; the original
   // programme stands.
   return target === undefined || findDomain(target, 'swimming') !== undefined;
 }
 
-export function adaptPlanForTarget(
+export function adaptPlanForPipeline(
   plan: TrackPlan,
-  target: TargetDefinition | undefined,
+  target: PipelineDefinition | undefined,
 ): TrackPlan {
   if (planKeepsSwimming(target) || target === undefined) {
     // Same reference, not a copy: callers and tests can tell "unchanged"

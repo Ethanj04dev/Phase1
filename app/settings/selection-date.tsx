@@ -7,7 +7,7 @@ import { Button } from '@/components/primitives/Button';
 import { Card } from '@/components/primitives/Card';
 import { Text } from '@/components/primitives/Text';
 import { TextField } from '@/components/primitives/TextField';
-import { countdownLabel, countdownTo, parseSelectionDateInput } from '@/domain/target/countdown';
+import { countdownLabel, countdownTo, parseSelectionDateInput } from '@/domain/pipeline/countdown';
 import { useAthleteProfile, useUpdateProfile } from '@/features/settings/useProfileSettings';
 import { goBack } from '@/lib/navigation';
 import { useTheme } from '@/theme';

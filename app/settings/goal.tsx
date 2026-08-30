@@ -7,7 +7,7 @@ import { SectionHeader } from '@/components/layout/SectionHeader';
 import { Button } from '@/components/primitives/Button';
 import { Card } from '@/components/primitives/Card';
 import { OptionCard } from '@/components/primitives/OptionCard';
-import { hasTargetDefinition } from '@/data/content/targets';
+import { hasPipelineDefinition } from '@/data/content/pipelines';
 import { Text } from '@/components/primitives/Text';
 import { GOALS } from '@/domain/goals/catalog';
 import { SERVICE_BRANCH_LABELS, type GoalId, type ServiceBranch } from '@/domain/goals/types';
@@ -98,7 +98,7 @@ export default function EditGoalScreen() {
                         meta={
                           goal.id === current
                             ? 'Current'
-                            : hasTargetDefinition(goal.id)
+                            : hasPipelineDefinition(goal.id)
                               ? 'Full target'
                               : undefined
                         }

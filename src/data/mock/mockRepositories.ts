@@ -3,8 +3,8 @@ import type { AthleteProfile } from '@/domain/athlete/types';
 import { getGoalOrDefault } from '@/domain/goals/catalog';
 import { calculateReadiness, calculateTrend } from '@/domain/readiness/score';
 import type { ReadinessSnapshot } from '@/domain/readiness/types';
-import type { MilestoneCompletion } from '@/domain/target/milestones';
-import type { ProficiencyRating } from '@/domain/target/proficiency';
+import type { MilestoneCompletion } from '@/domain/pipeline/milestones';
+import type { ProficiencyRating } from '@/domain/pipeline/proficiency';
 import { ok, type Result } from '@/domain/types';
 
 import type {

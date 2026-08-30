@@ -1,8 +1,8 @@
-import type { PreparationDomainId } from '@/domain/target/domains';
-import type { TargetId } from '@/domain/target/types';
+import type { PreparationDomainId } from '@/domain/pipeline/domains';
+import type { PipelineId } from '@/domain/pipeline/types';
 import type { CategoryScores, IsoDateTime, PerformanceCategory, Uuid } from '@/domain/types';
 
-import type { DomainScores } from './targetScore';
+import type { DomainScores } from './pipelineScore';
 
 /**
  * The Target-aware half of a snapshot.
@@ -17,8 +17,8 @@ import type { DomainScores } from './targetScore';
  * has no Target definition yet. A reader that finds null must say so rather
  * than substituting the legacy number.
  */
-export interface TargetReadinessRecord {
-  targetId: TargetId;
+export interface PipelineReadinessRecord {
+  targetId: PipelineId;
   /** Weighted overall against the Target's own domains, 0-100. */
   overall: number;
   domains: DomainScores;
@@ -58,7 +58,7 @@ export interface ReadinessCalculation {
    * The same instant scored against the athlete's Target. Null where there is
    * no Target definition, or on rows written before Targets existed.
    */
-  target: TargetReadinessRecord | null;
+  target: PipelineReadinessRecord | null;
 }
 
 /**

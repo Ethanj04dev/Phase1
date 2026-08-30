@@ -4,7 +4,7 @@ import { AsyncBoundary } from '@/components/feedback/AsyncBoundary';
 import { Screen } from '@/components/layout/Screen';
 import { Card } from '@/components/primitives/Card';
 import { Text } from '@/components/primitives/Text';
-import { useTarget } from '@/features/target/useTarget';
+import { usePipeline } from '@/features/pipeline/usePipeline';
 import { useTheme } from '@/theme';
 
 /**
@@ -18,7 +18,7 @@ import { useTheme } from '@/theme';
  */
 export default function RankingsScreen() {
   const theme = useTheme();
-  const { state, reload } = useTarget();
+  const { state, reload } = usePipeline();
 
   return (
     <Screen
@@ -35,7 +35,7 @@ export default function RankingsScreen() {
       </Text>
 
       <AsyncBoundary state={state} onRetry={reload}>
-        {({ target, profile }) => (
+        {({ pipeline, profile }) => (
           <>
             <Card style={{ gap: theme.spacing.sm }}>
               <Text variant="headline">Not live yet — on purpose</Text>
@@ -57,8 +57,8 @@ export default function RankingsScreen() {
               </Text>
               <Card style={{ gap: theme.spacing.sm }}>
                 <Text variant="body" color="textSecondary">
-                  {target
-                    ? `Your pipeline — ${target.name} — will have its own board, built from verified assessment performances converted into a single 0–1000 rating.`
+                  {pipeline
+                    ? `Your pipeline — ${pipeline.name} — will have its own board, built from verified assessment performances converted into a single 0–1000 rating.`
                     : 'Each pipeline will have its own board, built from verified assessment performances converted into a single 0–1000 rating.'}
                 </Text>
                 <Text variant="caption" color="textTertiary">

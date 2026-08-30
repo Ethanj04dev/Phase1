@@ -10,10 +10,10 @@ import { Card } from '@/components/primitives/Card';
 import { Divider } from '@/components/primitives/Divider';
 import { Text } from '@/components/primitives/Text';
 import { READINESS_BAND_LABELS, readinessBand } from '@/domain/readiness/bands';
-import { countdownLabel, countdownTo } from '@/domain/target/countdown';
-import { preparationDomain } from '@/domain/target/domains';
+import { countdownLabel, countdownTo } from '@/domain/pipeline/countdown';
+import { preparationDomain } from '@/domain/pipeline/domains';
 import { describeSession, totalEstimatedMinutes } from '@/domain/training/describe';
-import { roadStepInstruction } from '@/features/target/roadCopy';
+import { roadStepInstruction } from '@/features/pipeline/roadCopy';
 import { useTodayDashboard } from '@/features/today/useTodayDashboard';
 import { formatDateStamp, formatPercent } from '@/lib/format';
 import { useTheme } from '@/theme';
@@ -67,7 +67,7 @@ export default function HomeScreen() {
                   </Text>
                 </View>
                 <Text variant="title" accessibilityRole="header">
-                  {`${data.target?.shortName ?? data.goal.shortName} candidate`}
+                  {`${data.pipeline?.shortName ?? data.goal.shortName} candidate`}
                 </Text>
                 {countdown ? (
                   <Text variant="bodySm" color="accent">
@@ -85,7 +85,7 @@ export default function HomeScreen() {
                     ? `Readiness ${data.readiness.overall} out of 100, ${READINESS_BAND_LABELS[band]}. Opens your pipeline`
                     : 'Readiness not yet measured. Opens your pipeline'
                 }
-                onPress={() => router.push('/target')}
+                onPress={() => router.push('/pipeline')}
               >
                 <Card style={{ gap: theme.spacing.sm, alignItems: 'center' }}>
                   {data.readiness && band ? (
@@ -127,7 +127,7 @@ export default function HomeScreen() {
                   ) : null}
                   {focus ? (
                     <Card
-                      onPress={() => router.push('/target/road')}
+                      onPress={() => router.push('/pipeline/road')}
                       accessibilityLabel={`Biggest opportunity: ${preparationDomain(focus.domainId).label}. Opens road to ready`}
                       style={{ flex: 1, gap: theme.spacing.xxs }}
                     >

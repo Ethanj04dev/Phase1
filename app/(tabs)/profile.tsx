@@ -10,7 +10,7 @@ import { Divider } from '@/components/primitives/Divider';
 import { Text } from '@/components/primitives/Text';
 import { branding } from '@/config/branding';
 import { disclaimers } from '@/config/disclaimers';
-import { findTarget } from '@/data/content/targets';
+import { findPipeline } from '@/data/content/pipelines';
 import { findTrack } from '@/domain/athlete/types';
 import { getGoalOrDefault } from '@/domain/goals/catalog';
 import { SERVICE_BRANCH_LABELS } from '@/domain/goals/types';
@@ -159,7 +159,7 @@ export default function ProfileScreen() {
           if (!profile) return null;
           const goal = getGoalOrDefault(profile.goalId);
           // Content lookup, not a fetch: the definition ships with the app.
-          const target = findTarget(profile.goalId);
+          const target = findPipeline(profile.goalId);
           const track = findTrack(profile.trackId);
 
           return (
@@ -191,7 +191,7 @@ export default function ProfileScreen() {
                         label="Details"
                         value="Open target"
                         hint="Demands, pipeline, milestones and career intel"
-                        onPress={() => router.push('/target')}
+                        onPress={() => router.push('/pipeline')}
                       />
                     </>
                   ) : null}

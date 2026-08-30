@@ -1,10 +1,10 @@
 import type { AssessmentEventId, AssessmentResult } from '@/domain/assessment/types';
 import type { AthleteProfile, TrainingTrackId } from '@/domain/athlete/types';
 import type { GoalId } from '@/domain/goals/types';
-import type { ReadinessSnapshot, TargetReadinessRecord } from '@/domain/readiness/types';
-import type { PreparationDomainId, ProficiencyLevel } from '@/domain/target/domains';
-import type { MilestoneCompletion } from '@/domain/target/milestones';
-import type { ProficiencyRating } from '@/domain/target/proficiency';
+import type { ReadinessSnapshot, PipelineReadinessRecord } from '@/domain/readiness/types';
+import type { PreparationDomainId, ProficiencyLevel } from '@/domain/pipeline/domains';
+import type { MilestoneCompletion } from '@/domain/pipeline/milestones';
+import type { ProficiencyRating } from '@/domain/pipeline/proficiency';
 import type { ExerciseResult, WorkoutResult } from '@/domain/training/types';
 import type { CategoryScores, ExperienceLevel, PerformanceCategory } from '@/domain/types';
 
@@ -122,7 +122,7 @@ export interface ReadinessScoreRow {
   coverage: number;
   benchmark_version: number;
   /** Target-aware half. Null on rows written before Targets existed. */
-  target_readiness: TargetReadinessRecord | null;
+  target_readiness: PipelineReadinessRecord | null;
 }
 
 export function toReadinessSnapshot(row: ReadinessScoreRow): ReadinessSnapshot {

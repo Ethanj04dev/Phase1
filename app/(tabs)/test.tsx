@@ -8,7 +8,7 @@ import { Card } from '@/components/primitives/Card';
 import { Divider } from '@/components/primitives/Divider';
 import { Text } from '@/components/primitives/Text';
 import { latestResultByEvent } from '@/domain/assessment/types';
-import { useTarget } from '@/features/target/useTarget';
+import { usePipeline } from '@/features/pipeline/usePipeline';
 import { useTheme } from '@/theme';
 
 /**
@@ -21,7 +21,7 @@ import { useTheme } from '@/theme';
  */
 export default function TestScreen() {
   const theme = useTheme();
-  const { state, reload } = useTarget();
+  const { state, reload } = usePipeline();
 
   return (
     <Screen

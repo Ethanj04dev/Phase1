@@ -7,7 +7,7 @@ import { getGoalOrDefault } from '@/domain/goals/catalog';
 import type { Goal } from '@/domain/goals/types';
 import type { ResolvedWorkoutDay } from '@/domain/training/types';
 import { err, ok, type Result } from '@/domain/types';
-import { loadTargetSnapshot, type TargetSnapshot } from '@/features/target/targetSnapshot';
+import { loadPipelineSnapshot, type PipelineSnapshot } from '@/features/pipeline/pipelineSnapshot';
 import { useAsyncResource, type AsyncResource } from '@/lib/useAsyncResource';
 
 /**
@@ -17,7 +17,7 @@ import { useAsyncResource, type AsyncResource } from '@/lib/useAsyncResource';
  * and the Target tab now show the same number and recommend the same work,
  * because they are reading the same object.
  */
-export interface TodayDashboard extends TargetSnapshot {
+export interface TodayDashboard extends PipelineSnapshot {
   profile: AthleteProfile;
   goal: Goal;
   position: ProgramPosition | null;
@@ -51,7 +51,7 @@ export function useTodayDashboard(): AsyncResource<TodayDashboard> {
     }
 
     const [snapshot, position, today, streak, completion] = await Promise.all([
-      loadTargetSnapshot({ assessment, proficiency, training }, profile),
+      loadPipelineSnapshot({ assessment, proficiency, training }, profile),
       training.getPosition(profile.id),
       training.getToday(profile.id),
       training.getStreakDays(profile.id),
