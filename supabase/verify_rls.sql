@@ -12,6 +12,8 @@ with expected as (
     'athlete_profiles',
     'candidate_profiles',
     'assessment_results',
+    'assessment_attempts',
+    'attempt_event_results',
     'proficiency_ratings',
     'milestone_completions',
     'readiness_scores',
@@ -89,8 +91,20 @@ where grantee = 'anon'
   and table_schema = 'public'
   and table_name in (
     'athlete_profiles','candidate_profiles','assessment_results',
+    'assessment_attempts','attempt_event_results',
     'readiness_scores','workout_results','exercise_results'
   );
+
+-- 7. The client must not be able to update attempts: verification verdicts
+--    and official ratings are service-role writes only.
+select
+  'assessment_attempts no client update' as check_name,
+  case when count(*) = 0 then 'PASS'
+       else 'FAIL — update policy exists' end as result
+from pg_policies
+where schemaname = 'public'
+  and tablename = 'assessment_attempts'
+  and cmd = 'UPDATE';
 
 -- 6. The public candidate view must expose only the agreed identity columns.
 --    A new column appearing here is a privacy decision, not a refactor.

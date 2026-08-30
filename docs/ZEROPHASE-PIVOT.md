@@ -330,11 +330,20 @@ priorities (§20) are covered by M0–M4.
   claim (unique, moderated wordlist), state, visibility; `candidate_profiles`
   table + migration 0006; profile screen reshaped into the résumé
   (self-reported data, clearly labelled).
-- **M2 — Attempts and the score.** `assessment_attempts` + `event_results`
-  migration; Test tab from test-day flow; ScoringConfig + Zero Score engine
-  (pure, tested, versioned) computing *preview* scores from self-reported
-  results; Home dashboard shows score as preview, unranked. PJ + SEAL +
-  Ranger configs.
+- **M2 — Attempts and the score. *(complete — awaiting owner review)***
+  `assessment_attempts` + `attempt_event_results` migration 0007; Test tab as
+  the gateway (assessment vs practice, visibly distinct); versioned
+  AssessmentDefinitions + ScoringConfig engine (pure, tested, piecewise-
+  linear, banded) computing *estimated* ratings from complete self-reported
+  attempts only. PJ IFT + SEAL PST + Ranger practice battery, all
+  provisional and labelled so.
+
+  **Core rule (owner decision, M2):** official ratings and rankings come
+  from COMPLETE assessment attempts — one sitting, one protocol, every
+  event. Never from best individual events combined across days; that
+  performance never happened. Individual event results are training data,
+  never leaderboard-eligible. An official rating always points back to one
+  real, complete, verified attempt.
 - **M3 — Verification V1.** Server enters: Edge Functions for verification
   codes, evidence upload (private storage, hashed), status transitions, and
   server-side score compute. Verified Assessment Mode UX: code on camera,

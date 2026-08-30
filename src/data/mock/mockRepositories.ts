@@ -1,5 +1,6 @@
 import type { AssessmentResult } from '@/domain/assessment/types';
 import type { AthleteProfile } from '@/domain/athlete/types';
+import { sortAttemptsByOccurrence, type AssessmentAttempt } from '@/domain/attempt/types';
 import type { CandidateProfile } from '@/domain/candidate/types';
 import { getGoalOrDefault } from '@/domain/goals/catalog';
 import { calculateReadiness, calculateTrend } from '@/domain/readiness/score';
@@ -11,6 +12,7 @@ import { ok, type Result } from '@/domain/types';
 import type {
   AssessmentRepository,
   AthleteRepository,
+  AttemptRepository,
   CandidateRepository,
   MilestoneRepository,
   ProficiencyRepository,
@@ -190,6 +192,36 @@ const readiness: ReadinessRepository = {
     }),
 };
 
+// --- Attempts ----------------------------------------------------------------
+
+let attempts: AssessmentAttempt[] = [];
+
+const attempt: AttemptRepository = {
+  list: (_athleteId, options) => {
+    const ordered = sortAttemptsByOccurrence(attempts);
+    return delayed<readonly AssessmentAttempt[]>(
+      options?.limit ? ordered.slice(0, options.limit) : ordered,
+    );
+  },
+  get: (_athleteId, attemptId) =>
+    delayed<AssessmentAttempt | null>(attempts.find((item) => item.id === attemptId) ?? null),
+  record: (athleteId, input) => {
+    const recorded: AssessmentAttempt = {
+      ...input,
+      id: `mock-attempt-${attempts.length + 1}`,
+      athleteId,
+      submittedAt: null,
+      verifiedAt: null,
+      verificationStatus: 'self_reported',
+      verificationMethod: 'self_reported',
+      officialRating: null,
+      createdAt: new Date().toISOString(),
+    };
+    attempts = [...attempts, recorded];
+    return delayed(recorded);
+  },
+};
+
 // --- Candidate ---------------------------------------------------------------
 
 const demoCandidate: CandidateProfile = {
@@ -247,6 +279,7 @@ const training: TrainingRepository = createContentTrainingRepository(
 export const mockRepositories: Repositories = {
   athlete,
   assessment,
+  attempt,
   candidate,
   milestone,
   proficiency,
@@ -259,6 +292,7 @@ export const mockRepositories: Repositories = {
 export function resetMockRepositories(): void {
   profile = { ...demoProfile };
   candidateProfile = { ...demoCandidate };
+  attempts = [];
   extraResults = [];
   extraRatings = [];
   extraMilestones = [];

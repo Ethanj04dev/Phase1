@@ -22,7 +22,10 @@ export default function AssessmentLayout() {
         contentStyle: { backgroundColor: darkTheme.colors.background },
       }}
     >
-      <Stack.Screen name="new" options={{ title: 'Log assessment' }} />
+      <Stack.Screen name="attempt" options={{ title: 'Practice assessment' }} />
+      <Stack.Screen name="history" options={{ title: 'Assessment history' }} />
+      <Stack.Screen name="attempts/[attemptId]" options={{ title: 'Assessment' }} />
+      <Stack.Screen name="new" options={{ title: 'Log training result' }} />
       <Stack.Screen name="test-day" options={{ title: 'Test day' }} />
       <Stack.Screen name="[eventId]" options={{ title: 'History' }} />
     </Stack>

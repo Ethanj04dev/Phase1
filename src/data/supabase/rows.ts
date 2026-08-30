@@ -1,5 +1,11 @@
 import type { AssessmentEventId, AssessmentResult } from '@/domain/assessment/types';
 import type { AthleteProfile, TrainingTrackId } from '@/domain/athlete/types';
+import type {
+  AssessmentAttempt,
+  AttemptStatus,
+  VerificationMethod,
+  VerificationStatus,
+} from '@/domain/attempt/types';
 import type { StateCode } from '@/domain/candidate/states';
 import type { CandidateProfile, CandidateVisibility } from '@/domain/candidate/types';
 import type { GoalId } from '@/domain/goals/types';
@@ -104,6 +110,69 @@ export function toAssessmentResult(row: AssessmentResultRow): AssessmentResult {
     value: Number(row.value),
     recordedAt: row.recorded_at,
     notes: row.notes,
+  };
+}
+
+export interface AttemptEventResultRow {
+  id: string;
+  attempt_id: string;
+  event_id: string;
+  value: number;
+  event_order: number;
+}
+
+export interface AssessmentAttemptRow {
+  id: string;
+  athlete_id: string;
+  definition_id: string;
+  definition_version: number;
+  pipeline_id: string;
+  status: string;
+  occurred_at: string;
+  started_at: string | null;
+  completed_at: string | null;
+  submitted_at: string | null;
+  verified_at: string | null;
+  verification_status: string;
+  verification_method: string;
+  estimated_rating: number | null;
+  scoring_config_version: number | null;
+  official_rating: number | null;
+  notes: string | null;
+  created_at: string;
+  /** Nested rows when the query selects them. */
+  attempt_event_results?: AttemptEventResultRow[];
+}
+
+export function toAssessmentAttempt(row: AssessmentAttemptRow): AssessmentAttempt {
+  const results = [...(row.attempt_event_results ?? [])]
+    .sort((a, b) => a.event_order - b.event_order)
+    .map((result) => ({
+      eventId: result.event_id as AssessmentEventId,
+      value: Number(result.value),
+      order: result.event_order,
+    }));
+
+  return {
+    id: row.id,
+    athleteId: row.athlete_id,
+    definitionId: row.definition_id,
+    definitionVersion: row.definition_version,
+    pipelineId: row.pipeline_id as GoalId,
+    status: row.status as AttemptStatus,
+    occurredAt: row.occurred_at,
+    startedAt: row.started_at,
+    completedAt: row.completed_at,
+    submittedAt: row.submitted_at,
+    verifiedAt: row.verified_at,
+    verificationStatus: row.verification_status as VerificationStatus,
+    verificationMethod: row.verification_method as VerificationMethod,
+    results,
+    estimatedRating: row.estimated_rating === null ? null : Number(row.estimated_rating),
+    scoringConfigVersion: row.scoring_config_version,
+    officialRating: row.official_rating === null ? null : Number(row.official_rating),
+    notes: row.notes,
+    createdAt: row.created_at,
   };
 }
 

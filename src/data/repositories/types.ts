@@ -1,5 +1,6 @@
 import type { AssessmentEventId, AssessmentResult } from '@/domain/assessment/types';
 import type { AthleteProfile } from '@/domain/athlete/types';
+import type { AssessmentAttempt } from '@/domain/attempt/types';
 import type { CandidateProfile } from '@/domain/candidate/types';
 import type { MilestoneCompletion } from '@/domain/pipeline/milestones';
 import type {
@@ -146,6 +147,44 @@ export interface NewAssessmentResult {
 }
 
 /**
+ * What the client may claim about an assessment attempt — and nothing more.
+ *
+ * There is deliberately no verification status, no verified timestamp and no
+ * official rating in this type. The client submits performances; the server
+ * decides truth. Every implementation stamps new attempts 'self_reported',
+ * and the database refuses inserts that claim otherwise.
+ */
+export type NewAssessmentAttempt = Omit<
+  AssessmentAttempt,
+  | 'id'
+  | 'athleteId'
+  | 'createdAt'
+  | 'submittedAt'
+  | 'verifiedAt'
+  | 'verificationStatus'
+  | 'verificationMethod'
+  | 'officialRating'
+>;
+
+/**
+ * Complete assessment attempts: the competitive record.
+ *
+ * Append-only, like results — a candidate's history of attempts is the
+ * product, and nothing here updates or deletes past performances. Server-side
+ * verification (M3) transitions attempts through statuses; the client-facing
+ * repository can only create self-reported ones and read them back.
+ */
+export interface AttemptRepository {
+  /** Newest first by when the assessment was performed. */
+  list(
+    athleteId: Uuid,
+    options?: { limit?: number },
+  ): Promise<Result<readonly AssessmentAttempt[]>>;
+  get(athleteId: Uuid, attemptId: Uuid): Promise<Result<AssessmentAttempt | null>>;
+  record(athleteId: Uuid, input: NewAssessmentAttempt): Promise<Result<AssessmentAttempt>>;
+}
+
+/**
  * Self-assessed skill levels, for domains that cannot be timed or counted.
  *
  * Separate from AssessmentRepository rather than folded into it, because the
@@ -207,6 +246,7 @@ export interface WorkoutRepository {
 export interface Repositories {
   athlete: AthleteRepository;
   assessment: AssessmentRepository;
+  attempt: AttemptRepository;
   candidate: CandidateRepository;
   milestone: MilestoneRepository;
   proficiency: ProficiencyRepository;

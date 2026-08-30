@@ -11,6 +11,7 @@ import { localWorkoutRepository as localDraftStore } from '@/data/local/workoutR
 import type {
   AssessmentRepository,
   AthleteRepository,
+  AttemptRepository,
   CandidateRepository,
   MilestoneRepository,
   ProficiencyRepository,
@@ -21,6 +22,7 @@ import type {
 
 import { friendlyMessage } from './client';
 import {
+  toAssessmentAttempt,
   toAssessmentResult,
   toAthleteProfile,
   toCandidateProfile,
@@ -29,6 +31,7 @@ import {
   toProficiencyRating,
   toReadinessSnapshot,
   toWorkoutResult,
+  type AssessmentAttemptRow,
   type AssessmentResultRow,
   type AthleteProfileRow,
   type CandidateProfileRow,
@@ -453,6 +456,97 @@ export function createSupabaseRepositories(client: SupabaseClient): Repositories
     },
   };
 
+  const ATTEMPT_SELECT = '*, attempt_event_results (*)';
+
+  const attempt: AttemptRepository = {
+    list: async (athleteId, options) => {
+      let query = client
+        .from('assessment_attempts')
+        .select(ATTEMPT_SELECT)
+        .eq('athlete_id', athleteId)
+        .order('occurred_at', { ascending: false });
+
+      if (options?.limit) query = query.limit(options.limit);
+
+      const { data, error } = await query;
+      if (error) {
+        return failure('We could not load your assessments.', error);
+      }
+      return ok((data as AssessmentAttemptRow[]).map(toAssessmentAttempt));
+    },
+
+    get: async (athleteId, attemptId) => {
+      const { data, error } = await client
+        .from('assessment_attempts')
+        .select(ATTEMPT_SELECT)
+        .eq('athlete_id', athleteId)
+        .eq('id', attemptId)
+        .maybeSingle();
+
+      if (error) {
+        return failure('We could not load that assessment.', error);
+      }
+      return ok(data ? toAssessmentAttempt(data as AssessmentAttemptRow) : null);
+    },
+
+    record: async (athleteId, input) => {
+      // Two inserts, attempt then events. Deliberately WITHOUT verification
+      // fields or an official rating: the columns default to self-reported
+      // server-side and row-level security refuses any insert claiming more.
+      const { data, error } = await client
+        .from('assessment_attempts')
+        .insert({
+          athlete_id: athleteId,
+          definition_id: input.definitionId,
+          definition_version: input.definitionVersion,
+          pipeline_id: input.pipelineId,
+          status: input.status,
+          occurred_at: input.occurredAt,
+          started_at: input.startedAt,
+          completed_at: input.completedAt,
+          estimated_rating: input.estimatedRating,
+          scoring_config_version: input.scoringConfigVersion,
+          notes: input.notes,
+        })
+        .select('*')
+        .single();
+
+      if (error) {
+        return failure('We could not save your assessment.', error);
+      }
+      const attemptRow = data as AssessmentAttemptRow;
+
+      const { error: resultsError } = await client.from('attempt_event_results').insert(
+        input.results.map((result) => ({
+          attempt_id: attemptRow.id,
+          event_id: result.eventId,
+          value: result.value,
+          event_order: result.order,
+        })),
+      );
+
+      if (resultsError) {
+        // Leaving a bare attempt behind would poison history with a
+        // performance that has no events. Best-effort cleanup, then report.
+        await client.from('assessment_attempts').delete().eq('id', attemptRow.id);
+        return failure('We could not save your assessment.', resultsError);
+      }
+
+      return ok(
+        toAssessmentAttempt({
+          ...attemptRow,
+          attempt_event_results: input.results.map((result, index) => ({
+            id: `pending-${index}`,
+            attempt_id: attemptRow.id,
+            event_id: result.eventId,
+            value: result.value,
+            event_order: result.order,
+          })),
+        }),
+      );
+    },
+  };
+
   /** Postgres unique-violation, which is how a lost handle race surfaces. */
   function isUniqueViolation(cause: unknown): boolean {
     return (
@@ -565,6 +659,7 @@ export function createSupabaseRepositories(client: SupabaseClient): Repositories
   return {
     athlete,
     assessment,
+    attempt,
     candidate,
     milestone,
     proficiency,

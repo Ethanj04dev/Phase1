@@ -4,6 +4,7 @@ import { readRecord, StorageKeys } from '@/data/local/storage';
 import { createSupabaseRepositories } from '@/data/supabase/supabaseRepositories';
 import type { AssessmentResult } from '@/domain/assessment/types';
 import type { AthleteProfile } from '@/domain/athlete/types';
+import type { AssessmentAttempt } from '@/domain/attempt/types';
 import type { CandidateProfile } from '@/domain/candidate/types';
 import type { ReadinessSnapshot } from '@/domain/readiness/types';
 import type { WorkoutResult } from '@/domain/training/types';
@@ -12,6 +13,7 @@ export interface MigrationOutcome {
   migrated: boolean;
   profile: boolean;
   candidate: boolean;
+  attempts: number;
   /**
    * Set when the locally chosen handle was already claimed by someone else.
    * The rest of the migration still succeeds; the athlete picks a new handle
@@ -28,6 +30,7 @@ const NOTHING_TO_DO: MigrationOutcome = {
   migrated: false,
   profile: false,
   candidate: false,
+  attempts: 0,
   handleConflict: false,
   assessments: 0,
   snapshots: 0,
@@ -151,6 +154,47 @@ export async function migrateLocalData(client: SupabaseClient): Promise<Migratio
       return { ...outcome, error: 'Some of your readiness history could not be transferred.' };
     }
     outcome.snapshots = localSnapshots.value.length;
+  }
+
+  // Assessment attempts move as they are: self-reported, with their original
+  // occurrence dates and estimates. Each attempt inserts its header row and
+  // then its event rows; a failure stops the count where it stands.
+  const localAttempts = await readRecord<AssessmentAttempt[]>(StorageKeys.assessmentAttempts);
+  if (localAttempts.ok && localAttempts.value?.length) {
+    for (const item of localAttempts.value) {
+      const { data, error } = await client
+        .from('assessment_attempts')
+        .insert({
+          athlete_id: athleteId,
+          definition_id: item.definitionId,
+          definition_version: item.definitionVersion,
+          pipeline_id: item.pipelineId,
+          status: item.status,
+          occurred_at: item.occurredAt,
+          started_at: item.startedAt,
+          completed_at: item.completedAt,
+          estimated_rating: item.estimatedRating,
+          scoring_config_version: item.scoringConfigVersion,
+          notes: item.notes,
+        })
+        .select('id')
+        .single();
+      if (error || !data) {
+        return { ...outcome, error: 'Some of your assessments could not be transferred.' };
+      }
+      const { error: eventsError } = await client.from('attempt_event_results').insert(
+        item.results.map((result) => ({
+          attempt_id: (data as { id: string }).id,
+          event_id: result.eventId,
+          value: result.value,
+          event_order: result.order,
+        })),
+      );
+      if (eventsError) {
+        return { ...outcome, error: 'Some of your assessments could not be transferred.' };
+      }
+      outcome.attempts += 1;
+    }
   }
 
   const localWorkouts = await readRecord<WorkoutResult[]>(StorageKeys.workoutResults);

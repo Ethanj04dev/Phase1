@@ -2,6 +2,7 @@ import * as Crypto from 'expo-crypto';
 
 import type { AssessmentResult } from '@/domain/assessment/types';
 import type { AthleteProfile } from '@/domain/athlete/types';
+import { sortAttemptsByOccurrence, type AssessmentAttempt } from '@/domain/attempt/types';
 import type { CandidateProfile } from '@/domain/candidate/types';
 import { calculateTrend } from '@/domain/readiness/score';
 import type { ReadinessCalculation, ReadinessSnapshot } from '@/domain/readiness/types';
@@ -16,6 +17,7 @@ import { createContentTrainingRepository } from '@/data/content/trainingReposito
 import type {
   AssessmentRepository,
   AthleteRepository,
+  AttemptRepository,
   CandidateRepository,
   NewAssessmentResult,
   NewAthleteProfile,
@@ -94,6 +96,60 @@ const athlete: AthleteRepository = {
 
     const written = await writeRecord(StorageKeys.athleteProfile, updated);
     return written.ok ? ok(updated) : written;
+  },
+};
+
+// --- Attempts ----------------------------------------------------------------
+
+async function loadAttempts(): Promise<Result<readonly AssessmentAttempt[]>> {
+  const stored = await readRecord<AssessmentAttempt[]>(StorageKeys.assessmentAttempts);
+  return stored.ok ? ok(stored.value ?? []) : stored;
+}
+
+const attempt: AttemptRepository = {
+  list: async (_athleteId, options) => {
+    const stored = await loadAttempts();
+    if (!stored.ok) {
+      return stored;
+    }
+    const ordered = sortAttemptsByOccurrence(stored.value);
+    return ok(options?.limit ? ordered.slice(0, options.limit) : ordered);
+  },
+
+  get: async (_athleteId, attemptId) => {
+    const stored = await loadAttempts();
+    if (!stored.ok) {
+      return stored;
+    }
+    return ok(stored.value.find((item) => item.id === attemptId) ?? null);
+  },
+
+  record: async (athleteId, input) => {
+    const stored = await loadAttempts();
+    if (!stored.ok) {
+      return stored;
+    }
+
+    // The trust boundary, locally: whatever the caller claims, a new attempt
+    // is self-reported with no official rating. The server is the only party
+    // that ever says otherwise, and it is not this code.
+    const recorded: AssessmentAttempt = {
+      ...input,
+      id: newId(),
+      athleteId,
+      submittedAt: null,
+      verifiedAt: null,
+      verificationStatus: 'self_reported',
+      verificationMethod: 'self_reported',
+      officialRating: null,
+      createdAt: now(),
+    };
+
+    const written = await writeRecord(StorageKeys.assessmentAttempts, [
+      ...stored.value,
+      recorded,
+    ]);
+    return written.ok ? ok(recorded) : written;
   },
 };
 
@@ -334,6 +390,7 @@ const readiness: ReadinessRepository = {
 export const localRepositories: Repositories = {
   athlete,
   assessment,
+  attempt,
   candidate,
   milestone,
   proficiency,
