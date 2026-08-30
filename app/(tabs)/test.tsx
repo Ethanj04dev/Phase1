@@ -11,6 +11,7 @@ import { Divider } from '@/components/primitives/Divider';
 import { Text } from '@/components/primitives/Text';
 import { RATING_LABEL } from '@/config/branding';
 import { VERIFICATION_STATUS_LABELS } from '@/domain/attempt/types';
+import { useAuth } from '@/features/auth/AuthProvider';
 import { useTestCenter } from '@/features/attempt/useTestCenter';
 import { formatDateStamp } from '@/lib/format';
 import { useTheme } from '@/theme';
@@ -28,6 +29,7 @@ import { useTheme } from '@/theme';
  */
 export default function TestScreen() {
   const theme = useTheme();
+  const { status: authStatus } = useAuth();
   const { state, reload } = useTestCenter();
 
   // Logging an attempt happens on screens pushed over this one.
@@ -94,14 +96,23 @@ export default function TestScreen() {
                     </Text>
                   )}
 
+                  {authStatus === 'signed_in' ? (
+                    <Button
+                      label={`Take verified ${definition.shortName}`}
+                      onPress={() => router.push('/verify')}
+                      testID="take-verified"
+                    />
+                  ) : null}
                   <Button
                     label={`Log a practice ${definition.shortName}`}
+                    variant={authStatus === 'signed_in' ? 'secondary' : 'primary'}
                     onPress={() => router.push('/assessment/attempt')}
                     testID="log-attempt"
                   />
                   <Text variant="caption" color="textTertiary">
-                    Verified assessments — the ones that can rank — arrive with verification.
-                    Everything logged today is self-reported and stays out of the rankings.
+                    {authStatus === 'signed_in'
+                      ? 'A verified assessment is recorded through the app, one session code, every event on camera, and reviewed before it counts. Practice attempts stay self-reported.'
+                      : 'Verified assessments — the ones that can rank — need an account. Everything logged without one is self-reported and stays out of the rankings.'}
                   </Text>
                 </Card>
               ) : (

@@ -28,6 +28,8 @@ import type {
   Repositories,
 } from '@/data/repositories/types';
 
+import { verificationUnavailable } from '@/data/repositories/verificationUnavailable';
+
 import { readRecord, StorageKeys, writeRecord } from './storage';
 import { localWorkoutRepository } from './workoutRepository';
 
@@ -398,5 +400,7 @@ export const localRepositories: Repositories = {
   // Programme content is authored and ships with the app; only the athlete's
   // position in it is personal, and that is derived from their start date.
   training: createContentTrainingRepository(loadProfile, localWorkoutRepository),
+  // Verified assessments require the server; local mode says so honestly.
+  verification: verificationUnavailable,
   workout: localWorkoutRepository,
 };

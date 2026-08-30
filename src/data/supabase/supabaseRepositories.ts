@@ -21,6 +21,7 @@ import type {
 } from '@/data/repositories/types';
 
 import { friendlyMessage } from './client';
+import { createVerificationRepository } from './verificationRepository';
 import {
   toAssessmentAttempt,
   toAssessmentResult,
@@ -668,6 +669,7 @@ export function createSupabaseRepositories(client: SupabaseClient): Repositories
     // Programme content ships with the app; only the athlete's position in it
     // is personal. Nothing to fetch.
     training: createContentTrainingRepository(athlete.getCurrentProfile, workout),
+    verification: createVerificationRepository(client),
   };
 }
 

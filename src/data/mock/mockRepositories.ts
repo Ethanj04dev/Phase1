@@ -23,6 +23,7 @@ import type {
 } from '@/data/repositories/types';
 
 import { createContentTrainingRepository } from '@/data/content/trainingRepository';
+import { verificationUnavailable } from '@/data/repositories/verificationUnavailable';
 import { createInMemoryWorkoutRepository } from './inMemoryWorkoutRepository';
 import {
   demoAssessmentDates,
@@ -281,6 +282,7 @@ export const mockRepositories: Repositories = {
   assessment,
   attempt,
   candidate,
+  verification: verificationUnavailable,
   milestone,
   proficiency,
   readiness,

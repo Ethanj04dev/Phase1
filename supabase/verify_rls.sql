@@ -14,6 +14,18 @@ with expected as (
     'assessment_results',
     'assessment_attempts',
     'attempt_event_results',
+    'verification_sessions',
+    'session_timeline_entries',
+    'session_event_claims',
+    'evidence',
+    'analysis_runs',
+    'analysis_events',
+    'analysis_flags',
+    'verification_event_reviews',
+    'verification_actions',
+    'verification_policies',
+    'scoring_configs',
+    'reviewers',
     'proficiency_ratings',
     'milestone_completions',
     'readiness_scores',
@@ -60,6 +72,9 @@ unscoped as (
     and coalesce(p.qual, p.with_check, '') not like '%current_athlete_id%'
     and coalesce(p.qual, p.with_check, '') not like '%auth.uid%'
     and coalesce(p.qual, p.with_check, '') not like '%workout_results%'
+    and coalesce(p.qual, p.with_check, '') not like '%is_active_reviewer%'
+    -- scoring_configs is deliberately world-readable content (authenticated).
+    and p.tablename <> 'scoring_configs'
   group by p.tablename
 )
 
@@ -68,6 +83,18 @@ select
   case when r.table_exists then 'PASS' else 'FAIL — table missing' end as table_check,
   case when r.rls_enabled then 'PASS' else 'FAIL — RLS OFF' end as rls_check,
   case
+    -- Verification tables are written ONLY by SECURITY DEFINER functions:
+    -- a client INSERT policy on them would be a hole, not a feature.
+    when r.table_name in (
+      'verification_sessions','session_timeline_entries','session_event_claims',
+      'evidence','analysis_runs','analysis_events','analysis_flags',
+      'verification_event_reviews','verification_actions',
+      'verification_policies','scoring_configs','reviewers'
+    ) then case
+      when pc.select_policies > 0 and pc.insert_policies = 0 then 'PASS'
+      when pc.insert_policies > 0 then 'FAIL — client write policy on definer-only table'
+      else 'FAIL — missing read policy'
+    end
     when pc.select_policies > 0 and pc.insert_policies > 0 then 'PASS'
     else 'FAIL — missing read or write policy'
   end as policy_check,

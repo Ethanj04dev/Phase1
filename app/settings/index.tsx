@@ -282,6 +282,18 @@ export default function SettingsScreen() {
               testID="auth-action"
             />
           </Card>
+          {/* The ground-truth console. Access is enforced server-side; this
+              row just avoids hiding the door from the people with the key. */}
+          {authStatus === 'signed_in' ? (
+            <Card padded={false} style={{ marginTop: theme.spacing.md }}>
+              <DetailRow
+                label="Ground-truth console"
+                value="Open"
+                hint="Reviewer access only"
+                onPress={() => router.push('/review')}
+              />
+            </Card>
+          ) : null}
         </View>
       ) : null}
 

@@ -19,7 +19,13 @@ import type {
   ResolvedWorkoutDay,
   WorkoutResult,
 } from '@/domain/training/types';
-import type { IsoDate, Result, Uuid } from '@/domain/types';
+import type {
+  SessionEventClaim,
+  TimelineEntry,
+  VerificationSession,
+  VerificationVerdict,
+} from '@/domain/verification/types';
+import type { IsoDate, IsoDateTime, Result, Uuid } from '@/domain/types';
 
 /**
  * Repository interfaces are the seam between the UI and wherever data
@@ -243,6 +249,116 @@ export interface WorkoutRepository {
   listExerciseResults(workoutResultId: Uuid): Promise<Result<readonly ExerciseResult[]>>;
 }
 
+/** What commit_evidence returns: the ledger row id for the later upload. */
+export interface CommittedEvidence {
+  evidenceId: Uuid;
+}
+
+export interface ReviewQueueItem {
+  attemptId: Uuid;
+  definitionId: string;
+  definitionVersion: number;
+  pipelineId: string;
+  submittedAt: IsoDateTime | null;
+}
+
+export interface ReviewEvidenceItem {
+  id: Uuid;
+  eventId: AssessmentEventId | null;
+  kind: 'video' | 'gps_trace';
+  storagePath: string | null;
+  durationSeconds: number | null;
+  receivedAt: IsoDateTime | null;
+}
+
+export interface ReviewIntegrityFinding {
+  eventId: AssessmentEventId | null;
+  verdict: VerificationVerdict | 'uncertain';
+  reasonCodes: readonly string[];
+}
+
+export interface ReviewEventState {
+  eventId: AssessmentEventId;
+  claimedValue: number;
+  reviewVerdict: VerificationVerdict | null;
+  acceptedValue: number | null;
+  reasonCode: string | null;
+}
+
+export interface ReviewDetail {
+  attemptId: Uuid;
+  definitionId: string;
+  definitionVersion: number;
+  verificationStatus: string;
+  submittedAt: IsoDateTime | null;
+  session: VerificationSession | null;
+  timeline: readonly TimelineEntry[];
+  claims: readonly SessionEventClaim[];
+  evidence: readonly ReviewEvidenceItem[];
+  integrity: readonly ReviewIntegrityFinding[];
+  events: readonly ReviewEventState[];
+}
+
+/**
+ * The verified-assessment session flow and the ground-truth console.
+ *
+ * Online-only by nature: every method is a thin call into SECURITY DEFINER
+ * database functions that stamp the server's clock and enforce state. The
+ * local implementation refuses politely — a verified performance cannot
+ * exist without the server, and pretending otherwise would counterfeit the
+ * product's core promise.
+ */
+export interface VerificationRepository {
+  getActiveSession(): Promise<Result<VerificationSession | null>>;
+  createSession(
+    definitionId: string,
+    definitionVersion: number,
+    pipelineId: string,
+    eventOrder: readonly AssessmentEventId[],
+  ): Promise<Result<VerificationSession>>;
+  /** Hash first — commits the fingerprint before the bytes move. */
+  commitEvidence(
+    sessionId: Uuid,
+    eventId: AssessmentEventId | null,
+    kind: 'video' | 'gps_trace',
+    contentHash: string,
+    clientCapturedAt: IsoDateTime,
+    durationSeconds: number | null,
+    byteSize: number,
+    mimeType: string,
+  ): Promise<Result<CommittedEvidence>>;
+  uploadEvidence(
+    evidenceId: Uuid,
+    sessionId: Uuid,
+    localUri: string,
+    mimeType: string,
+  ): Promise<Result<void>>;
+  openEvent(sessionId: Uuid, eventId: AssessmentEventId): Promise<Result<void>>;
+  closeEvent(
+    sessionId: Uuid,
+    eventId: AssessmentEventId,
+    claimedValue: number,
+  ): Promise<Result<void>>;
+  submit(sessionId: Uuid): Promise<Result<Uuid>>;
+  abandon(sessionId: Uuid): Promise<Result<void>>;
+  getClaims(sessionId: Uuid): Promise<Result<readonly SessionEventClaim[]>>;
+
+  // --- Ground-truth console (reviewer-gated server-side) -------------------
+  isReviewer(): Promise<Result<boolean>>;
+  listReviewQueue(): Promise<Result<readonly ReviewQueueItem[]>>;
+  getReviewDetail(attemptId: Uuid): Promise<Result<ReviewDetail>>;
+  getEvidenceUrl(storagePath: string): Promise<Result<string>>;
+  reviewEvent(
+    attemptId: Uuid,
+    eventId: AssessmentEventId,
+    verdict: VerificationVerdict,
+    acceptedValue: number | null,
+    reasonCode: string | null,
+    reasonText: string | null,
+  ): Promise<Result<void>>;
+  finalize(attemptId: Uuid): Promise<Result<string>>;
+}
+
 export interface Repositories {
   athlete: AthleteRepository;
   assessment: AssessmentRepository;
@@ -252,5 +368,6 @@ export interface Repositories {
   proficiency: ProficiencyRepository;
   readiness: ReadinessRepository;
   training: TrainingRepository;
+  verification: VerificationRepository;
   workout: WorkoutRepository;
 }

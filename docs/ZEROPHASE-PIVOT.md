@@ -420,6 +420,25 @@ nobody can trust.
    Automated authority is granted per event behind measured gates (shadow
    mode first); false-verification rate is the metric everything else
    negotiates around. See docs/M3-VERIFICATION-DESIGN.md (v2).
+11. **M3 execution decisions (roadmap approval).** (a) Zero Verified
+   launches early with human ground truth as interim authority — automated
+   engines run in shadow on every applicable assessment; do NOT market it
+   as "AI verified" while a human is the authority. (b) Authority moves
+   event-by-event via audited policy changes; demotion is immediate on
+   degradation. (c) Verification consent and model-training consent are
+   separate permissions — evidence is never silently training data.
+   (d) Abstention is a feature: optimize leaderboard integrity, never
+   completion rate. (e) Run first, calisthenics second (pull-ups →
+   push-ups → sit-ups), swim last; nothing waits on swim automation.
+   (f) Prefer established CV components and deterministic logic before any
+   custom model training. (g) Disagreements between model and ground truth
+   are preserved as first-class data. (h) M4 leaderboards only require an
+   authoritative verified result — they do not care whether the authority
+   at the time was human ground truth or a promoted engine. (i) Public
+   language stays simple: UNVERIFIED / VERIFIED — no internal ML terms.
+   Sequence: M3A foundation → M3B run engine → M3C pull-up prototype →
+   M3D calisthenics productionization → M3E continuity → M3F swim, with a
+   review stop after each.
 
 **Naming:** the 0–1000 rating is NOT called Zero Score. Internal name
 `performanceRating`; UI label "Performance rating" via `RATING_LABEL` in the
