@@ -79,7 +79,7 @@ export interface AthleteProfile {
   trainingDaysPerWeek: number;
   /**
    * The athlete's own selection or ship date, if they have one. Optional and
-   * self-reported, like a milestone: Phase 1 records it, cannot verify it,
+   * self-reported, like a milestone: Zero Phase records it, cannot verify it,
    * and uses it only to anchor the countdown. Absent on records written
    * before the field existed.
    */

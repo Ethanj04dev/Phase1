@@ -207,7 +207,7 @@ export default function RoadToReadyScreen() {
 
               {readiness ? (
                 <Text variant="caption" color="textTertiary">
-                  {`Your readiness is ${readiness.overall}. Phase 1 suggests aiming for ${PHASE1_TARGET_READINESS} before selection. That is a Phase 1 benchmark, not an official threshold, and it does not predict an outcome.`}
+                  {`Your readiness is ${readiness.overall}. Zero Phase suggests aiming for ${PHASE1_TARGET_READINESS} before selection. That is a Zero Phase benchmark, not an official threshold, and it does not predict an outcome.`}
                 </Text>
               ) : null}
             </>

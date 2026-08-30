@@ -91,7 +91,7 @@ function EventRow({
           color={current === null ? 'textTertiary' : 'textPrimary'}
         />
         <Figure
-          label="Phase 1 target"
+          label="Zero Phase target"
           value={benchmark ? formatEventValue(event, benchmark.target) : '—'}
           color="accent"
         />
@@ -168,7 +168,7 @@ export default function FitnessScreen() {
               <Card style={{ gap: theme.spacing.sm }}>
                 <Text variant="headline">Two different numbers</Text>
                 <Text variant="bodySm" color="textSecondary">
-                  An official standard is what the career field publishes. A Phase 1 target is
+                  An official standard is what the career field publishes. A Zero Phase target is
                   what this app thinks you should be able to do to arrive prepared rather than
                   merely eligible.
                 </Text>

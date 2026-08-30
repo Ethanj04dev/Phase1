@@ -26,7 +26,7 @@ export const READINESS_BAND_DESCRIPTIONS: Record<ReadinessBand, string> = {
   early: 'You are at the start. Consistency matters more than intensity right now.',
   building: 'The base is forming. Keep the volume steady and let it accumulate.',
   developing: 'Real progress. Push the areas holding your score back.',
-  prepared: 'You are meeting Phase 1 benchmarks across the board. Hold it and sharpen.',
+  prepared: 'You are meeting Zero Phase benchmarks across the board. Hold it and sharpen.',
 };
 
 /** Inclusive lower bound of each band. */
@@ -48,10 +48,10 @@ export function readinessBand(score: number): ReadinessBand {
 }
 
 /**
- * The readiness Phase 1 suggests aiming for before selection.
+ * The readiness Zero Phase suggests aiming for before selection.
  *
- * A Phase 1 benchmark, not a threshold anyone official recognises, and not a
- * promise that reaching it means anything beyond having met Phase 1's own
+ * A Zero Phase benchmark, not a threshold anyone official recognises, and not a
+ * promise that reaching it means anything beyond having met Zero Phase's own
  * preparation targets.
  */
 export const PHASE1_TARGET_READINESS = 80;

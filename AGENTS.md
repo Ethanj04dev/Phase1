@@ -1,4 +1,4 @@
-# Phase 1 — working notes
+# Zero Phase — working notes
 
 Read the versioned Expo docs at https://docs.expo.dev/versions/v54.0.0/ before
 writing code. This project is on SDK 54 / React Native 0.81.5 / React 19.1 /

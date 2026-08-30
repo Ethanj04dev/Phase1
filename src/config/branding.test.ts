@@ -1,28 +1,15 @@
-import { PHASES, phaseForReadiness } from './branding';
+import { branding, RATING_LABEL } from './branding';
 
-describe('phaseForReadiness', () => {
-  it('returns the foundation phase at the bottom of the range', () => {
-    expect(phaseForReadiness(0).id).toBe(1);
-    expect(phaseForReadiness(54).id).toBe(1);
+describe('branding', () => {
+  it('carries the Zero Phase identity', () => {
+    expect(branding.productName).toBe('ZERO PHASE');
+    expect(`${branding.wordmark.lead} ${branding.wordmark.numeral}`).toBe('ZERO PHASE');
   });
 
-  it('returns the highest band the score satisfies', () => {
-    expect(phaseForReadiness(55).id).toBe(2);
-    expect(phaseForReadiness(74).id).toBe(2);
-    expect(phaseForReadiness(75).id).toBe(3);
-    expect(phaseForReadiness(89).id).toBe(3);
-    expect(phaseForReadiness(90).id).toBe(4);
-    expect(phaseForReadiness(100).id).toBe(4);
-  });
-});
-
-describe('PHASES', () => {
-  it('starts at zero so every score maps to a phase', () => {
-    expect(PHASES[0]?.minReadiness).toBe(0);
-  });
-
-  it('is ordered by ascending threshold', () => {
-    const thresholds = PHASES.map((phase) => phase.minReadiness);
-    expect([...thresholds].sort((a, b) => a - b)).toEqual(thresholds);
+  // The rating deliberately has no brand name yet. This test exists so that
+  // when it gets one, the change is a decision made here, not a placeholder
+  // that leaked into production copy.
+  it('labels the competitive rating generically until it is named', () => {
+    expect(RATING_LABEL).toBe('Performance rating');
   });
 });

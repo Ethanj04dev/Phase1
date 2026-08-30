@@ -8,7 +8,7 @@ import type { IsoDate, IsoDateTime } from '@/domain/types';
  * weeks to selection trains differently from one with forty, and the whole
  * product reads differently once a real date sits behind it.
  *
- * The date is the athlete's own claim, like a milestone: Phase 1 records it,
+ * The date is the athlete's own claim, like a milestone: Zero Phase records it,
  * cannot verify it, and never presents the countdown as anything other than
  * arithmetic against what they entered.
  */

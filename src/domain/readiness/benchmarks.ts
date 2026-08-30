@@ -3,7 +3,7 @@ import type { AssessmentEventId } from '@/domain/assessment/types';
 /**
  * Benchmark tables translate a raw performance into a 0-100 category score.
  *
- * These are Phase 1 benchmarks: an editorial, published, adjustable opinion
+ * These are Zero Phase benchmarks: an editorial, published, adjustable opinion
  * about what a well-prepared athlete looks like. They are NOT any
  * organisation's official standards, they are not derived from any proprietary
  * programme, and a score against them predicts nothing about selection.
@@ -12,7 +12,7 @@ import type { AssessmentEventId } from '@/domain/assessment/types';
  * - Anchors are ordered by ascending score. Scores between anchors are
  *   linearly interpolated, so improvement always moves the number rather than
  *   jumping at thresholds.
- * - A score of 100 means "at the top of the Phase 1 scale", not "maximum human
+ * - A score of 100 means "at the top of the Zero Phase scale", not "maximum human
  *   performance". The scale is deliberately reachable.
  * - Values below the first anchor floor at 0; above the last, cap at 100.
  */

@@ -38,16 +38,16 @@ export function roadStepInstruction(step: RoadStep): string {
       // No claim about being the top priority here: the ordering and the
       // points line already say that, and repeating it on every row would
       // tell the athlete that six different things are the most important.
-      return `Behind the Phase 1 benchmark, and ${Math.round(step.weight * 100)}% of your score.`;
+      return `Behind the Zero Phase benchmark, and ${Math.round(step.weight * 100)}% of your score.`;
     case 'maintain':
       // A domain averages its events, so it can sit at benchmark while one
       // event is still short. Saying "at benchmark" over a row that visibly
       // reads "0:10 to go" would look like the app cannot read its own data.
       return step.events.some((gap) => gap.current !== null && !gap.met)
-        ? 'At the Phase 1 benchmark overall, though not every event is there yet.'
-        : 'At or past the Phase 1 benchmark. Keep it there rather than chasing it further.';
+        ? 'At the Zero Phase benchmark overall, though not every event is there yet.'
+        : 'At or past the Zero Phase benchmark. Keep it there rather than chasing it further.';
     case 'unavailable':
-      return 'Phase 1 has no assessment for this that is safe to ask an untrained athlete to attempt, so it carries no score. It still matters in training.';
+      return 'Zero Phase has no assessment for this that is safe to ask an untrained athlete to attempt, so it carries no score. It still matters in training.';
   }
 }
 

@@ -3,152 +3,42 @@ import { Pressable, View } from 'react-native';
 
 import { ReadinessGauge } from '@/components/charts/ReadinessGauge';
 import { AsyncBoundary } from '@/components/feedback/AsyncBoundary';
+import { NavRow } from '@/components/layout/NavRow';
 import { Screen } from '@/components/layout/Screen';
 import { Wordmark } from '@/components/layout/Wordmark';
-import { Button } from '@/components/primitives/Button';
 import { Card } from '@/components/primitives/Card';
 import { Divider } from '@/components/primitives/Divider';
 import { Text } from '@/components/primitives/Text';
 import { READINESS_BAND_LABELS, readinessBand } from '@/domain/readiness/bands';
 import { countdownLabel, countdownTo } from '@/domain/target/countdown';
 import { preparationDomain } from '@/domain/target/domains';
-import type { RoadStep } from '@/domain/target/roadToReady';
 import { describeSession, totalEstimatedMinutes } from '@/domain/training/describe';
-import { SESSION_MODALITY_LABELS, type ResolvedWorkoutDay } from '@/domain/training/types';
 import { roadStepInstruction } from '@/features/target/roadCopy';
 import { useTodayDashboard } from '@/features/today/useTodayDashboard';
 import { formatDateStamp, formatPercent } from '@/lib/format';
 import { useTheme } from '@/theme';
 
 /**
- * Today answers one question loudly: what do I do now.
+ * Home — the candidate's competitive dashboard.
  *
- * It used to be a dashboard -- readiness, a four-tile category grid, the
- * session, streak tiles -- five blocks of roughly equal weight, which meant
- * the athlete had to decide what to look at before they could act. The score
- * is not the thing to do at seven in the morning.
+ * Zero Phase is not a workout tracker, so Home no longer opens on a workout.
+ * It opens on who the candidate is, what they are counting down to, where
+ * they stand, and what is holding them back. Training appears at the bottom
+ * as the means, not the message.
  *
- * So the session is the hero, the reason it matters comes second, and
- * readiness drops to a quiet line underneath. The category grid is gone
- * entirely: it lives on Target now, where weights and rationale give it the
- * context it always needed.
+ * Everything on this screen is real. Rank and the 0–1000 rating do not exist
+ * yet, so they are not here — no placeholder numbers, no mock leaderboard.
+ * The readiness gauge is the real instrument that the rating will replace.
  */
-
-/** The work itself. Everything else on this screen is subordinate to it. */
-function SessionHero({ day }: { day: ResolvedWorkoutDay | null }) {
-  const theme = useTheme();
-
-  if (!day || day.restDay) {
-    return (
-      <Card style={{ gap: theme.spacing.sm }}>
-        <Text variant="bodySm" color="textTertiary">
-          Today
-        </Text>
-        <Text variant="title">Recovery</Text>
-        <Text variant="body" color="textSecondary">
-          No session scheduled. Sleep and easy movement are the work today, and skipping
-          that is how the next hard week goes badly.
-        </Text>
-      </Card>
-    );
-  }
-
-  const minutes = totalEstimatedMinutes(day.sessions);
-
-  return (
-    <Card padded={false}>
-      <View style={{ padding: theme.spacing.lg, gap: theme.spacing.xs }}>
-        <View
-          style={{
-            flexDirection: 'row',
-            alignItems: 'baseline',
-            justifyContent: 'space-between',
-            gap: theme.spacing.md,
-          }}
-        >
-          <Text variant="bodySm" color="textTertiary">
-            Today
-          </Text>
-          <Text variant="bodySm" color="textTertiary">
-            {`${minutes} min`}
-          </Text>
-        </View>
-        {day.sessions.map((session, index) => (
-          <View key={session.id} style={{ gap: theme.spacing.xxs }}>
-            {index > 0 ? (
-              <Divider style={{ marginVertical: theme.spacing.md }} />
-            ) : null}
-            {/* A recovery session is titled "Recovery" and its modality is
-                also "Recovery". Printing both reads as a rendering fault. */}
-            {SESSION_MODALITY_LABELS[session.modality] === session.title ? null : (
-              <Text variant="bodySm" color="accent">
-                {SESSION_MODALITY_LABELS[session.modality]}
-              </Text>
-            )}
-            <Text variant="metricMd">{session.title}</Text>
-            <Text variant="body" color="textSecondary">
-              {describeSession(session)}
-            </Text>
-          </View>
-        ))}
-      </View>
-    </Card>
-  );
-}
-
-/** One line on why today's work is worth doing, from the Road to Ready. */
-function WhyItMatters({ focus }: { focus: RoadStep }) {
-  const theme = useTheme();
-
-  return (
-    <Pressable
-      accessibilityRole="button"
-      accessibilityLabel={`Road to ready. Your focus is ${preparationDomain(focus.domainId).label}`}
-      onPress={() => router.push('/target/road')}
-      style={{ gap: theme.spacing.xs }}
-    >
-      <Text variant="bodySm" color="textTertiary">
-        {`Your focus: ${preparationDomain(focus.domainId).label.toLowerCase()}`}
-      </Text>
-      <Text variant="body" color="textSecondary">
-        {roadStepInstruction(focus)}
-      </Text>
-      <Text variant="caption" color="accent">
-        Road to ready ›
-      </Text>
-    </Pressable>
-  );
-}
-
-export default function TodayScreen() {
+export default function HomeScreen() {
   const theme = useTheme();
   const { state, reload } = useTodayDashboard();
-
-  const dashboard = state.status === 'success' ? state.data : null;
-  const hasSessionToday = Boolean(dashboard?.today && !dashboard.today.restDay);
 
   return (
     <Screen
       scroll
-      testID="today-screen"
+      testID="home-screen"
       contentContainerStyle={{ paddingBottom: theme.spacing.xxl, gap: theme.spacing.xl }}
-      footer={
-        hasSessionToday ? (
-          <Button
-            label="Begin session"
-            size="lg"
-            accessibilityHint="Starts the first session of today"
-            onPress={() => {
-              if (dashboard?.today) {
-                router.push({
-                  pathname: '/workout/active',
-                  params: { dayId: dashboard.today.id },
-                });
-              }
-            }}
-          />
-        ) : undefined
-      }
     >
       <AsyncBoundary state={state} onRetry={reload}>
         {(data) => {
@@ -156,9 +46,13 @@ export default function TodayScreen() {
           const countdown = countdownLabel(
             countdownTo(data.profile.selectionDate, new Date().toISOString()),
           );
+          const edge = data.readiness?.strongestDomain ?? null;
+          const focus = data.road?.focus ?? null;
+          const session = data.today && !data.today.restDay ? data.today : null;
 
           return (
             <>
+              {/* Identity: who this candidate is and what the clock says. */}
               <View style={{ gap: theme.spacing.xs, paddingTop: theme.spacing.md }}>
                 <View
                   style={{
@@ -168,19 +62,13 @@ export default function TodayScreen() {
                   }}
                 >
                   <Wordmark />
-                  {/* Mono earns its place here: this is a stamp, not prose. */}
                   <Text variant="mono" color="textTertiary">
                     {formatDateStamp(new Date())}
                   </Text>
                 </View>
-                <Text variant="bodySm" color="textSecondary">
-                  {data.position
-                    ? `${data.target?.name ?? data.goal.name} · Week ${data.position.weekNumber} · Day ${data.position.dayNumber}`
-                    : (data.target?.name ?? data.goal.name)}
+                <Text variant="title" accessibilityRole="header">
+                  {`${data.target?.shortName ?? data.goal.shortName} candidate`}
                 </Text>
-                {/* The anchor. A candidate with fourteen weeks trains
-                    differently from one with forty, and this line keeps that
-                    fact in view every morning. */}
                 {countdown ? (
                   <Text variant="bodySm" color="accent">
                     {countdown}
@@ -188,70 +76,107 @@ export default function TodayScreen() {
                 ) : null}
               </View>
 
-              <SessionHero day={data.today} />
-
-              {data.road?.focus ? <WhyItMatters focus={data.road.focus} /> : null}
-
-              {/* The other two questions the product owes an answer to, kept
-                  deliberately quiet. Neither is what to act on right now. */}
-              <View>
-                <Divider />
-                <View
-                  style={{
-                    flexDirection: 'row',
-                    paddingTop: theme.spacing.lg,
-                    gap: theme.spacing.lg,
-                  }}
-                >
-                  <Pressable
-                    accessibilityRole="button"
-                    accessibilityLabel={
-                      data.readiness && band
-                        ? `Readiness ${data.readiness.overall} out of 100, ${READINESS_BAND_LABELS[band]}`
-                        : 'Readiness not yet available'
-                    }
-                    onPress={() => router.push('/target')}
-                    style={{ flex: 1.3, gap: theme.spacing.xxs, alignItems: 'flex-start' }}
-                  >
-                    <Text variant="caption" color="textTertiary">
-                      Readiness
-                    </Text>
-                    {data.readiness && band ? (
-                      // The honest gauge at pocket size: the same instrument
-                      // as Target, quiet here because the session is the hero.
+              {/* Where they stand. The honest gauge; the rating replaces this
+                  scale when verification exists to back it. */}
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel={
+                  data.readiness && band
+                    ? `Readiness ${data.readiness.overall} out of 100, ${READINESS_BAND_LABELS[band]}. Opens your pipeline`
+                    : 'Readiness not yet measured. Opens your pipeline'
+                }
+                onPress={() => router.push('/target')}
+              >
+                <Card style={{ gap: theme.spacing.sm, alignItems: 'center' }}>
+                  {data.readiness && band ? (
+                    <>
                       <ReadinessGauge
                         score={data.readiness.overall}
                         coverage={data.readiness.coverage}
-                        size={96}
+                        caption={READINESS_BAND_LABELS[band]}
+                        size={180}
                         accessibilityLabel={`Readiness ${data.readiness.overall} out of 100, ${READINESS_BAND_LABELS[band]}`}
                       />
-                    ) : (
-                      <Text variant="bodySm" color="textSecondary">
-                        Not yet
+                      {data.readiness.coverage < 1 ? (
+                        <Text variant="caption" color="textTertiary" align="center">
+                          {`Measured on ${formatPercent(data.readiness.coverage)} of your pipeline. The open section is what you have not tested.`}
+                        </Text>
+                      ) : null}
+                    </>
+                  ) : (
+                    <Text variant="body" color="textSecondary">
+                      Take an assessment to put a number on where you stand.
+                    </Text>
+                  )}
+                </Card>
+              </Pressable>
+
+              {/* Edge and weakness: the competitive reading of the same data. */}
+              {edge || focus ? (
+                <View style={{ flexDirection: 'row', gap: theme.spacing.md }}>
+                  {edge ? (
+                    <Card style={{ flex: 1, gap: theme.spacing.xxs }}>
+                      <Text variant="caption" color="textTertiary">
+                        Your edge
                       </Text>
-                    )}
-                  </Pressable>
-
-                  <View style={{ flex: 1, gap: theme.spacing.xxs }}>
-                    <Text variant="caption" color="textTertiary">
-                      Streak
-                    </Text>
-                    <Text variant="metricMd">{data.streakDays}</Text>
-                    <Text variant="caption" color="textTertiary">
-                      {data.streakDays === 1 ? 'day' : 'days'}
-                    </Text>
-                  </View>
-
-                  <View style={{ flex: 1, gap: theme.spacing.xxs }}>
-                    <Text variant="caption" color="textTertiary">
-                      This week
-                    </Text>
-                    <Text variant="metricMd">{formatPercent(data.weeklyCompletion)}</Text>
-                    <Text variant="caption" color="textTertiary">
-                      complete
-                    </Text>
-                  </View>
+                      <Text variant="headline">{preparationDomain(edge).label}</Text>
+                      <Text variant="caption" color="textTertiary">
+                        {`${data.readiness?.domains[edge] ?? ''}`}
+                      </Text>
+                    </Card>
+                  ) : null}
+                  {focus ? (
+                    <Card
+                      onPress={() => router.push('/target/road')}
+                      accessibilityLabel={`Biggest opportunity: ${preparationDomain(focus.domainId).label}. Opens road to ready`}
+                      style={{ flex: 1, gap: theme.spacing.xxs }}
+                    >
+                      <Text variant="caption" color="textTertiary">
+                        Biggest opportunity
+                      </Text>
+                      <Text variant="headline" color="accent">
+                        {preparationDomain(focus.domainId).label}
+                      </Text>
+                      <Text variant="caption" color="textTertiary" numberOfLines={2}>
+                        {roadStepInstruction(focus)}
+                      </Text>
+                    </Card>
+                  ) : null}
                 </View>
+              ) : null}
+
+              {/* The loop, stated where the candidate starts every day. */}
+              <Card padded={false}>
+                <NavRow
+                  title="Test"
+                  subtitle="Assessments are how performance enters Zero Phase"
+                  onPress={() => router.push('/assessment/test-day')}
+                />
+              </Card>
+
+              {/* Training: the means, not the message. */}
+              <View>
+                <Divider />
+                <NavRow
+                  title={session ? "Today's training" : 'Training'}
+                  subtitle={
+                    session
+                      ? `${session.sessions.map((s) => s.title).join(' + ')} · ${totalEstimatedMinutes(session.sessions)} min`
+                      : data.today?.restDay
+                        ? 'Recovery day — rest is programmed, not earned back later'
+                        : 'Your programme, week by week'
+                  }
+                  onPress={() => router.push('/train')}
+                />
+                {session && session.sessions[0] ? (
+                  <Text
+                    variant="caption"
+                    color="textTertiary"
+                    style={{ paddingHorizontal: theme.spacing.lg }}
+                  >
+                    {describeSession(session.sessions[0])}
+                  </Text>
+                ) : null}
               </View>
             </>
           );

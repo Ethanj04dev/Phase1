@@ -78,7 +78,7 @@ export default function SelectionDateScreen() {
               <Text variant="body" color="textSecondary">
                 Your selection or ship date, if you have one. It anchors the countdown on
                 Today and Road to Ready. Like your milestones, it is your own record —
-                Phase 1 cannot verify it and does not report it anywhere.
+                Zero Phase cannot verify it and does not report it anywhere.
               </Text>
 
               <TextField

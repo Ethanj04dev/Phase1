@@ -18,10 +18,10 @@ export type TargetId = string;
 //
 // OfficialStandard and Phase1Benchmark are separate types with different field
 // names on purpose. One cannot be passed where the other is expected, so a
-// Phase 1 recommendation cannot reach a screen that labels it official, and no
+// Zero Phase recommendation cannot reach a screen that labels it official, and no
 // amount of later refactoring can quietly merge them.
 
-/** A documented military requirement. Never authored by Phase 1. */
+/** A documented military requirement. Never authored by Zero Phase. */
 export interface OfficialStandard {
   eventId: AssessmentEventId;
   /**
@@ -41,16 +41,16 @@ export interface StandardRequirement {
 }
 
 /**
- * A preparation benchmark authored by Phase 1.
+ * A preparation benchmark authored by Zero Phase.
  *
- * Explicitly not a requirement. It is where Phase 1 thinks an athlete should
+ * Explicitly not a requirement. It is where Zero Phase thinks an athlete should
  * be to arrive prepared rather than merely eligible, and it says so.
  */
 export interface Phase1Benchmark {
   eventId: AssessmentEventId;
   /** Repetitions or seconds, per the event unit. */
   target: number;
-  /** Why Phase 1 picked this figure. Shown to the athlete on request. */
+  /** Why Zero Phase picked this figure. Shown to the athlete on request. */
   rationale: string;
 }
 
@@ -78,7 +78,7 @@ export interface ProficiencySkill {
   id: string;
   label: string;
   description: string;
-  /** Level Phase 1 suggests aiming for. Not an official requirement. */
+  /** Level Zero Phase suggests aiming for. Not an official requirement. */
   phase1Target: ProficiencyLevel;
   /**
    * True where the skill must not be practised alone. Surfaced on the session
@@ -157,7 +157,7 @@ export interface IntelArticle {
 export interface TargetAssessment {
   eventId: AssessmentEventId;
   /**
-   * Whether this test exists because the military runs it, or because Phase 1
+   * Whether this test exists because the military runs it, or because Zero Phase
    * uses it to measure preparation. The athlete is always told which.
    */
   origin: 'official' | 'phase1';

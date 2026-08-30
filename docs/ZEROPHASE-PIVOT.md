@@ -355,7 +355,39 @@ nobody can trust.
 
 ---
 
-## 11. Open questions for the owner
+## 11. Decisions (were open questions — answered by the owner)
+
+1. **Handles, not real names.** Usernames are the primary public identity
+   (e.g. @eJones); an optional display name may sit alongside. Real names are
+   never required for public profiles.
+2. **18+ only for V1.** No public profiles for minors. DOB, if collected for
+   age verification, is stored privately and never displayed; age brackets
+   (18–20, 21–24, 25–29, 30+) may be shown later, exact DOB never.
+3. **State is self-declared**, selected at onboarding, used for state
+   rankings and profiles only. No precise location is collected or shown.
+   Stronger verification only if abuse demands it.
+4. **Verification review is manual admin review for V1.** Submit → server
+   validates → pending review → admin approves/rejects/adjusts → only
+   approved performances are leaderboard-eligible. The data model leaves room
+   for community reviewers, reputation, consensus, approved evaluators and CV
+   later; none are V1. A simple internal admin review interface ships at M3.
+5. **Evidence retention:** kept while the performance is leaderboard-active;
+   lifecycle architected for a formal retention policy set before production
+   launch. Users are told before submitting that footage is uploaded for
+   review. Verification videos are never publicly viewable — only the
+   resulting status and badge are public. Storage cost is treated as a
+   first-order architectural concern.
+6. **Training content is demoted, not deleted.** It becomes the Improve
+   system connected to ranking weakness later. Legacy architecture does not
+   get a vote on the new product's shape.
+
+**Naming:** the 0–1000 rating is NOT called Zero Score. Internal name
+`performanceRating`; UI label "Performance rating" via `RATING_LABEL` in the
+branding config — one place to change when the real name is chosen. Every
+"Zero Score" reference earlier in this document should be read as
+`performanceRating` until the final brand name lands.
+
+## 12. Superseded questions (original list)
 
 1. **Handles and real names** — handles only, or optional real names?
    (Recommend handles only at launch; less moderation surface.)

@@ -29,7 +29,7 @@ import {
  * athlete and testable in isolation.
  *
  * Nothing here predicts anything. A score states how a performance compares to
- * the Phase 1 benchmark tables, and nothing more.
+ * the Zero Phase benchmark tables, and nothing more.
  */
 
 function clampScore(score: number): number {

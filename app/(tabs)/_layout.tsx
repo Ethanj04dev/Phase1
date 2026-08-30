@@ -12,15 +12,18 @@ interface TabDefinition {
 }
 
 /**
- * Five tabs, one question each:
- * what matters now, what am I preparing for, what am I doing about it,
- * am I getting closer, how is my preparation configured.
+ * The Zero Phase navigation: competitive first.
+ *
+ * Home is the candidate's standing, Rankings is the product, Test is how
+ * performance enters it, Community is who else is in it, Profile is who the
+ * candidate is. Training deliberately has no tab -- it is reached from Home,
+ * because Zero Phase is not a workout tracker.
  */
 const TABS: readonly TabDefinition[] = [
-  { name: 'index', title: 'Today', icon: 'sunrise' },
-  { name: 'target', title: 'Target', icon: 'crosshair' },
-  { name: 'train', title: 'Train', icon: 'activity' },
-  { name: 'progress', title: 'Progress', icon: 'trending-up' },
+  { name: 'index', title: 'Home', icon: 'home' },
+  { name: 'rankings', title: 'Rankings', icon: 'bar-chart-2' },
+  { name: 'test', title: 'Test', icon: 'check-circle' },
+  { name: 'community', title: 'Community', icon: 'users' },
   { name: 'profile', title: 'Profile', icon: 'user' },
 ];
 

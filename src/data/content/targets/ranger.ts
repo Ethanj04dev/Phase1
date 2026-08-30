@@ -18,7 +18,7 @@ import type {
  * standards have not been sourced, so there are no official standard entries
  * at all — which the Fitness screen reports as "no official standard on
  * file", a different and truer claim than "verification required". The
- * weights, benchmarks and rationale are Phase 1's own preparation judgement,
+ * weights, benchmarks and rationale are Zero Phase's own preparation judgement,
  * labelled as exactly that.
  */
 
@@ -26,7 +26,7 @@ import type {
 //
 // Load carriage is the centre of gravity, with running a close second. No
 // water domains: this preparation lives on foot and under a ruck. Weights sum
-// to 1 and are Phase 1's judgement, not a published weighting.
+// to 1 and are Zero Phase's judgement, not a published weighting.
 
 const domains: readonly TargetDomain[] = [
   {
@@ -58,7 +58,7 @@ const domains: readonly TargetDomain[] = [
     weight: 0.12,
     demand: 'high',
     rationale:
-      'Enough usable strength to carry, drag and lift under fatigue. Phase 1 does not score this from a maximal lift, so it stays unscored until a safe submaximal assessment exists.',
+      'Enough usable strength to carry, drag and lift under fatigue. Zero Phase does not score this from a maximal lift, so it stays unscored until a safe submaximal assessment exists.',
     eventIds: [],
   },
   {
@@ -71,10 +71,10 @@ const domains: readonly TargetDomain[] = [
   },
 ];
 
-// --- Phase 1 benchmarks -----------------------------------------------------
+// --- Zero Phase benchmarks -----------------------------------------------------
 //
-// Phase 1's own preparation targets. Explicitly not requirements: they are
-// where Phase 1 thinks an athlete should be to arrive prepared rather than
+// Zero Phase's own preparation targets. Explicitly not requirements: they are
+// where Zero Phase thinks an athlete should be to arrive prepared rather than
 // merely eligible.
 
 const phase1Benchmarks: readonly Phase1Benchmark[] = [
@@ -182,7 +182,7 @@ const milestones: readonly MilestoneDefinition[] = [
   {
     id: 'first_assessment',
     label: 'First fitness assessment',
-    description: 'You have recorded a full baseline in Phase 1.',
+    description: 'You have recorded a full baseline in Zero Phase.',
     order: 4,
   },
   {
@@ -216,7 +216,7 @@ export const RANGER: TargetDefinition = {
   officialStandards: [],
   phase1Benchmarks,
   assessments: [
-    // Every assessment is a Phase 1 measure. Marking one "official" is itself
+    // Every assessment is a Zero Phase measure. Marking one "official" is itself
     // a claim about how this career tests candidates, and that has not been
     // sourced.
     { eventId: 'ruck_3_mile', origin: 'phase1', domainId: 'rucking' },
@@ -232,11 +232,11 @@ export const RANGER: TargetDefinition = {
     {
       id: 'preparation_approach',
       category: 'preparation',
-      title: 'How Phase 1 approaches this Target',
+      title: 'How Zero Phase approaches this Target',
       body: [
-        'Phase 1 weights load carriage most heavily for this career, then running, then body-weight strength endurance.',
-        'That weighting is Phase 1’s own judgement about where preparation time pays off. It is not a published or official weighting, and it is visible so you can disagree with it.',
-        'Your readiness score measures you against Phase 1 benchmarks only. It is not a prediction, and it does not guarantee selection.',
+        'Zero Phase weights load carriage most heavily for this career, then running, then body-weight strength endurance.',
+        'That weighting is Zero Phase’s own judgement about where preparation time pays off. It is not a published or official weighting, and it is visible so you can disagree with it.',
+        'Your readiness score measures you against Zero Phase benchmarks only. It is not a prediction, and it does not guarantee selection.',
       ],
     },
     {
@@ -244,9 +244,9 @@ export const RANGER: TargetDefinition = {
       category: 'fitness',
       title: 'Why swimming is not scored here',
       body: [
-        'This Target’s readiness score contains no swimming or water confidence domains, because Phase 1 weights preparation toward what this pipeline leans on hardest: moving on foot, under load, for a long time.',
-        'That does not mean water skills never appear anywhere in a career. It means Phase 1 does not score them for this Target, and says so rather than quietly averaging them in.',
-        'Phase 1 does not measure, rank or reward breath-hold performance for any career, and never will.',
+        'This Target’s readiness score contains no swimming or water confidence domains, because Zero Phase weights preparation toward what this pipeline leans on hardest: moving on foot, under load, for a long time.',
+        'That does not mean water skills never appear anywhere in a career. It means Zero Phase does not score them for this Target, and says so rather than quietly averaging them in.',
+        'Zero Phase does not measure, rank or reward breath-hold performance for any career, and never will.',
       ],
     },
     {
@@ -254,8 +254,8 @@ export const RANGER: TargetDefinition = {
       category: 'fitness',
       title: 'Why there are no official standards shown',
       body: [
-        'No official entry standards for this career field have been sourced from an authoritative document yet, so Phase 1 shows none rather than filling the space with plausible numbers.',
-        'The figures you do see are Phase 1 preparation benchmarks, labelled as such, with the reasoning behind each one.',
+        'No official entry standards for this career field have been sourced from an authoritative document yet, so Zero Phase shows none rather than filling the space with plausible numbers.',
+        'The figures you do see are Zero Phase preparation benchmarks, labelled as such, with the reasoning behind each one.',
         'Confirm current official requirements with a recruiter or an official source.',
       ],
     },
@@ -265,7 +265,7 @@ export const RANGER: TargetDefinition = {
       title: 'The quiet variable',
       body: [
         'Rucking and running volume reward monotony. The athletes who arrive prepared are rarely the ones with the most impressive single sessions; they are the ones who did not miss weeks.',
-        'Phase 1 scores training consistency for this Target because for this preparation it is a fitness input, not an attitude badge.',
+        'Zero Phase scores training consistency for this Target because for this preparation it is a fitness input, not an attitude badge.',
       ],
     },
   ],

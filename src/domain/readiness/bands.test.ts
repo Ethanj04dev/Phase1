@@ -49,7 +49,7 @@ describe('readinessBand', () => {
     expect(text).not.toMatch(/will pass|guarantee|selected|you will/);
   });
 
-  it('puts the Phase 1 target inside the prepared band', () => {
+  it('puts the Zero Phase target inside the prepared band', () => {
     expect(readinessBand(PHASE1_TARGET_READINESS)).toBe('prepared');
   });
 });

@@ -54,7 +54,7 @@ export default function ResultScreen() {
             </Text>
           ) : null}
           <Button
-            label="Begin Phase 1"
+            label="Begin Zero Phase"
             size="lg"
             loading={submitting}
             onPress={handleBegin}

@@ -29,7 +29,7 @@ import {
  * block, then drops so the athlete absorbs the work rather than accumulating
  * fatigue until something breaks.
  *
- * Content is original to Phase 1 and deliberately conservative. Nothing here
+ * Content is original to Zero Phase and deliberately conservative. Nothing here
  * is adapted from a third-party paid programme, and none of it claims to
  * reproduce any organisation's standards.
  */

@@ -45,7 +45,7 @@ export default function TargetScreen() {
             return (
               <>
                 <Text variant="title" accessibilityRole="header">
-                  Your target
+                  Your pipeline
                 </Text>
                 <Card style={{ gap: theme.spacing.sm }}>
                   <Text variant="headline">Not yet available</Text>
@@ -68,7 +68,7 @@ export default function TargetScreen() {
             <>
               <View style={{ gap: theme.spacing.xs }}>
                 <Text variant="bodySm" color="textTertiary">
-                  Your target
+                  Your pipeline
                 </Text>
                 <Text variant="title" accessibilityRole="header">
                   {target.name}

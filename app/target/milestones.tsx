@@ -13,7 +13,7 @@ import { useTheme } from '@/theme';
 /**
  * The athlete's own preparation checklist.
  *
- * Deliberately not a process guide. Phase 1 is not an authority on how anyone
+ * Deliberately not a process guide. Zero Phase is not an authority on how anyone
  * joins a career field, routes differ, and people do these steps out of order.
  * So nothing is gated, nothing is required, and the order is a suggestion the
  * athlete is free to ignore.
@@ -119,7 +119,7 @@ export default function MilestonesScreen() {
           return (
             <>
               <Text variant="body" color="textSecondary">
-                Your own record of where you are in the process. Phase 1 is not an authority
+                Your own record of where you are in the process. Zero Phase is not an authority
                 on how anyone joins a career field: the order below is a suggestion, nothing
                 here is required, and steps get done out of order all the time.
               </Text>
@@ -136,7 +136,7 @@ export default function MilestonesScreen() {
                 {/* Said plainly rather than implied. The app is a notebook
                     here, not a verifier. */}
                 <Text variant="caption" color="textTertiary">
-                  Phase 1 records what you tell it. It cannot confirm any of these, and none
+                  Zero Phase records what you tell it. It cannot confirm any of these, and none
                   of it is reported anywhere.
                 </Text>
               </Card>

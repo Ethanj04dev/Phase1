@@ -113,7 +113,7 @@ export default function TimelineScreen() {
       ) : null}
 
       <Text variant="caption" color="textTertiary">
-        Like everything here, this is your own record. Phase 1 cannot verify it and does
+        Like everything here, this is your own record. Zero Phase cannot verify it and does
         not report it anywhere.
       </Text>
     </Screen>

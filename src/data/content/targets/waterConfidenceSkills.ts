@@ -56,7 +56,7 @@ export const WATER_CONFIDENCE_SKILLS: readonly ProficiencySkill[] = [
     phase1Target: 'developing',
     requiresSupervision: true,
     safetyNotice:
-      'Requires qualified in-water supervision. Never practise breath-holding or underwater work alone. Hyperventilating before going under, or pushing to your limit, can cause blackout without warning and drowning follows silently. Phase 1 does not measure or reward breath-hold performance.',
+      'Requires qualified in-water supervision. Never practise breath-holding or underwater work alone. Hyperventilating before going under, or pushing to your limit, can cause blackout without warning and drowning follows silently. Zero Phase does not measure or reward breath-hold performance.',
   },
 ];
 
@@ -71,6 +71,6 @@ export const WATER_SAFETY_ARTICLE = {
   body: [
     'Never train in water alone. That applies to easy surface swimming as much as to skill work.',
     'Any underwater or breath-holding practice requires qualified in-water supervision. Hyperventilating beforehand, or pushing to your limit, can cause blackout with no warning, and drowning follows silently.',
-    'Phase 1 does not measure, rank or reward breath-hold performance, and never will. Water confidence here means being calm and capable, not proving how long you can stay under.',
+    'Zero Phase does not measure, rank or reward breath-hold performance, and never will. Water confidence here means being calm and capable, not proving how long you can stay under.',
   ],
 } as const;

@@ -117,7 +117,7 @@ describe('domain lookup', () => {
   });
 });
 
-describe('official standards and Phase 1 benchmarks stay apart', () => {
+describe('official standards and Zero Phase benchmarks stay apart', () => {
   const standard: OfficialStandard = {
     eventId: 'run_1_5_mile',
     requirement: unverified('not yet sourced'),
@@ -125,7 +125,7 @@ describe('official standards and Phase 1 benchmarks stay apart', () => {
   const benchmark: Phase1Benchmark = {
     eventId: 'run_1_5_mile',
     target: 570,
-    rationale: 'Where Phase 1 thinks an athlete should be to arrive prepared.',
+    rationale: 'Where Zero Phase thinks an athlete should be to arrive prepared.',
   };
   const populated = target({
     officialStandards: [standard],
@@ -170,7 +170,7 @@ describe('official standards and Phase 1 benchmarks stay apart', () => {
     expect(found?.requirement.status).toBe('verified');
   });
 
-  it('requires every Phase 1 benchmark to explain itself', () => {
+  it('requires every Zero Phase benchmark to explain itself', () => {
     expect(benchmark.rationale.length).toBeGreaterThan(10);
   });
 

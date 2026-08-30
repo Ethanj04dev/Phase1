@@ -1,5 +1,5 @@
 /**
- * The preparation domains Phase 1 can measure.
+ * The preparation domains Zero Phase can measure.
  *
  * This is a registry of what the product *knows how to talk about*, not a list
  * of what any athlete is scored on. A Target selects a subset and weights it,

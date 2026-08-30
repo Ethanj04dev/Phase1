@@ -118,7 +118,7 @@ describe('official data is never fabricated', () => {
   );
 
   it.each(TARGETS.map((t) => [t.id, t] as const))(
-    '%s makes every Phase 1 benchmark explain itself',
+    '%s makes every Zero Phase benchmark explain itself',
     (_id, target) => {
       for (const benchmark of target.phase1Benchmarks) {
         expect(benchmark.rationale.length).toBeGreaterThan(20);

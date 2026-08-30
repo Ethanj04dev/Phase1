@@ -10,7 +10,7 @@ import type { MilestoneDefinition, TargetDefinition } from './types';
  * So nothing here gates anything, no step is presented as required, and the
  * order is a suggestion the athlete is free to ignore.
  *
- * Phase 1 records that the athlete says a step is done. It has no way to know
+ * Zero Phase records that the athlete says a step is done. It has no way to know
  * whether it is, and does not claim to.
  */
 
@@ -76,7 +76,7 @@ export function milestoneProgress(
  *
  * A suggestion, never a gate. An athlete who has a ship date but never told us
  * they sat the ASVAB still gets the ASVAB back as "suggested next", which is
- * correct: Phase 1 knows what they have told it, not what they have done.
+ * correct: Zero Phase knows what they have told it, not what they have done.
  */
 export function suggestedNextMilestone(
   standings: readonly MilestoneStanding[],

@@ -21,14 +21,14 @@ import { WATER_CONFIDENCE_SKILLS, WATER_SAFETY_ARTICLE } from './waterConfidence
  *
  * Same rules as everywhere: every official figure is `unverified` until a
  * human cites an authoritative document, and everything authored here is
- * Phase 1's own preparation judgement, labelled as exactly that.
+ * Zero Phase's own preparation judgement, labelled as exactly that.
  */
 
 // --- Preparation domains ----------------------------------------------------
 //
 // Swim-dominant: the water carries more combined weight than for any other
 // Target, and calisthenics sits higher than for Pararescue. Weights sum to 1
-// and are Phase 1's judgement, not a published weighting.
+// and are Zero Phase's judgement, not a published weighting.
 
 const domains: readonly TargetDomain[] = [
   {
@@ -77,7 +77,7 @@ const domains: readonly TargetDomain[] = [
     weight: 0.06,
     demand: 'moderate',
     rationale:
-      'Enough usable strength to carry, climb and move load. Phase 1 does not score this from a maximal lift, so it stays unscored until a safe submaximal assessment exists.',
+      'Enough usable strength to carry, climb and move load. Zero Phase does not score this from a maximal lift, so it stays unscored until a safe submaximal assessment exists.',
     eventIds: [],
   },
   {
@@ -104,7 +104,7 @@ const officialStandards: readonly OfficialStandard[] = [
   { eventId: 'run_1_5_mile', requirement: unverified('Not yet sourced from an authoritative document.') },
 ];
 
-// --- Phase 1 benchmarks -----------------------------------------------------
+// --- Zero Phase benchmarks -----------------------------------------------------
 
 const phase1Benchmarks: readonly Phase1Benchmark[] = [
   {
@@ -221,7 +221,7 @@ const milestones: readonly MilestoneDefinition[] = [
   {
     id: 'first_assessment',
     label: 'First fitness assessment',
-    description: 'You have recorded a full baseline in Phase 1.',
+    description: 'You have recorded a full baseline in Zero Phase.',
     order: 4,
   },
   {
@@ -252,7 +252,7 @@ export const SEAL: TargetDefinition = {
   officialStandards,
   phase1Benchmarks,
   assessments: [
-    // Every assessment is a Phase 1 measure. Marking one "official" is itself
+    // Every assessment is a Zero Phase measure. Marking one "official" is itself
     // a claim about how this career tests candidates, and that has not been
     // sourced.
     { eventId: 'swim_500m', origin: 'phase1', domainId: 'swimming' },
@@ -269,11 +269,11 @@ export const SEAL: TargetDefinition = {
     {
       id: 'preparation_approach',
       category: 'preparation',
-      title: 'How Phase 1 approaches this Target',
+      title: 'How Zero Phase approaches this Target',
       body: [
-        'Phase 1 weights the water most heavily for this career — swimming fitness and water confidence together carry more of the score than for any other Target — with calisthenics and running close behind.',
-        'That weighting is Phase 1’s own judgement about where preparation time pays off. It is not a published or official weighting, and it is visible so you can disagree with it.',
-        'Your readiness score measures you against Phase 1 benchmarks only. It is not a prediction, and it does not guarantee selection.',
+        'Zero Phase weights the water most heavily for this career — swimming fitness and water confidence together carry more of the score than for any other Target — with calisthenics and running close behind.',
+        'That weighting is Zero Phase’s own judgement about where preparation time pays off. It is not a published or official weighting, and it is visible so you can disagree with it.',
+        'Your readiness score measures you against Zero Phase benchmarks only. It is not a prediction, and it does not guarantee selection.',
       ],
     },
     WATER_SAFETY_ARTICLE,
@@ -282,8 +282,8 @@ export const SEAL: TargetDefinition = {
       category: 'fitness',
       title: 'Why some standards are blank',
       body: [
-        'Official entry standards for this career field have not yet been sourced from an authoritative document, so Phase 1 shows them as requiring verification rather than filling them in with a plausible number.',
-        'The figures you do see are Phase 1 preparation benchmarks, labelled as such, with the reasoning behind each one.',
+        'Official entry standards for this career field have not yet been sourced from an authoritative document, so Zero Phase shows them as requiring verification rather than filling them in with a plausible number.',
+        'The figures you do see are Zero Phase preparation benchmarks, labelled as such, with the reasoning behind each one.',
         'Confirm current official requirements with a recruiter or an official source.',
       ],
     },

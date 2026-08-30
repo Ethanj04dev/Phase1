@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "Phase 1",
+    "name": "Zero Phase",
     "slug": "phase-1",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -9,7 +9,9 @@
     "userInterfaceStyle": "dark",
     "backgroundColor": "#050505",
     "primaryColor": "#FFFFFF",
-    "assetBundlePatterns": ["**/*"],
+    "assetBundlePatterns": [
+      "**/*"
+    ],
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "com.phaseone.app",

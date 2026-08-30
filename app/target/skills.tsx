@@ -101,7 +101,7 @@ function SkillRow({
 
       <View style={{ gap: theme.spacing.xxs }}>
         <Text variant="caption" color="textTertiary">
-          {`Suggested by Phase 1: ${PROFICIENCY_LEVEL_LABELS[skill.phase1Target]}`}
+          {`Suggested by Zero Phase: ${PROFICIENCY_LEVEL_LABELS[skill.phase1Target]}`}
         </Text>
         <Text variant="caption" color="textTertiary">
           {standing.lastRatedAt === null
@@ -241,7 +241,7 @@ export default function SkillsScreen() {
                   the surface needs qualified in-water supervision.
                 </Text>
                 <Text variant="bodySm" color="textSecondary">
-                  Phase 1 does not measure, rank or reward breath-hold performance, and never
+                  Zero Phase does not measure, rank or reward breath-hold performance, and never
                   will. There is no record to beat here. Water confidence means being calm and
                   capable, not proving how long you can stay under.
                 </Text>

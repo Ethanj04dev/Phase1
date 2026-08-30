@@ -1,9 +1,9 @@
 import type { IsoDate } from '@/domain/types';
 
 /**
- * Provenance for anything Phase 1 presents as official.
+ * Provenance for anything Zero Phase presents as official.
  *
- * The central rule of this product is that a Phase 1 recommendation must never
+ * The central rule of this product is that a Zero Phase recommendation must never
  * be mistaken for a military requirement. That rule is enforced here by types
  * rather than by discipline: an unverified value carries no number at all, so
  * there is nothing for a screen to render even by accident. A plausible

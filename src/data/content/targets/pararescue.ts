@@ -16,20 +16,20 @@ import type {
  * Read this before editing:
  *
  * Every official figure here is `unverified`. That is not an oversight and not
- * a TODO to fill in with something plausible. Phase 1's entire credibility
+ * a TODO to fill in with something plausible. Zero Phase's entire credibility
  * rests on never presenting its own recommendation as a military requirement,
  * so an unsourced standard shows as "Verification required" until somebody
  * reads an authoritative document and cites it.
  *
- * What *is* authored here is Phase 1's own preparation methodology: which
- * domains matter and how much, what Phase 1 thinks an athlete should be able
+ * What *is* authored here is Zero Phase's own preparation methodology: which
+ * domains matter and how much, what Zero Phase thinks an athlete should be able
  * to do to arrive prepared rather than merely eligible, and why. All of it is
- * labelled as Phase 1's opinion, because that is what it is.
+ * labelled as Zero Phase's opinion, because that is what it is.
  */
 
 // --- Preparation domains ----------------------------------------------------
 //
-// Weights sum to 1 and are Phase 1's judgement about where preparation time
+// Weights sum to 1 and are Zero Phase's judgement about where preparation time
 // pays off for this career, not a published weighting.
 
 const domains: readonly TargetDomain[] = [
@@ -79,7 +79,7 @@ const domains: readonly TargetDomain[] = [
     weight: 0.07,
     demand: 'moderate',
     rationale:
-      'Enough usable strength to carry, climb and move load. Phase 1 does not score this from a maximal lift, so it stays unscored until a safe submaximal assessment exists.',
+      'Enough usable strength to carry, climb and move load. Zero Phase does not score this from a maximal lift, so it stays unscored until a safe submaximal assessment exists.',
     // Deliberately empty. A domain with no safe assessment carries no score
     // rather than an invented one.
     eventIds: [],
@@ -106,10 +106,10 @@ const officialStandards: readonly OfficialStandard[] = [
   { eventId: 'swim_500m', requirement: unverified('Not yet sourced from an authoritative document.') },
 ];
 
-// --- Phase 1 benchmarks -----------------------------------------------------
+// --- Zero Phase benchmarks -----------------------------------------------------
 //
-// Phase 1's own preparation targets. Explicitly not requirements: they are
-// where Phase 1 thinks an athlete should be to arrive prepared rather than
+// Zero Phase's own preparation targets. Explicitly not requirements: they are
+// where Zero Phase thinks an athlete should be to arrive prepared rather than
 // merely eligible.
 
 const phase1Benchmarks: readonly Phase1Benchmark[] = [
@@ -230,7 +230,7 @@ const milestones: readonly MilestoneDefinition[] = [
   {
     id: 'first_assessment',
     label: 'First fitness assessment',
-    description: 'You have recorded a full baseline in Phase 1.',
+    description: 'You have recorded a full baseline in Zero Phase.',
     order: 4,
   },
   {
@@ -259,7 +259,7 @@ export const PARARESCUE: TargetDefinition = {
   officialStandards,
   phase1Benchmarks,
   assessments: [
-    // Every assessment is currently a Phase 1 measure. Marking one "official"
+    // Every assessment is currently a Zero Phase measure. Marking one "official"
     // is itself a claim about how this career tests candidates, and that has
     // not been sourced.
     { eventId: 'swim_500m', origin: 'phase1', domainId: 'swimming' },
@@ -276,11 +276,11 @@ export const PARARESCUE: TargetDefinition = {
     {
       id: 'preparation_approach',
       category: 'preparation',
-      title: 'How Phase 1 approaches this Target',
+      title: 'How Zero Phase approaches this Target',
       body: [
-        'Phase 1 weights swimming and water confidence most heavily for this career, then running, then body-weight strength endurance and load carriage.',
-        'That weighting is Phase 1’s own judgement about where preparation time pays off. It is not a published or official weighting, and it is visible so you can disagree with it.',
-        'Your readiness score measures you against Phase 1 benchmarks only. It is not a prediction, and it does not guarantee selection.',
+        'Zero Phase weights swimming and water confidence most heavily for this career, then running, then body-weight strength endurance and load carriage.',
+        'That weighting is Zero Phase’s own judgement about where preparation time pays off. It is not a published or official weighting, and it is visible so you can disagree with it.',
+        'Your readiness score measures you against Zero Phase benchmarks only. It is not a prediction, and it does not guarantee selection.',
       ],
     },
     WATER_SAFETY_ARTICLE,
@@ -289,9 +289,9 @@ export const PARARESCUE: TargetDefinition = {
       category: 'fitness',
       title: 'Why some standards are blank',
       body: [
-        'Official entry standards for this career field have not yet been sourced from an authoritative document, so Phase 1 shows them as requiring verification rather than filling them in with a plausible number.',
+        'Official entry standards for this career field have not yet been sourced from an authoritative document, so Zero Phase shows them as requiring verification rather than filling them in with a plausible number.',
         'A wrong official figure is worse than a missing one: you would train to it, and find out at the worst possible moment.',
-        'Phase 1 targets are shown alongside and are clearly labelled. They are preparation benchmarks written by Phase 1, not requirements.',
+        'Zero Phase targets are shown alongside and are clearly labelled. They are preparation benchmarks written by Zero Phase, not requirements.',
       ],
     },
     {

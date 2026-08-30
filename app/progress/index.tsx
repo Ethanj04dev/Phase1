@@ -143,7 +143,7 @@ export default function ProgressScreen() {
                       </Text>
                     )}
                     <Text variant="caption" color="textTertiary">
-                      {`Phase 1 suggests ${PHASE1_TARGET_READINESS} before selection${
+                      {`Zero Phase suggests ${PHASE1_TARGET_READINESS} before selection${
                         coverage === null
                           ? ''
                           : `. Based on ${formatPercent(coverage)} of what this target measures`

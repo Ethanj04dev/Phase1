@@ -9,7 +9,7 @@ import {
 } from './provenance';
 
 /**
- * These tests guard the product's most important promise: that Phase 1 never
+ * These tests guard the product's most important promise: that Zero Phase never
  * presents its own recommendation, or a placeholder, as an official military
  * requirement.
  */

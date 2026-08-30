@@ -8,7 +8,7 @@ import type { BlockPlan, DayPlan, SessionPlan } from './buildProgram';
  * shape with progressive overload and a planned deload -- and it keeps the
  * content tunable instead of frozen in a wall of literals.
  *
- * All of this content is original to Phase 1. Nothing here is adapted from any
+ * All of this content is original to Zero Phase. Nothing here is adapted from any
  * third-party paid programme or any organisation's published standards.
  */
 

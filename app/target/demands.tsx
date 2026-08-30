@@ -43,7 +43,7 @@ export default function PhysicalDemandsScreen() {
           return (
             <>
               <Text variant="body" color="textSecondary">
-                {`What ${target.name} asks of you physically, and why each area matters. This is Phase 1's assessment of the preparation demands, not an official document.`}
+                {`What ${target.name} asks of you physically, and why each area matters. This is Zero Phase's assessment of the preparation demands, not an official document.`}
               </Text>
 
               <Card padded={false}>
