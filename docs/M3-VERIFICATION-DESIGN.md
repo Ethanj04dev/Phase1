@@ -1,657 +1,634 @@
-# M3 — Verification Architecture & Threat Model
+# M3 — Automated Verification Architecture
 
-**Status: DESIGN FOR REVIEW. Nothing in this document is implemented.**
+**Status: DESIGN v2, FOR REVIEW. Nothing implemented.**
+**v2 change: verification authority moves from human review to automated
+verification.** Human review becomes a secondary process — ground truth,
+appeals, QA, audits, fraud investigation — never the normal product path.
 
-The question this system answers is not "did the candidate submit these
-numbers?" It is:
+The question is unchanged:
 
 > How confident can Zero Phase be that **this specific candidate** performed
 > **this specific complete assessment**, at **this time**, according to the
 > **required protocol**, without manipulating the evidence?
 
-Every design choice below is downstream of that sentence, and of the core
-principle: rankings are only as valuable as the trust candidates place in the
-verification behind them.
+What changed is who answers it at scale. The target architecture:
 
-One honesty note up front, repeated where it matters: **verification cannot be
-perfect.** The system is designed to make cheating expensive, detectable and
-auditable — and to grade its own confidence honestly through tiers — not to
-pretend fraud is impossible.
+```
+EVIDENCE
+   ↓
+AUTOMATED ANALYSIS          (specialized engines, per event)
+   ↓
+SERVER VERIFICATION POLICY  (thresholds, integrity, versioned rules)
+   ↓
+AUTHORITATIVE VERDICT       (verified | failed | unable_to_verify)
+```
+
+The engineering goal, stated the honest way: **automate routine verification
+at extremely high *measured* reliability while abstaining whenever evidence
+or confidence is insufficient.** Not "perfect verification" — abstention is a
+first-class outcome, and leaderboard credibility outranks verification
+completion rate. `unable_to_verify` is always preferable to incorrectly
+verified.
+
+**M2 is untouched by this change.** One complete assessment produces one
+rating; training events stay separate; self-reported never ranks; official
+ratings are server-controlled; history is append-only; scoring configs are
+versioned; a ranking always references one complete eligible assessment.
 
 ---
 
-## 1. Threat model
+## 1. The three-outcome verdict model
 
-Threats are grouped by what the architecture does about them: **PREVENT**
-(structurally impossible or near-impossible), **DETECT** (caught by review or
-automated checks), **DISCOURAGE** (raised cost, imperfect detection).
-Severity reflects damage to leaderboard credibility × ease of execution.
+Every event, and every assessment, resolves to exactly one of:
 
-### 1.1 Evidence-substitution attacks
-
-| Threat | Severity | Response |
+| Outcome | Meaning | Examples |
 |---|---|---|
-| Uploading prerecorded footage | HIGH | **PREVENT.** Server-issued session challenge must appear at the start of every clip (§4). Footage recorded before the challenge existed cannot contain it. In-app capture (§5) blocks camera-roll uploads entirely for the Zero Verified tier. |
-| Editing / splicing video | HIGH | **PREVENT (mostly) + DETECT.** In-app capture produces one continuous clip per event; its SHA-256 hash is committed to the server at capture time (§6.4), before any editing window exists. A swapped file fails the hash check. Splicing *during* capture (rooted device, virtual camera) is not preventable client-side — reviewers watch for discontinuities, and automated discontinuity detection is a designed-for upgrade (§17). |
-| Pausing recording mid-event | HIGH | **DETECT.** Clip duration must match the server-clocked event window (§6.2). A 2-minute push-up event whose clip is 1:40 is flagged automatically. |
-| Reusing evidence across attempts | MEDIUM | **PREVENT.** Content hash is unique-indexed across all evidence; the embedded challenge belongs to exactly one session. |
-| Reusing evidence across accounts | MEDIUM | **PREVENT.** Same hash index is global, not per-account. |
-| Manipulating timestamps | MEDIUM | **PREVENT.** Every timestamp that matters is stamped by the server on receipt. Client timestamps are stored as claims, never trusted. |
+| **VERIFIED** | Sufficient evidence and confidence to accept the result. | All checks pass above calibrated thresholds. |
+| **FAILED** | Sufficient evidence that the protocol or result is invalid. | Invalid rep standards, insufficient distance, wrong event order, excessive transition time, confirmed evidence manipulation. |
+| **UNABLE_TO_VERIFY** | Evidence is ambiguous or technically insufficient. **The system abstains rather than guesses.** | Candidate leaves frame, landmarks untrackable, severe lighting, swimmer lost by the tracker, GPS quality too poor, angle prevents ROM judgment, corrupt file. |
 
-### 1.2 Identity attacks
+Rules that follow from this:
 
-| Threat | Severity | Response |
-|---|---|---|
-| Another person performs an event | HIGH | **DETECT (moderate confidence).** Session opens with an identity clip — the candidate's face, reading the challenge aloud (§4.3). Reviewers compare the person in each event clip to the identity clip. Not biometric-grade in V1; honest limitation. Face-continuity automation is a designed-for upgrade. |
-| Multiple accounts | MEDIUM | **DISCOURAGE + DETECT.** One candidate profile per auth user (already enforced); evidence-hash reuse across accounts is blocked; device metadata recorded per session supports later abuse investigation. Determined multi-accounting is not fully preventable — say so. |
-| Collusion with reviewers/proctors | MEDIUM | **DISCOURAGE + DETECT.** Reviewers cannot review their own or self-selected attempts (assignment is server-side), every review action lands in an append-only audit log (§9), the model supports N independent reviews per event (§15), and proctor attestations are auditable records, never a `verified=true` bit (§13). |
-
-### 1.3 Protocol attacks
-
-| Threat | Severity | Response |
-|---|---|---|
-| Events out of order | MEDIUM | **PREVENT.** The session state machine only opens event N+1 after event N closes (§3). Order is server-controlled. |
-| Excessive rest between events | MEDIUM | **PREVENT (structure) + DETECT.** Transitions are server-clocked. A gap beyond the protocol tolerance is recorded on the timeline and flags the attempt — it cannot be edited out afterward, because the timeline lives on the server (§6). |
-| Inflated rep counts / partial ROM / wrong standards | HIGH | **DETECT.** This is the core job of human review: reviewers count valid reps against the protocol standard and the accepted value can be adjusted below the claim (§9). The claim is preserved verbatim. |
-| Incorrect timer start/stop | LOW | **PREVENT.** Timed windows are app-driven inside capture; the clip spans the window. |
-| Candidate leaves frame / camera can't judge form | MEDIUM | **DETECT.** Per-event framing protocol (§7); reviewers reject events with unjudgeable evidence. Rejection means retest, not benefit of the doubt. |
-
-### 1.4 Distance/measurement attacks
-
-| Threat | Severity | Response |
-|---|---|---|
-| Running short / invalid course | HIGH | **DETECT.** Distance is computed server-side from the GPS trace, never taken from the claim (§8). Accepted time is read at the accepted distance. |
-| GPS spoofing | MEDIUM | **DISCOURAGE + DETECT.** Plausibility checks (accuracy variance, teleportation, pace-vs-history, elevation sanity, clock-skew) plus video bookends tying the run to a real place and the challenge. Sophisticated spoofing beats V1 — honest limitation, mitigated later by device integrations and proctored tiers. |
-| Pool shorter than claimed | HIGH (for swim) | **PARTIAL in V1.** The swim protocol (§8.3) requires the pool and lane markers on camera and the stated length on record, but V1 cannot *prove* pool length. The swim is verification's weakest event in V1 and the design says so; proctored/approved-pool tiers exist largely for this. |
-| Incorrect lap counts / missed wall touches | HIGH (for swim) | **DETECT.** Fixed-camera protocol keeps walls visible; reviewers count laps and touches. |
-
-### 1.5 Platform attacks
-
-| Threat | Severity | Response |
-|---|---|---|
-| Manipulated client requests (`verified=true`, inflated official rating) | HIGH | **PREVENT.** Already structural since M2: no client UPDATE policy on attempts, INSERT limited to self-reported claims, official ratings and status transitions are service-role writes only. M3 extends the same posture to every verification table (§20). |
-| Direct database/API manipulation | HIGH | **PREVENT.** RLS on every table; verdict fields have no client write path; Edge Functions validate challenges and transitions against server state, not request payloads. |
-
-**Summary of honesty:** V1 *prevents* replayed footage, swapped files,
-reordered events, silent extra rest, evidence reuse, and every
-client-declares-truth attack. It *detects* bad reps, short distances, and
-identity substitution with human eyes at moderate confidence. It *cannot*
-defeat a sophisticated attacker with a rooted device, a virtual camera and a
-body double — that is what the proctored and organization tiers are for, and
-why confidence is graded rather than binary.
+- The system is **never forced to guess**. Any engine that cannot reach its
+  confidence threshold returns `unable_to_verify` with reasons.
+- `FAILED` requires positive evidence of invalidity — it is a finding, not a
+  default. Ambiguity is `unable_to_verify`, not failure.
+- `unable_to_verify` is a candidate-friendly outcome: clear reasons
+  ("Pull-up footage could not be reliably evaluated — camera too low"), no
+  penalty, retest path. The pre-capture quality gate (§5) exists to make it
+  rare.
+- Assessment-level verdict composes event verdicts (§3): all events verified
+  → verified; any failed → failed; otherwise unable_to_verify.
 
 ---
 
-## 2. Verification state machine
+## 2. Architecture: specialized engines, not one AI reviewer
 
-Two machines, deliberately separate: the **session** (live, while performing)
-and the **attempt** (the permanent competitive record, unchanged from M2).
-
-### Session states
-
-```
-issued ──► active ──► submitted            (terminal for the session)
-   │          │
-   │          ├──► interrupted ──► abandoned
-   └──────────┴──► expired
-```
-
-- `issued` — server created the session + challenge; nothing captured yet.
-- `active` — identity clip received; events opening in order.
-- `interrupted` — app death / crash mid-event beyond resume tolerance (§18).
-- `submitted` — all uploads finalized; the attempt enters review.
-- `expired` / `abandoned` — challenge TTL passed or candidate quit. Partial
-  evidence is retained briefly for support, then deleted.
-
-### Attempt states (M2 enum, now with real transitions)
+There is deliberately **no generic "AI reviewer"** and no opaque model that
+writes `verified = true`. Verification is a pipeline of specialized systems,
+each producing structured, signed-off analysis; a deterministic **rules
+engine** applies versioned policy to their outputs; the **server** issues the
+verdict. A model returns observations; only policy decides.
 
 ```
-                          ┌────────► zero_verified   (terminal*)
-self_reported             │
-     │              pending_review ─► rejected        (terminal*)
-     └── (verified ──────►│
-          session                └──► proctored / org (future path)
-          submit)
+                    ┌───────────────────────────────┐
+ evidence  ───────► │ 1 EVIDENCE INTEGRITY ENGINE   │  deterministic
+                    ├───────────────────────────────┤
+                    │ 2 EVENT ANALYSIS ENGINES      │
+                    │   · calisthenics (pose/CV)    │  per-event,
+                    │   · run (sensor physics)      │  specialized
+                    │   · swim (tracking/CV)        │
+                    ├───────────────────────────────┤
+                    │ 3 CANDIDATE CONTINUITY ENGINE │  session-scoped
+                    ├───────────────────────────────┤
+                    │ 4 FRAUD / ANOMALY ENGINE      │  cross-signal
+                    ├───────────────────────────────┤
+                    │ 5 VERIFICATION RULES ENGINE   │  deterministic,
+                    │   (server policy, versioned)  │  issues verdict
+                    └───────────────────────────────┘
 ```
 
-- Every transition past `self_reported` is a **service-role write**. There is
-  no client path, and the M2 RLS audit already proves the absence.
-- `rejected` carries a machine-readable reason category; one category is
-  `retest_required`, which the UI renders as "Retest required" — a rejection
-  with a friendly path forward, not a separate state.
-- \*Terminal for the candidate. An admin can reopen with an audited action
-  (e.g., fraud discovered post-verification revokes `zero_verified`); every
-  reopen is a new audit row, never a silent edit.
+**Evidence Integrity Engine** (deterministic, no ML): in-app capture flag,
+challenge/session binding, hash match vs commitment, capture continuity,
+expected clip duration vs server event window, metadata sanity, event order,
+transition timing vs protocol budget, global evidence-reuse check, session
+state validity. Runs first; hard failures short-circuit the pipeline.
 
-### Event-level review states (within pending_review)
+**Calisthenics Analysis Engine** (§6): body visibility, pose landmarks,
+temporal movement analysis, exercise-specific state machines, rep
+segmentation, per-rep validity + ROM evaluation, per-rep and per-event
+confidence.
+
+**Run Verification Engine** (§7): GPS distance/accuracy/continuity, elapsed
+time, teleportation and speed/acceleration plausibility, elevation sanity,
+app/device state, motion data where available, start/finish bookends.
+Physics and rules first — auditable; ML only as an anomaly classifier on top.
+
+**Swim Verification Engine** (§8): candidate tracking, lane tracking,
+wall-touch and turn detection, lap counting, elapsed time, continuity, pool
+framing and stated-length evidence, confidence. Abstains readily.
+
+**Candidate Continuity Engine**: answers one narrow question — *does the
+person in each event appear consistent with the person established in this
+session's identity clip?* Session-scoped comparison only. This is
+deliberately **not** a public identity-recognition system and never becomes a
+cross-user biometric database: embeddings are computed per session, compared
+within the session, and are never indexed across candidates.
+
+**Fraud / Anomaly Engine**: combines signals across engines — integrity
+oddities + implausible improvement vs history + device fingerprints +
+continuity wobble — into risk flags. High-risk flags block auto-verification
+(→ unable_to_verify or investigation), never silently pass.
+
+**Verification Rules Engine**: deterministic, versioned server policy that
+consumes every engine's structured output and produces the verdict.
+Conceptually:
 
 ```
-claimed ──► accepted | adjusted(value, reason) | rejected(reason)
+auto_verify(event) ⇐
+      integrity = pass
+  AND candidate_continuity ≥ threshold(event, policy_version)
+  AND analysis_confidence  ≥ threshold(event, policy_version)
+  AND capture_quality      ≥ threshold(event, policy_version)
+  AND no high-risk anomaly flag
+otherwise → unable_to_verify   (or failed, on positive invalidity findings)
 ```
-
-### The verdict rule
-
-`zero_verified` **iff**: every event in the protocol is accepted or adjusted,
-AND the identity clip passes, AND the session timeline has no unexplained
-gaps. **Any** rejected event rejects the assessment — four of five passing is
-not a smaller success, because the protocol is the unit of competition. The
-official rating is then computed server-side from **accepted** values under
-the attempt's stamped scoring-config version.
 
 ---
 
-## 3. Candidate verified-assessment flow
+## 3. Automated-verdict state machine
+
+Attempt statuses are unchanged from M2. What changes is what happens inside
+`pending_review` — it becomes, in the normal path, machine time measured in
+minutes, not reviewer-queue time measured in days.
+
+```
+ATTEMPT
+self_reported ──(verified session submit)──► pending_review
+                                                │
+                              ┌─────────────────┼──────────────────┐
+                              ▼                 ▼                  ▼
+                        zero_verified        rejected        unable_to_verify*
+                        (official rating)    (failed:         (reasons + free
+                                             reason codes)     retest path)
+
+EVENT (inside analysis)
+captured ─► integrity_checked ─► analyzed ─► verified | failed | unable_to_verify
+
+ASSESSMENT VERDICT = compose(event verdicts):
+  all verified                        → zero_verified
+  any failed                          → rejected(reason)
+  none failed, any unable_to_verify   → unable_to_verify
+```
+
+\* Storage note: `unable_to_verify` is recorded as the analysis outcome; at
+the attempt-status level it maps onto `rejected` with reason class
+`unable_to_verify` / `retest_required` — the M2 enum needs no migration, and
+the UI renders it as its own friendly outcome, never as an accusation.
+
+**Authority is a policy switch, not an architecture** (§10): the same
+pipeline runs in shadow mode (analysis recorded, humans hold authority) or
+authority mode (analysis verdict is final), configured per event and per
+policy version. Promotion from shadow to authority is an explicit, audited
+configuration change gated on measured performance.
+
+Every transition remains a **service-role write**. Nothing here weakens the
+M2 rule that clients cannot touch verdicts.
+
+---
+
+## 4. Machine outputs: structured, traceable, rep-level
+
+### Event-level output (every engine, every event)
+
+```
+event: pull_ups
+claimed_value: 21
+detected_reps: 22
+accepted_reps: 20
+invalid_reps:
+  - rep 8:  chin_below_bar
+  - rep 17: incomplete_extension
+body_visibility_confidence: 0.995
+rep_count_confidence:       0.987
+rom_confidence:             0.974
+candidate_continuity:       0.991
+evidence_integrity: pass
+anomaly_flags: []
+decision: VERIFIED
+accepted_value: 20
+```
+
+The accepted number must be **traceable to machine observations** — an
+engine that returns "looks good" is not an engine, and no such output is
+accepted by the rules engine.
+
+### Rep-level records (calisthenics)
+
+Every detected repetition persists:
+
+```
+rep_number · start_ts · end_ts · verdict (valid|invalid|uncertain)
+confidence · reason_codes[] · joint/body metrics (per-rep extremes:
+e.g. min elbow angle, chin-vs-bar clearance, hip line deviation)
+```
+
+This powers debugging, appeals, model evaluation, future visual replay, and
+candidate transparency — eventually `CLAIMED 21 · ACCEPTED 20 · REP 14
+INVALID — incomplete extension` with no human annotator involved.
+
+---
+
+## 5. Pre-capture quality gate
+
+Automated verification starts **before** the exercise does. Ahead of each
+camera event, an on-device preflight checks: full body visible, required
+landmarks visible, required equipment (bar) visible, camera angle in range,
+lighting adequate, camera stable, distance adequate. If the system could not
+confidently judge the event from this setup, **the verified event does not
+start**, and the candidate is told exactly what to fix, in plain commands:
+
+```
+MOVE CAMERA BACK · FEET NOT VISIBLE · BAR NOT FULLY VISIBLE
+LIGHTING TOO LOW · CAMERA TOO LOW · PHONE NOT STABLE
+```
+
+This is the single biggest lever on automated accuracy and on keeping the
+`unable_to_verify` rate low: reject bad setups when fixing them costs ten
+seconds, not after a max-effort set. M3 may begin with basic heuristics
+(single pose-frame checks, brightness, gyro stability) — but the gate is
+architected in from the first build and its checks version with the
+analysis ruleset.
+
+On-device vs server trust: the preflight runs on-device for instant feedback
+and **gates capture only**. Authoritative analysis always runs server-side
+against the committed evidence — on-device outputs are conveniences and
+claims, never inputs to the verdict.
+
+---
+
+## 6. Calisthenics: pose/motion analysis, not an LLM watching video
+
+The pipeline is computer vision, purpose-built: pose estimation → landmark
+tracking → temporal smoothing → an **exercise-specific state machine** →
+rep segmentation → per-rep ROM evaluation against the protocol standard.
+
+```
+PULL-UP:  dead-hang bottom → upward motion → chin clears bar reference
+          → downward motion → required extension → next rep
+PUSH-UP:  locked top → controlled descent → required bottom threshold
+          → return to locked top → next rep
+SIT-UP:   start position → required upward position → return → next rep
+```
+
+- Standards are **versioned with the assessment protocol**: the state
+  machine's thresholds (what "chin clears", "required extension", "bottom
+  threshold" mean) are data tied to `definition_id@version` +
+  `analysis_ruleset_version`, not constants in analysis code. A protocol
+  change is a new ruleset version, and historical attempts keep the rules
+  they were judged under.
+- Per-rep verdicts carry `uncertain` as a real value; too many uncertain
+  reps pushes the event to `unable_to_verify` rather than rounding them
+  either direction.
+- Base pose models are established components (on the order of
+  MediaPipe/MoveNet-class body-landmark models); Zero Phase's proprietary
+  layer is the exercise state machines, standards evaluation, calibration
+  and validation harness on top — not training pose estimation from scratch.
+
+## 7. Run: sensor physics first, ML second
+
+Primarily **objective sensor verification** — auditable rules over the GPS
+trace, not visual AI: computed distance (accuracy-weighted, filtered),
+elapsed time from trace timestamps, route continuity, teleport detection,
+speed/acceleration plausibility, elevation sanity, app-state and clock-skew
+checks, motion-sensor corroboration where available, bookend clips checked
+for challenge + continuity. ML appears only as an anomaly classifier over
+trace features (spoof-likeness), and its flags route to `unable_to_verify`
+or fraud review — the physics rules stay primary and explainable.
+
+Claimed distance/time is **never authoritative**: accepted values are
+computed from evidence (time read at the accepted distance), claim stored
+verbatim beside them. Treadmills remain ineligible in V1. Because this
+engine is deterministic and was already designed server-side in v1, **the
+run is the first event that can realistically reach full automated
+authority.**
+
+## 8. Swim: strictest environment, fastest abstention
+
+Still the hardest event, now with requirements chosen for **machine**
+judgeability, not just reviewer judgeability: fixed elevated camera, full
+lane visible including walls/turns, pool markers visible, pool length
+selected/stated before start, candidate identified on camera before entering
+the water, continuous recording.
+
+Automated targets: swimmer tracking in-lane, wall-touch detection, turn
+detection, lap counting, elapsed time, continuity. The abstention rule is
+strict: **if tracking confidence drops below threshold at any point, the
+event is `unable_to_verify` — the system never guesses lap counts.**
+
+It is acceptable, and expected, that the swim (a) has stricter environment
+requirements than calisthenics, (b) shows a higher `unable_to_verify` rate,
+and (c) reaches automated authority last — possibly remaining
+shadow/assisted long after pull-ups are fully automated. Pool length remains
+unprovable by camera alone; the stated length + visible markers + pace
+plausibility bound it, and the proctored tier remains the strong answer.
+
+---
+
+## 9. AI/ML data schema
+
+New records, alongside (never replacing) the v1 session/evidence tables:
+
+```sql
+verification_analysis_runs (
+  id, attempt_id, session_id,
+  trigger ('submission','reprocess','adversarial_test','shadow'),
+  policy_version,                 -- verification policy applied
+  status ('running','complete','error'),
+  verdict ('verified','failed','unable_to_verify') null,
+  started_at, completed_at
+)
+
+analysis_events (
+  id, run_id, event_id,
+  engine, model_name, model_version, ruleset_version,
+  claimed_value, detected_value, accepted_value,
+  verdict ('verified','failed','unable_to_verify','uncertain'),
+  confidences jsonb,              -- named: visibility, count, rom, continuity…
+  reason_codes text[],
+  metrics jsonb,                  -- engine-specific structured observations
+  created_at
+)
+
+analysis_reps (
+  id, analysis_event_id, rep_number,
+  start_ms, end_ms,
+  verdict ('valid','invalid','uncertain'),
+  confidence, reason_codes text[],
+  metrics jsonb                   -- per-rep joint/body extremes
+)
+
+analysis_signals (                -- cross-engine inputs to policy
+  id, run_id, source_engine, signal, value jsonb, created_at
+)
+
+analysis_flags (                  -- anomaly/fraud findings
+  id, run_id, severity ('info','suspicious','high_risk'),
+  code, detail jsonb, created_at
+)
+
+verification_policies (           -- versioned thresholds & authority
+  version, definition_id, definition_version,
+  thresholds jsonb,               -- per event, per confidence dimension
+  authority jsonb,                -- per event: 'shadow' | 'authoritative'
+  created_at, activated_at, notes
+)
+```
+
+All analysis tables are **service-role only**. Candidates see a sanitized
+projection (verdict, accepted values, human-readable reasons); the raw
+signals never leave the backend. Human review rows
+(`verification_event_reviews`, v1 design) are retained with a `reviewer_kind`
+distinction (`human` | `system`) — in shadow mode both exist and
+disagreement between them is queryable by design.
+
+## 10. Model versioning & reprocessing
+
+Every automated decision records the full stack that produced it:
+
+```
+MODEL · MODEL VERSION · RULESET VERSION ·
+ASSESSMENT PROTOCOL VERSION · VERIFICATION POLICY VERSION
+```
+
+- Historical assessments stay auditable forever: we can always answer
+  "which model, under which rules, verified this 826 in March?"
+- A newer model **never silently reinterprets** old verified performances.
+  Reprocessing historical evidence is an explicit, audited operation
+  (`trigger = 'reprocess'`, its own run row, its own audit entry), and
+  policy decides separately whether a reprocessed verdict ever replaces the
+  original.
+- This mirrors M2's scoring-config discipline exactly — same reasoning,
+  same mechanics, one level up.
+
+## 11. Confidence and calibration
+
+Confidence numbers are only meaningful if they are **calibrated** —
+thresholds come from validation data, never intuition:
+
+- Every engine emits named confidence dimensions (visibility, count, ROM,
+  continuity, tracking). Thresholds live in `verification_policies`, per
+  event and per dimension, versioned.
+- Calibration quality is itself measured (§13): when the model says 0.97,
+  it must be right ~97% of the time on held-out data, or the threshold
+  moves until behavior matches.
+- The initial thresholds ship deliberately conservative: a high
+  `unable_to_verify` rate at launch is the designed cost of a near-zero
+  false-verification rate, and thresholds relax only as validation data
+  earns it.
+
+## 12. Validation dataset & ground truth
+
+The verifier is not trusted because it works on a few test videos. An
+offline validation system is part of the architecture:
+
+- A labeled corpus with **human-established ground truth per rep and per
+  event**, deliberately spanning: valid/invalid/borderline reps, body
+  types, clothing, gyms, bar styles, phone models, lighting, camera
+  distances, movement speeds, fatigue-degraded form, deliberate cheating
+  attempts, partial obstruction, unusual-but-valid technique.
+- Ground truth is produced in the review console (v1's console, repurposed:
+  its primary job is now **labeling and QA**, not production verdicts) with
+  a defined labeling standard and double-labeling on a sample to measure
+  human agreement itself — ground truth has error bars too.
+- Dataset governance: training/validation use of candidate footage requires
+  **its own explicit consent**, separate from verification consent (§17).
+  Early corpus can be seeded by us and volunteers before any candidate
+  footage is used.
+- Held-out splits are sacred: no threshold tuning on the evaluation set.
+
+## 13. Metrics that matter
+
+Per event, not "accuracy":
+
+| Metric | Question |
+|---|---|
+| **False verification rate** | **How often do we verify what should not have been verified? The metric. Optimized against aggressively; everything else negotiates around it.** |
+| False rejection rate | How often is a legitimate performance failed? |
+| Unable-to-verify rate | How often do we abstain? (Acceptable cost — but tracked, because it is the UX price.) |
+| Valid-rep precision / recall | Per-rep judgment quality. |
+| Invalid-rep detection rate | Do we catch the bad reps specifically? |
+| Exact count agreement + error distribution | Not just averages — the shape of miscounts. |
+| Calibration quality | Do confidences mean what they say? |
+
+A higher unable-to-verify rate is an acceptable trade for a substantially
+lower false-verification rate — leaderboard integrity over completion rate,
+as policy, in writing.
+
+## 14. Shadow mode → authority: the promotion path
+
+```
+candidate submits ──► pipeline analyzes (always)
+                          │
+             ┌────────────┴────────────┐
+        SHADOW MODE                AUTHORITY MODE
+        human ground-truth         pipeline verdict is final;
+        review issues the          humans audit samples,
+        verdict; AI verdict        handle appeals & flags
+        recorded + compared
+```
+
+- Both modes run the **same pipeline and record the same analysis rows**;
+  the only difference is which verdict is authoritative — a
+  `verification_policies.authority` setting, per event.
+- Disagreements in shadow mode are first-class data: stored, queried,
+  reviewed, fed back into rulesets and thresholds.
+- **Promotion gates** (numbers set later, philosophy fixed now): an event's
+  engine gains authority only after hitting explicit targets on
+  (1) held-out validation data, (2) the adversarial suite (§15), and
+  (3) real-world shadow-mode assessments. Promotion is per event — pull-ups
+  may be fully automated while the swim is still shadowed. Demotion is the
+  same switch in reverse if live metrics degrade.
+- During shadow mode, humans hold interim authority for camera events —
+  which is not wasted work: every review is a labeled ground-truth sample.
+
+## 15. Adversarial testing
+
+A dedicated, maintained suite of hostile assessments, each with a known
+correct outcome, run against every model/ruleset/policy release:
+
+partial reps · camera-angle manipulation · leaving frame · a second person
+entering frame · prerecorded displays / video-of-video playback ·
+speed-modified footage · mirrored footage · GPS spoof-like traces ·
+intentional GPS dropouts · shortened routes · hidden extra rest · fake pool
+lengths · skipped laps · multiple people in a lane.
+
+Results are documented per attack as **PREVENTED / DETECTED /
+UNABLE_TO_VERIFY / NOT CURRENTLY SOLVED** — the fourth category is required
+reporting, not an embarrassment to hide. The suite is a release gate: a
+regression on a previously-passed attack blocks promotion.
+
+## 16. What v1 keeps (session architecture is not replaced by AI)
+
+Everything provenance-related from design v1 stands unchanged — AI analyzes
+evidence; the session architecture is what makes the evidence *worth
+analyzing*:
+
+- Server-generated single-use expiring challenges, burned into every clip
+  with event ordinals; identity clip opening each session.
+- In-app capture as the Zero Verified boundary (no camera-roll uploads).
+- Server-controlled event ordering, server-clocked windows and transition
+  budgets, append-only timeline.
+- Hash-at-capture commitments; global evidence-reuse prevention; resumable
+  uploads; private bucket; signed-URL access only.
+- The failure/recovery experience (local-first capture, clean interruption,
+  abort-anytime, technical failure → fair retest, never verification).
+- The trust boundary: client submits claims and evidence; server determines
+  truth. Models are now part of *analysis*; they still cannot touch the
+  verdict — only server policy can (§2, §17).
+- Verification tiers (self-reported → zero-verified → proctor → org) and
+  attestation architecture; storage/cost analysis — with one big update:
+  automated review removes the 200–300 reviewer-hours per 1,000 assessments
+  that was v1's real scale constraint, replacing it with GPU inference cost
+  (bounded, per-assessment, and cheap relative to labor) plus a small
+  residual human load for audits/appeals/labeling.
+
+## 17. Privacy (additions for automation)
+
+- **Minimum necessary analysis.** Engines compute what the event requires —
+  landmarks, tracks, traces. No general-purpose biometric identity
+  database; continuity embeddings are session-scoped and never indexed
+  across users (§2).
+- Evidence storage rules unchanged: private by default, never reachable
+  from profile APIs, retention per the standing owner decision.
+- **Training-data consent is separate from verification consent.** Ordinary
+  verification permission covers analysis of your footage to verify *your*
+  assessment. Using footage to train or evaluate models is a distinct,
+  explicit opt-in with its own policy — designed in now, before any corpus
+  of candidate footage exists.
+- Candidates see outcomes and reasons, not surveillance theater: the UX
+  never exposes raw signals, embeddings, or model internals.
+
+## 18. Product UX
+
+The backend sophistication is invisible. The candidate experiences:
 
 ```
 TAKE VERIFIED IFT
-   │
-   ▼
-PREFLIGHT ──────────── camera permission, GPS permission (run), storage
-   │                   headroom, battery warning, per-event protocol brief,
-   │                   evidence disclosure (§16): what is recorded, why, who
-   │                   reviews it, how long it is kept. Explicit consent.
-   ▼
-SESSION ISSUED ─────── server generates session + challenge K7F-29Q,
-   │                   TTL sized to the protocol (e.g. 4 hours)
-   ▼
-IDENTITY CLIP ───────── candidate's face, reading the challenge aloud (~10s)
-   ▼
-EVENT 1 … N, in protocol order, each:
-   │   instruction screen (framing diagram, rep standard, challenge overlay)
-   │   ► in-app capture (video; GPS trace for the run)
-   │   ► candidate confirms claimed value
-   │   ► hash committed immediately; body uploads in background
-   │   ► server closes the event window
-   ▼
-CONTROLLED TRANSITION ─ server-clocked rest timer between events; overage
-   │                    is recorded on the timeline, visibly to the candidate
-   ▼
-REVIEW & SUBMIT ─────── summary of claims; SUBMIT finalizes uploads
-   ▼
-PENDING REVIEW ──────── "Under review — typically within N days"
-   ▼
-VERDICT ─────────────── ZERO VERIFIED (official rating appears)
-                        or REJECTED with reasons (retest path shown)
+   ↓
+CAMERA CHECK          ✓ Body visible  ✓ Camera stable  ✓ Lighting good
+   ↓
+PERFORM ASSESSMENT    (events in order, transitions timed)
+   ↓
+ANALYZING PERFORMANCE
+   ↓
+VERIFIED ✓                         — or —    UNABLE TO VERIFY
+Performance rating: 846                      Pull-up footage could not be
+                                             reliably evaluated.
+                                             Retest available now.
 ```
 
-Design intent: the session **is** the provenance. A candidate cannot
-reproduce this artifact set after the fact, because the challenge, the
-ordering, the transition clocks and the hash commitments all live server-side
-and only exist during a live session.
-
-**Platform note (important for our workflow):** in-app video capture and
-foreground GPS work inside Expo Go, so V1 remains testable on the physical
-iPhone without a Mac. The run protocol therefore keeps the app foregrounded
-(§8.2); background-tracking support is explicitly postponed until an EAS dev
-build/TestFlight is in play. Practice flows are untouched.
+Failure copy explains what to fix, never accuses. Appeals (§19 of v1,
+retained): a candidate who believes the accepted value is wrong can REQUEST
+REVIEW — which routes to human review as the exception path. Appeals are
+architected now, shipped later; their existence does not make verification
+human-driven.
 
 ---
 
-## 4. Session & challenge design
+## 19. Build plan: honest capability assessment + milestones
 
-- **Server-generated** by an Edge Function using the service role; never
-  client-generated, never guessable (crypto-random, ~7 chars from an
-  unambiguous base32 alphabet, e.g. `K7F-29Q`).
-- **Bound** to one candidate, one session, one attempt, one protocol version.
-- **Single-use and expiring.** TTL covers one assessment (default 4h,
-  per-definition). Expiry kills the session; a new attempt needs a new code.
-- **Incorporated into evidence** twice:
-  1. The identity clip: candidate reads the code aloud on camera.
-  2. Every event clip: the app renders a capture overlay burned into the
-     recording — `K7F-29Q · E3/5 · ZERO PHASE` — so each clip is
-     independently bound to the session **and its position in it**.
-- **Event-specific component: recommended.** The `E3/5` ordinal costs
-  nothing and defeats the remaining replay window (reusing clip 2 from
-  earlier *today* as clip 4). Full per-event sub-codes add friction without
-  adding much over the ordinal + server timeline; not recommended for V1.
-- **Validation is server-side state**, not string comparison against client
-  payloads: the server knows what it issued, to whom, when, and whether the
-  session window is open.
+### Realistically buildable now (no ML research required)
 
----
+- Session/challenge/capture/hash/timeline architecture (v1 design, intact).
+- **Evidence Integrity Engine — 100% deterministic, fully automatable
+  immediately.**
+- **Run Verification Engine — physics/rules over GPS; the first event with
+  a credible path to full automated authority in M3.**
+- Verification Rules Engine, three-outcome verdicts, policy versioning,
+  shadow/authority switch, analysis record schema.
+- Pre-capture quality gate v1 (heuristics: brightness, gyro stability,
+  single-frame pose sanity via an off-the-shelf on-device pose model).
+- Review console repurposed as ground-truth labeling + QA + shadow
+  comparison tooling.
 
-## 5. In-app capture — the tier-defining requirement
+### Requires ML/CV engineering + validation before authority
 
-**Recommendation: YES.** Zero Verified means *evidence captured through the
-Zero Phase app during a live session*. Camera-roll uploads are not eligible
-for Zero Verified, full stop.
+- Calisthenics rep judging (pose pipeline + exercise state machines are
+  buildable with established components; **calibrated trust** requires the
+  dataset, metrics and shadow-mode mileage — the work is validation more
+  than modeling).
+- Candidate continuity scoring (session-scoped embedding comparison).
+- Swim tracking/lap counting (hardest; strictest environment; last to
+  authority).
+- Fraud/anomaly ML layers (rules-first versions ship early; learned
+  versions need data only production can generate).
 
-Why this is the right trade:
+### Proposed milestones
 
-- The challenge overlay, hash-at-capture, event windows and continuity
-  timeline are only trustworthy if the app controls the camera.
-- "Upload whatever video you want" moves every threat in §1.1 from PREVENT
-  to DETECT and multiplies review cost per assessment.
+- **M3A — Verified sessions + deterministic verification core.**
+  Sessions, challenges, in-app capture for all events, hashes, timeline,
+  private evidence storage. Evidence Integrity Engine + Rules Engine +
+  three-outcome verdicts + policy/authority config + full analysis schema.
+  Run engine live in shadow mode. Camera events: capture works end-to-end;
+  interim authority is human ground-truth review through the relabeled
+  console (every review doubles as a training label). Candidate UX already
+  shows the automated flow shape.
+- **M3B — Calisthenics analysis v1 + quality gate.** Server-side pose
+  extraction, exercise state machines for pull-ups/push-ups/sit-ups,
+  rep-level records, preflight camera gate, shadow-mode comparison
+  dashboards, labeling standard + dataset tooling, metrics suite (§13),
+  adversarial suite v1. Run engine promoted to authority when its gates
+  pass.
+- **M3C — Calibration + first camera-event authority.** Threshold
+  calibration from validation data, adversarial hardening, per-event
+  promotion of calisthenics engines as each clears its gates
+  (pull-ups first, likely). Candidate continuity engine v1. Appeals
+  skeleton.
+- **M3D — Swim automation.** Tracking, wall-touch/turn/lap detection under
+  the strict environment gate; long shadow period expected; promoted only
+  when measured. Until then the swim runs shadow with human ground truth —
+  or, at the owner's option, waits on the proctored tier.
 
-Trade-offs accepted, and edge cases to design around:
-
-- **Single-device constraint.** The phone is the camera, so the phone cannot
-  be in the candidate's hand. Protocols assume a propped/tripod phone
-  (§7–§8). A second person may *operate* the propped phone but adds nothing
-  they could fake.
-- **Storage/battery.** Preflight checks headroom and warns; capture uses
-  720p by default (§17) to bound file sizes.
-- **Device quality variance.** Old devices produce worse footage; the
-  protocol's framing checks matter more than resolution. Minimum: the
-  reviewer must be able to judge — unjudgeable footage rejects the event.
-- **Accessibility valve.** Candidates whose devices genuinely cannot run
-  capture can still log practice attempts; verification is a premium claim,
-  not a gate on using the product.
-- **Rooted devices / virtual cameras** can still lie to the app. This is the
-  residual risk in-app capture does not close (§1.5); it is why tiers exist.
-
----
-
-## 6. Continuity — proving one performance, not five clips
-
-**Not one enormous video.** Per-event clips plus a server-owned session
-timeline, stitched by four mechanisms:
-
-1. **Server-clocked event windows.** The server records when each event
-   opens and closes (on receipt of app signals, stamped with server time).
-   Clip duration must match its window within tolerance.
-2. **Server-clocked transitions.** Rest between events runs on the server's
-   clock. The protocol's allowed rest (from the versioned definition) is the
-   budget; overage is recorded, visible, and flags review. A secret
-   30-minute rest is structurally impossible to hide because the gap exists
-   in data the client cannot edit.
-3. **Hash commitment at capture.** The app computes each clip's SHA-256 the
-   moment recording stops and sends the hash immediately (bytes upload
-   later, resumable). Swapping the file after the fact fails the check; the
-   tiny hash survives bad networks that would delay a video upload.
-4. **Challenge + ordinal overlay** (§4) binds every clip to this session and
-   this position, so clips cannot be dropped, reordered, or borrowed.
-
-Deliberately postponed: cryptographic clip-chaining (each overlay embedding
-the previous clip's hash). It hardens against a sophisticated
-capture-layer attack but complicates recovery from mid-session failures; the
-server timeline gives most of the value. Revisit with automated review.
+Throughout: the long-term goal is fixed — **100% of normal assessment
+reviewing automated** — and every milestone moves authority event-by-event
+behind measured gates rather than betting the leaderboard on a launch-day
+model.
 
 ---
 
-## 7. Calisthenics protocol (pull-ups, push-ups, sit-ups)
-
-**V1 assumes human review. No computer vision.** Evidence is captured so CV
-could later assist (§15): continuous fixed-angle clips, full body always in
-frame, stable timestamps.
-
-- **Camera:** propped/tripod, landscape, stable. Whole body plus ground/bar
-  contact visible for the entire event. Guidance targets: pull-ups — slight
-  side-front angle showing full hang, chin and bar; push-ups and sit-ups —
-  side view showing the full body line and ground contact.
-- **Start ritual:** framing screen with a silhouette guide → challenge
-  overlay begins recording → candidate assumes the start position visibly.
-- **One continuous clip per event.** Timed events (2:00 push-ups/sit-ups)
-  record the full window; the app timer is burned into the overlay so the
-  reviewer sees clip time and event clock together.
-- **Standards on screen before capture**, drawn from the versioned protocol
-  definition (dead hang, chin over bar, rest positions) — the candidate
-  cannot claim not to have seen the standard they're judged against.
-- **Leaving frame, obstruction, unjudgeable lighting → event rejectable.**
-  The instruction screens exist to make this rare, review makes it final.
-- **Audio stays on.** Breathing/counting is corroborating evidence and
-  costs nothing.
-- **Reviewer counts valid reps**; invalid reps are excluded from the
-  accepted value rather than failing the event outright (unless standards
-  collapse entirely).
-
----
-
-## 8. Run protocol (1.5-mile)
-
-### Evidence captured
-
-- **GPS trace**, 1 Hz: lat/lon, horizontal accuracy, speed, altitude, device
-  timestamp — recorded in-app, foreground (screen on, keep-awake; armband or
-  hand carry). App-state transitions are logged; backgrounding pauses count
-  as trace gaps and flag review. (Background tracking arrives with a dev
-  build later; the constraint is stated, not hidden.)
-- **Video bookends**, ~15s each: before — challenge overlay, candidate,
-  surroundings at the start point; after — candidate at the finish,
-  breathing like someone who just ran. Bookends tie the trace to a real
-  person and place.
-- **No pause button.** A stationary gap is a gap; the reviewer judges it.
-
-### Server-side acceptance
-
-- **Distance is computed from the trace** (accuracy-weighted haversine
-  over filtered samples) — never taken from the claim.
-- **Accepted time = elapsed time at the accepted distance.** If the trace
-  covers 1.52 mi in 8:57, the accepted 1.5-mile time is read at 1.5 mi.
-  The claim is stored verbatim beside it.
-- **Plausibility checks flag, not auto-reject:** implausible pace vs the
-  candidate's history, teleport jumps, accuracy collapse, elevation
-  nonsense, device-clock skew vs server clocks.
-- **Treadmills are not Zero Verified-eligible in V1.** Distance is
-  unverifiable; treadmill runs remain valid practice. Device integrations
-  (§15) may open this later.
-
----
-
-## 9. Swim protocol (500m) — the hardest event, multiple approaches
-
-**V1 primary — fixed camera:** phone on tripod/stand, positioned high and
-lateral enough to see the candidate's full lane including **both walls**
-(or, where geometry forbids, one wall plus clear turn visibility). One
-continuous clip: pre-swim pan of the pool and lane markings, candidate
-states pool length aloud with the challenge overlay running, then the swim.
-Reviewer counts laps and wall touches; time comes from the clip.
-
-**V1 alternate — human camera operator:** a second person tracks the
-candidate. Same requirements (walls, touches, continuity); operator identity
-is not evidence, just labor.
-
-**Future — wearable corroboration:** lap counts and stroke data from
-watches as *supporting* evidence, never sole evidence.
-
-**Future strong — approved pool / proctor:** the real answer to this
-event's structural weakness (§13).
-
-**Honest limitations, stated in-product:** V1 cannot prove pool length; it
-records the stated length, the visible markings, and reviews consistency
-(lap count × stated length vs elapsed time vs plausible pace). The swim is
-the least-provable event in V1 and the verification badge does not pretend
-otherwise internally — this is a primary driver of the proctored tier, and
-GPS does not solve pools and is not pretended to.
-
----
-
-## 10. Human review — workflow, console, permissions
-
-### Reviewer console (internal web tool, V1-minimal)
-
-Queue → attempt view containing:
-
-- **CANDIDATE** — handle and identity clip only. No email, no legal name,
-  no location beyond what evidence shows.
-- **ASSESSMENT** — definition, protocol version, per-event standards text.
-- **SESSION TIMELINE** — issued → identity → events with windows and
-  transitions; gaps and tolerance overages pre-flagged.
-- **PER EVENT** — claimed value, evidence player (speed controls,
-  jump-to-event, a tally counter for reps), GPS map + computed distance for
-  the run.
-
-### Reviewer actions
-
-| Action | Requires | Effect |
-|---|---|---|
-| ACCEPT | — | accepted value = claimed value |
-| ADJUST | reason (code + text) | accepted value ≠ claim, both preserved |
-| REJECT EVENT | reason (code + text) | assessment cannot verify |
-| REJECT ASSESSMENT | reason | e.g. identity/continuity failure |
-| FLAG | note | escalates to admin, no verdict |
-
-The assessment verdict is **computed** from event verdicts by the §2 rule —
-reviewers judge events; only admins can override the computed verdict, and
-overrides are audited.
-
-### Permission model
-
-| Role | Can |
-|---|---|
-| `reviewer` | See assigned queue, review events, flag. Cannot review own attempts (server-assigned), cannot see candidate PII, cannot override verdicts. |
-| `admin` | Everything reviewers can, plus assignment, verdict override (audited), revocation, retention actions. |
-
-All writes go through role-checked Edge Functions using the service role;
-the console never holds the service key. Every action appends to
-`verification_actions` — an append-only audit log with actor, action,
-payload and server time.
-
-### Adjustment/rejection behavior (non-negotiables)
-
-- Original claims (`attempt_event_results`) are **never modified**.
-- Accepted values live in review rows; the official rating is computed from
-  accepted values.
-- The candidate sees both, with reasons: `CLAIMED 18 · ACCEPTED 17 —
-  "rep 12 chin below bar"`. Nothing is rewritten as though they had
-  originally submitted 17.
-- V1 has no formal appeals; the remedy for a disputed rejection is a
-  retest. Revisit when volume justifies it.
-
----
-
-## 11. Evidence architecture & privacy
-
-### Evidence records
-
-```
-evidence
-  id                uuid
-  attempt_id        → assessment_attempts
-  session_id        → verification_sessions
-  event_id          text | null        -- null = identity clip
-  kind              video | gps_trace
-  storage_path      text               -- private bucket, never public
-  content_hash      text (sha-256)     -- globally unique-indexed
-  hash_committed_at timestamptz        -- server receipt of the hash
-  captured_at       timestamptz        -- client claim
-  received_at       timestamptz        -- server receipt of the bytes
-  duration_seconds  numeric | null
-  byte_size         bigint
-  mime_type         text
-  capture_method    in_app | external  -- external exists for future tiers
-  device_metadata   jsonb              -- model, OS, app version
-  review_status     pending | reviewed | unusable
-```
-
-### Privacy model — PRIVATE BY DEFAULT
-
-- Evidence lives in a **private storage bucket**; access is via short-lived
-  signed URLs issued by an Edge Function to exactly two parties: the owner
-  (viewing their own submissions) and the assigned reviewer.
-- **No public API can reach evidence.** It is absent from every public view
-  (the M1 `public_candidate_profiles` pattern extends: what other users see
-  of verification is the badge and status, nothing else). Verification
-  footage never appears on profiles, ever.
-- **Consent screen before every session** states: what is recorded, why,
-  who may review it (authorized Zero Phase reviewers), how it is used
-  (verification only), and the retention rule.
-- **Retention** (per the M1 owner decision): evidence kept while the
-  performance is leaderboard-active; when superseded or expired, evidence
-  becomes deletable while the verified result, hashes, timeline and review
-  records are retained — the verdict outlives its footage.
-- Account deletion removes evidence; what minimal audit residue (hashes,
-  verdicts) survives is a **policy decision to make before launch**, flagged
-  here rather than silently decided.
-
----
-
-## 12. Database schema proposal (design, not a migration)
-
-```sql
-verification_sessions (
-  id, athlete_id → athlete_profiles, attempt_id → assessment_attempts,
-  definition_id, definition_version,
-  challenge_code unique, challenge_expires_at,
-  status ('issued','active','interrupted','submitted','expired','abandoned'),
-  started_at, submitted_at, device_metadata jsonb, created_at
-)
--- RLS: owner SELECT; INSERT only via Edge Function (service role);
--- no client UPDATE — state moves server-side.
-
-session_timeline_entries (
-  id, session_id, entry_type ('identity','event_open','event_close',
-  'transition_start','transition_end','interruption'),
-  event_id null, server_time, client_time null, metadata jsonb
-)
--- Append-only, service-role writes; owner SELECT.
-
-evidence ( …as §11… )
--- RLS: owner SELECT of metadata rows; INSERT via Edge Function during an
--- active owned session only; bytes in private bucket; no UPDATE/DELETE by
--- clients (retention actions are service-role).
-
-verification_event_reviews (
-  id, attempt_id, event_id null,        -- null = assessment-level verdict row
-  reviewer_id → reviewers,
-  verdict ('accepted','adjusted','rejected'),
-  accepted_value numeric null,
-  reason_code, reason_text,
-  authoritative boolean,                -- V1: the single authoritative row;
-  created_at                            -- future: N rows + consensus (§15)
-)
--- No client access at all. Service-role only. Candidates see review
--- outcomes through a sanitized Edge Function response / derived columns.
-
-verification_actions (
-  id, attempt_id, actor_id, actor_role, action, payload jsonb, created_at
-)  -- append-only audit; admin SELECT only.
-
-reviewers ( user_id, role ('reviewer','admin'), active, created_at )
-
--- Reserved for §13 (not shipped in V1):
-organizations ( id, name, status ('pending','approved','suspended'), … )
-organization_members ( organization_id, user_id, role ('org_admin','proctor') )
-attestations (
-  id, attempt_id, proctor_user_id, organization_id null,
-  statement jsonb,      -- protocol version, conditions, per-event results
-  attested_at, status ('submitted','accepted','rejected')
-)
-```
-
-Attempt columns already exist for all of this (M2 shipped the status enum,
-method enum, lifecycle timestamps, and `official_rating` with no client
-write path). M3 adds tables around attempts; it does not reshape them.
-
----
-
-## 13. Trusted proctors & organizations (architecture only, V1 reserves it)
-
-- An **organization** is approved by Zero Phase (status lifecycle, suspendable).
-  A **proctor** is a member with the proctor role. No real organization is
-  named or branded anywhere in product or code.
-- A proctor administers an assessment and submits an **attestation**: a
-  structured, signed-by-account statement binding proctor + organization +
-  candidate + attempt + protocol version + per-event results + time.
-- **An attestation is evidence, not a verdict.** Zero Phase policy decides
-  what an accepted attestation from an org in good standing yields
-  (`proctored` status, lighter evidence requirements). A proctor can never
-  write `verified = true` — the same service-role gate that blocks
-  candidates blocks proctors; their power is to *attest*, auditable and
-  revocable, org-wide if trust collapses.
-- Collusion resistance: attestations are per-attempt rows tied to real
-  accounts; spot-check review of proctored attempts and org-level revocation
-  are the levers.
-
-## 14. Verification tiers
-
-```
-SELF REPORTED   → never leaderboard-eligible (permanent rule)
-ZERO VERIFIED   → in-app captured, session-bound, human-reviewed
-PROCTOR VERIFIED→ administered by an approved individual (attestation)
-ORG VERIFIED    → administered through an approved organization
-```
-
-Tiers express **confidence in provenance, not athletic quality**. The
-Performance Rating math is identical at every tier — an 826 is an 826. The
-badge answers "how sure are we this happened"; the number answers "how good
-was it". These dimensions never mix, including in ranking order (eligibility
-is binary at zero-verified-and-above; policy for M4 selection stays as
-designed in M2).
-
-## 15. Future review models (designed-for, not built)
-
-- **Community review:** `verification_event_reviews` already supports N
-  rows per event. Future: server assigns K independent reviewers, blind to
-  each other (enforced by not exposing sibling rows), consensus computes the
-  accepted value, reviewer accuracy vs consensus builds reputation.
-  Nothing in V1's single-authoritative-row flow blocks this.
-- **Automated review:** evidence is captured CV-ready (continuous fixed
-  clips, stable overlays, hashes). An automated reviewer is just another
-  reviewer row (`reviewer_id` → a system account) whose verdicts coexist
-  with human rows — assist first (pre-counting reps, flagging
-  discontinuities), gate later if ever.
-
-## 16. Failure & recovery experience
-
-Principles: technical failure never becomes verification, and honest
-candidates are never punished — the remedy is always a clean retest with
-their practice data intact.
-
-- **Local-first capture:** clips and traces persist on-device as captured;
-  hashes commit immediately (tiny); bytes upload resumably with a submission
-  window (e.g. 24h) — a dead spot at the track doesn't kill a session, and
-  the challenge already binds delayed uploads.
-- **App crash / relaunch:** the session resumes if the server-clocked event
-  window allows; otherwise the session is `interrupted` and the candidate
-  chooses: save as an aborted attempt (history, no rating) or discard.
-- **Phone dies mid-assessment:** as above on next launch; partial evidence
-  retained briefly for support, then deleted.
-- **GPS degrades mid-run:** the trace gap is recorded; small gaps are
-  reviewer judgment, large gaps reject the event with a "retest, and here's
-  why" message.
-- **Storage full / permission revoked mid-session:** preflight minimizes
-  it; mid-session it interrupts cleanly rather than corrupting.
-- **Emergency:** a prominent abort exists at every step, no questions asked,
-  nothing submitted.
-
-## 17. Storage & cost
-
-Working assumptions (720p default, H.264/H.265, ~5–8 MB/min):
-
-| Evidence | Duration | Size |
-|---|---|---|
-| Identity clip | ~15 s | ~2 MB |
-| Pull-ups | ~2 min | ~12 MB |
-| Push-ups, sit-ups | 2 min each | ~24 MB |
-| Run bookends + trace | ~30 s + JSON | ~4 MB |
-| Swim (continuous) | ~10–12 min | ~70 MB |
-| **Per assessment** | | **~110 MB** (swim dominates) |
-
-- **1,000 assessments ≈ 110 GB** stored ≈ **$2–3/month** at commodity
-  object-storage rates; 10,000 ≈ 1.1 TB ≈ $25–30/month. Storage is not the
-  constraint. Review egress (one viewing ≈ file size) roughly doubles the
-  monthly cost per review pass — still small.
-- **The real cost is review labor:** ~12–18 reviewer-minutes per assessment
-  (2× playback, rep counting, map check) → 1,000 assessments ≈ **200–300
-  reviewer-hours**. This is why the console optimizes reviewer speed first,
-  and why community/automated review are the designed scale path.
-- Levers, in order: swim clip is the storage lever (720p enforced, possible
-  frame-rate reduction); retention expiry (evidence deleted when
-  leaderboard-inactive, verdicts kept) is the long-term lever; per-event
-  clips (already chosen) are the review-speed lever.
-- Caps enforced at capture: max duration per event from the protocol
-  definition, max resolution 1080p, hard per-file byte cap.
-
-## 18. Security boundaries (consolidated)
-
-| Party | May | May never |
-|---|---|---|
-| Candidate app | capture, hash, upload, claim values, read own status | write any verification status, rating, accepted value, or timeline entry |
-| Reviewer console | submit event verdicts via role-checked functions | hold service keys, see candidate PII, review own attempts, edit claims |
-| Proctor (future) | submit attestations | flip any status directly |
-| Edge Functions (service role) | issue sessions/challenges, stamp timelines, accept hashes, compute official ratings, transition statuses, sign evidence URLs, write audit rows | trust any client-supplied timestamp, hash-check bypass, or verdict |
-| Database | enforce all of the above via RLS + absent policies | — |
-
-The M2 principle, extended verbatim: **the client submits claims and
-evidence; the server determines truth.**
-
-## 19. Ship in M3 V1 vs postpone
-
-**Ship (V1):**
-- Sessions + server challenges + identity clip
-- In-app capture: calisthenics clips, run GPS + bookends, swim fixed-camera
-- Hash-at-capture commitments; resumable uploads; private bucket
-- Server-clocked timeline + transitions; per-event windows
-- Pending review; internal console (queue, player, tally, accept/adjust/
-  reject/flag with reasons); computed verdicts; audit log
-- Server-computed official rating from accepted values; `zero_verified` /
-  `rejected` end-to-end; candidate-facing claimed-vs-accepted transparency
-- Consent + privacy surfaces; retention while leaderboard-active
-
-**Postpone (architected for, deliberately not built):**
-- Proctor/organization attestations (schema reserved, no UI)
-- Community review (N-row model ready), reviewer reputation
-- All automated/CV review; wearable and HealthKit corroboration
-- Cryptographic clip-chaining; background-location run tracking (dev build)
-- Treadmill eligibility; formal appeals; pool-length attestation
-- Evidence-expiration automation (manual/admin in V1)
-
-**Open questions for the owner before M3 implementation:**
-1. Review SLA to promise candidates ("typically within N days") — N?
-2. Reviewer staffing for V1 (owner-only at first?) — shapes console scope.
-3. Account-deletion residue: do hashes/verdicts survive account deletion
-   for anti-abuse, or is deletion total? (Legal/privacy call.)
-4. Swim in V1: ship with stated limitations as designed, or hold the swim
-   to proctored-only and launch Zero Verified with the other events?
-   (Shipping it is the current design; holding it is defensible.)
+## 20. Open questions for the owner
+
+1. **Shadow-mode interim experience:** while camera events await promotion,
+   human ground-truth review is the interim authority — meaning early
+   verified assessments do wait on a person. Accept that (it also builds
+   the dataset), or hold Zero Verified launch until the run + calisthenics
+   engines pass their gates?
+2. **Training-data consent placement:** opt-in at session time, at account
+   level, or via a separate contributor program?
+3. **Inference infrastructure:** server-side GPU (managed inference) is the
+   trustworthy default; approve that direction now or revisit at M3B when
+   the pose pipeline lands?
+4. **Promotion gate numbers:** targets per event (false-verification rate
+   ceilings, shadow sample sizes) — proposed concretely at M3B when the
+   metrics suite exists, decided by you.

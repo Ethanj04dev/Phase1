@@ -344,12 +344,15 @@ priorities (§20) are covered by M0–M4.
   performance never happened. Individual event results are training data,
   never leaderboard-eligible. An official rating always points back to one
   real, complete, verified attempt.
-- **M3 — Verification V1.** Server enters: Edge Functions for verification
-  codes, evidence upload (private storage, hashed), status transitions, and
-  server-side score compute. Verified Assessment Mode UX: code on camera,
-  continuous-video guidance, per-event status. Ops-manual review path (us,
-  not the community) makes `zero_verified` real without pretending CV
-  exists.
+- **M3 — Verification (automated-first; design approved separately).**
+  Server enters: Edge Functions for challenges, evidence upload (private
+  storage, hashed), status transitions, server-side score compute — and
+  automated verification as the target authority. Split into M3A
+  (sessions + deterministic engines: integrity + run), M3B (calisthenics
+  pose analysis + quality gate, shadow mode), M3C (calibration +
+  per-event authority promotion), M3D (swim). Human review is ground
+  truth/QA/appeals, not the product path. See
+  docs/M3-VERIFICATION-DESIGN.md.
 - **M4 — Rankings.** Materialised leaderboards + public views; Rankings tab
   (national/state/pipeline); rank on Home; ranking_history recording from
   day one so movement (§8) has data the moment there are two snapshots.
@@ -407,6 +410,16 @@ nobody can trust.
    adjusted or rejected — it is not casually client-deletable; the audit
    trail is preserved. Privacy/deletion mechanisms come later without
    destroying verification integrity.
+10. **Verification authority is AUTOMATED (supersedes the "manual admin
+   review for V1" part of decision 4; M3 design review).** The production
+   goal is 100% automated verification of normal assessments: evidence →
+   automated analysis → server verification policy → authoritative verdict,
+   with three outcomes (verified / failed / unable-to-verify) and mandatory
+   abstention when confidence is insufficient. Human review remains for
+   ground truth, appeals, QA, audits and fraud — never the normal path.
+   Automated authority is granted per event behind measured gates (shadow
+   mode first); false-verification rate is the metric everything else
+   negotiates around. See docs/M3-VERIFICATION-DESIGN.md (v2).
 
 **Naming:** the 0–1000 rating is NOT called Zero Score. Internal name
 `performanceRating`; UI label "Performance rating" via `RATING_LABEL` in the
