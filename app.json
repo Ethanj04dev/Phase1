@@ -17,6 +17,11 @@
       "bundleIdentifier": "com.phaseone.app",
       "config": {
         "usesNonExemptEncryption": false
+      },
+      "infoPlist": {
+        "UIBackgroundModes": [
+          "location"
+        ]
       }
     },
     "android": {
@@ -45,7 +50,13 @@
         }
       ],
       "expo-font",
-      "expo-video"
+      "expo-video",
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Zero Phase records your location during a verified run to compute the official distance and time. It is recorded only while the run event is active, stored privately as evidence, and never shared publicly."
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true

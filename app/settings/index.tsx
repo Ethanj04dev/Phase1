@@ -292,6 +292,13 @@ export default function SettingsScreen() {
                 hint="Reviewer access only"
                 onPress={() => router.push('/review')}
               />
+              <Divider />
+              <DetailRow
+                label="Run lab (internal)"
+                value="Open"
+                hint="Engine calibration tooling"
+                onPress={() => router.push('/verify/run-lab')}
+              />
             </Card>
           ) : null}
         </View>

@@ -211,7 +211,7 @@ export function RunTracker({
           </View>
         </View>
         <Text variant="caption" color="textTertiary">
-          {`Required: ${formatDistance(requiredDistanceMeters)}. The official distance and time are computed from the trace, not from this display. Keep the app open and the screen on for the whole run.`}
+          {`Required: ${formatDistance(requiredDistanceMeters)} — run a little past it; your official time is read at exactly the required distance. Keep the app open and the screen on for the whole run. Distance and time are computed from the trace, not from this display.`}
         </Text>
       </Card>
 

@@ -632,3 +632,31 @@ model.
 4. **Promotion gate numbers:** targets per event (false-verification rate
    ceilings, shadow sample sizes) — proposed concretely at M3B when the
    metrics suite exists, decided by you.
+
+---
+
+## Appendix A — Run Engine promotion gates (M3B.1, proposed v1)
+
+Source of truth: `src/domain/runEngine/promotionGates.ts` (versioned).
+The synthetic-benchmark gates are enforced on every test run by
+`benchmark.test.ts`, which also regenerates the measured report at
+`docs/benchmarks/run-engine-v2.md`.
+
+| Gate | Threshold |
+|---|---|
+| Benchmark: mean abs distance error | ≤ 1.5% (measured v2: ~0.7%) |
+| Benchmark: worst-condition abs error | ≤ 4% (measured v2: ~2.1%, under-credit) |
+| Benchmark: signed (athlete-favouring) bias | ≤ +0.5% |
+| Benchmark: accepted-time mean / max error | ≤ 8s / ≤ 25s |
+| Benchmark: uncertainty-bound coverage | ≥ 90% of runs |
+| Benchmark + adversarial: false verifications | 0 |
+| Adversarial suite | 100% pass, no regressions, per release |
+| Real-device corpus | ≥ 30 traces on measured courses; median abs error ≤ 2%, p95 ≤ 4% |
+| Real-world shadow | ≥ 150 shadowed run events; 0 confirmed false verifications; false-failure ≤ 1%; UTV tracked (target ≤ 20%) |
+| Mechanics | Server-side execution of the exact benchmarked engine (parity-pinned); audited policy insert; immediate demotion on live degradation |
+
+Distance-crediting stance (v2): a verified verdict requires clearing the
+protocol distance by the trace's own measured uncertainty; a crossing inside
+the band abstains (`distance_margin_uncertain`); failure requires being
+short beyond the band on a trustworthy trace. Candidate guidance follows:
+run a little past the line.

@@ -1,16 +1,16 @@
-import { measurePath, prepareSamples } from './filtering';
-import { haversineMeters } from './geo';
+import { measurePath, prepareSamples } from './filtering.ts';
+import { haversineMeters } from './geo.ts';
 import {
   RUN_ENGINE_VERSION,
   RUN_RULESET,
   RUN_RULESET_VERSION,
-} from './ruleset';
+} from './ruleset.ts';
 import type {
   RunAnalysis,
   RunAnalysisInput,
   RunAnomalySignal,
   RunVerdict,
-} from './types';
+} from './types.ts';
 
 /**
  * The Run Engine: raw device signals in, structured explainable analysis out.

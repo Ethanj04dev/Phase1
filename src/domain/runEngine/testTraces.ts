@@ -27,8 +27,14 @@ export interface TraceOptions {
   speedAt: (t: number) => number;
   intervalSeconds?: number;
   accuracyAt?: (t: number) => number;
-  /** Uniform position jitter amplitude in metres. */
+  /** Position jitter amplitude (std-ish) in metres. */
   jitterMeters?: number;
+  /**
+   * 'white': independent per-sample noise — the pessimistic worst case.
+   * 'ar1': first-order autocorrelated noise (ρ≈0.9), which is how real GPS
+   * error actually behaves — it drifts, it does not shake.
+   */
+  jitterModel?: 'white' | 'ar1';
   jitterSeed?: number;
   startTimeMs?: number;
   events?: readonly RunTraceEvent[];
@@ -36,13 +42,22 @@ export interface TraceOptions {
   dropSeconds?: ReadonlySet<number>;
 }
 
-export function makeTrace(options: TraceOptions): RunTrace {
+/** A synthetic trace with its analytically known true path length. */
+export interface TruthTrace {
+  trace: RunTrace;
+  referenceMeters: number;
+  /** True elapsed seconds at which the runner crossed `atMeters`. */
+  referenceCrossingSeconds: (atMeters: number) => number | null;
+}
+
+export function makeTruthTrace(options: TraceOptions): TruthTrace {
   const {
     durationSeconds,
     speedAt,
     intervalSeconds = 1,
     accuracyAt = () => 8,
     jitterMeters = 0,
+    jitterModel = 'white',
     jitterSeed = 42,
     startTimeMs = T0,
     events = [],
@@ -50,30 +65,62 @@ export function makeTrace(options: TraceOptions): RunTrace {
   } = options;
 
   const random = lcg(jitterSeed);
+  const rho = 0.9;
+  const innovationScale = jitterModel === 'ar1' ? Math.sqrt(1 - rho * rho) : 1;
+  let jLat = 0;
+  let jLon = 0;
+
   const samples: RunSample[] = [];
+  const truthBySecond: number[] = [0];
   let northMeters = 0;
 
   for (let second = 0; second <= durationSeconds; second += intervalSeconds) {
     if (second > 0) {
       northMeters += speedAt(second) * intervalSeconds;
+      truthBySecond.push(northMeters);
+    }
+    const noiseLat = (random() * 2 - 1) * jitterMeters * innovationScale;
+    const noiseLon = (random() * 2 - 1) * jitterMeters * innovationScale;
+    if (jitterModel === 'ar1') {
+      jLat = rho * jLat + noiseLat;
+      jLon = rho * jLon + noiseLon;
+    } else {
+      jLat = noiseLat;
+      jLon = noiseLon;
     }
     if (dropSeconds.has(second)) {
       continue;
     }
-    const jitterLat = jitterMeters === 0 ? 0 : (random() * 2 - 1) * jitterMeters;
-    const jitterLon = jitterMeters === 0 ? 0 : (random() * 2 - 1) * jitterMeters;
     samples.push({
       t: startTimeMs + second * 1000,
-      lat: 30 + (northMeters + jitterLat) / METERS_PER_DEGREE_LAT,
+      lat: 30 + (northMeters + jLat) / METERS_PER_DEGREE_LAT,
       // Longitude degrees scaled at this latitude (~cos 30° ≈ 0.866).
-      lon: -85 + jitterLon / (METERS_PER_DEGREE_LAT * 0.866),
+      lon: -85 + jLon / (METERS_PER_DEGREE_LAT * 0.866),
       acc: accuracyAt(second),
       alt: null,
       spd: speedAt(second),
     });
   }
 
-  return { formatVersion: 1, samples, events };
+  return {
+    trace: { formatVersion: 1, samples, events },
+    referenceMeters: northMeters,
+    referenceCrossingSeconds: (atMeters: number) => {
+      for (let second = 1; second < truthBySecond.length; second += 1) {
+        if (truthBySecond[second]! >= atMeters) {
+          const previous = truthBySecond[second - 1]!;
+          const span = truthBySecond[second]! - previous;
+          const fraction = span <= 0 ? 1 : (atMeters - previous) / span;
+          return (second - 1 + fraction) * intervalSeconds;
+        }
+      }
+      return null;
+    },
+  };
+}
+
+export function makeTrace(options: TraceOptions): RunTrace {
+  return makeTruthTrace(options).trace;
 }
 
 /** A trace that follows a repeated rectangular loop (track laps, turns). */
@@ -117,6 +164,43 @@ export function makeLoopTrace(options: {
   }
 
   return { formatVersion: 1, samples, events: [] };
+}
+
+/**
+ * Applies positional jitter to an existing trace. The true path length of
+ * the input is unchanged — this perturbs the *measurements*, which is
+ * exactly what GPS error does.
+ */
+export function addJitter(
+  trace: RunTrace,
+  jitterMeters: number,
+  model: 'white' | 'ar1',
+  seed: number,
+): RunTrace {
+  const random = lcg(seed);
+  const rho = 0.9;
+  const innovationScale = model === 'ar1' ? Math.sqrt(1 - rho * rho) : 1;
+  let jLat = 0;
+  let jLon = 0;
+  return {
+    ...trace,
+    samples: trace.samples.map((sample) => {
+      const noiseLat = (random() * 2 - 1) * jitterMeters * innovationScale;
+      const noiseLon = (random() * 2 - 1) * jitterMeters * innovationScale;
+      if (model === 'ar1') {
+        jLat = rho * jLat + noiseLat;
+        jLon = rho * jLon + noiseLon;
+      } else {
+        jLat = noiseLat;
+        jLon = noiseLon;
+      }
+      return {
+        ...sample,
+        lat: sample.lat + jLat / METERS_PER_DEGREE_LAT,
+        lon: sample.lon + jLon / (METERS_PER_DEGREE_LAT * Math.cos((30 * Math.PI) / 180)),
+      };
+    }),
+  };
 }
 
 /** An out-and-back: north for half the time, back south for the rest. */

@@ -19,5 +19,7 @@
     ".expo/types/**/*.ts",
     "expo-env.d.ts"
   ],
-  "exclude": ["node_modules"]
+  // supabase/functions is Deno code (npm: specifiers, .ts import paths,
+  // Deno globals) checked by the Supabase toolchain, not this tsconfig.
+  "exclude": ["node_modules", "supabase/functions"]
 }

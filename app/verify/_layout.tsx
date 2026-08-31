@@ -18,6 +18,7 @@ export default function VerifyLayout() {
       }}
     >
       <Stack.Screen name="index" options={{ title: 'Verified assessment' }} />
+      <Stack.Screen name="run-lab" options={{ title: 'Run lab' }} />
       <Stack.Screen
         name="session"
         options={{

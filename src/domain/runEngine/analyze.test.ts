@@ -45,10 +45,19 @@ describe('valid runs', () => {
   });
 
   it('verifies a slow but honest runner', () => {
-    // 2.0 m/s → ~20 minutes. Slow is not suspicious.
-    const analysis = analyze(makeTrace({ durationSeconds: 1230, speedAt: () => 2.0 }));
+    // 2.0 m/s → ~20 minutes, running a little past the line as instructed.
+    const analysis = analyze(makeTrace({ durationSeconds: 1290, speedAt: () => 2.0 }));
     expect(analysis.verdict).toBe('verified');
     expect(analysis.acceptedTimeSeconds).toBeGreaterThan(1195);
+    expect(analysis.acceptedTimeSeconds).toBeLessThan(1215);
+  });
+
+  it('abstains when the crossing sits inside the uncertainty band', () => {
+    // ~2436m computed vs 2414m required: a good trace that clears by less
+    // than the measurement uncertainty, so the engine refuses to guess.
+    const analysis = analyze(makeTrace({ durationSeconds: 1218, speedAt: () => 2.0 }));
+    expect(analysis.verdict).toBe('unable_to_verify');
+    expect(analysis.reasonCodes).toContain('distance_margin_uncertain');
   });
 
   it('verifies an extremely fast but humanly possible runner', () => {
@@ -279,8 +288,8 @@ describe('structured output', () => {
   it('always stamps engine and ruleset versions', () => {
     const analysis = analyze(makeTrace({ durationSeconds: 690, speedAt: () => 3.6 }));
     expect(analysis.engine).toBe('run_gps');
-    expect(analysis.engineVersion).toBe('1');
-    expect(analysis.rulesetVersion).toBe(1);
+    expect(analysis.engineVersion).toBe('2');
+    expect(analysis.rulesetVersion).toBe(2);
   });
 
   it('reports raw distance beside computed distance, never instead of it', () => {
