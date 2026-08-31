@@ -1,6 +1,36 @@
 # M3C — Automated Calisthenics Verification (Pull-ups first)
 
-**Status: DESIGN FOR REVIEW. Nothing implemented.**
+**Status: DESIGN APPROVED with owner decisions below. Implementation
+begins at M3C-1 after scope sign-off.**
+
+## Owner decisions (M3C review — binding)
+
+1. **Kipping stays conservative in v1:** detected swing flags the rep and
+   resolves to UNCERTAIN when confidence or calibration is insufficient;
+   no automatic invalidation until labeled real-world data supports a
+   calibrated threshold. Ruleset/version-controlled so different protocols
+   can define different standards later.
+2. **Setup-photo gate approved,** including ~5–10s of pre-assessment
+   friction — with the UX requirement that the check visibly communicates
+   what is being verified (framing, body visibility, bar visibility,
+   lighting, stability), never an unexplained spinner.
+3. **Server worker stays at M3C-5.** The analyzer is validated before
+   authoritative execution is productionized.
+4. **Bar reference is an interface, not an assumption.** Wrist-derived bar
+   height is acceptable for the prototype, but the analyzer consumes a
+   replaceable `BarReference` and does not care how it was obtained;
+   future independent bar detection plugs in without rewriting the engine.
+5. **The §7 thresholds are prototype/shadow gates, not production-authority
+   standards.** A separate authoritative-promotion stage requires
+   substantially stronger real-world evidence, targets near-zero false
+   verification, and its final thresholds are empirically calibrated,
+   never arbitrarily chosen.
+6. **Dataset diversity is measured at the athlete/session level,** not
+   video count — many clips from few athletes must never masquerade as
+   diversity.
+7. **The fundamental architecture is preserved:** pose estimation
+   observes; deterministic versioned rules decide; no ML/CV component ever
+   directly issues an authoritative VERIFIED verdict.
 
 The Run Engine's philosophy, applied to camera events: deterministic
 measurement wherever possible, ML used to *observe* rather than to issue
@@ -65,10 +95,25 @@ Landmarks used: wrists, elbows, shoulders, mouth/nose (chin proxy), hips,
 knees, ankles. Derived per frame: elbow angle (shoulder–elbow–wrist), chin
 line vs bar line, hip horizontal displacement, per-landmark visibility.
 
-**Bar-line estimation (deterministic):** the median wrist height across
-dead-hang frames establishes the bar line in image space, with its own
-spread as uncertainty. No object detection needed in v1; the hands are on
-the bar, so the wrists *are* the bar.
+**Bar reference (interface, per owner decision 4):** the analyzer consumes
+a `BarReference` — bar line position in image space, its uncertainty, and
+the provider's name and version — and never cares how it was obtained.
+
+```
+interface BarReference {
+  provider: string;          // 'wrist_hang_median' | future detectors
+  providerVersion: string;
+  lineY: number;             // normalized image space
+  uncertainty: number;       // spread of the estimate
+}
+```
+
+The v1 provider is deterministic wrist-hang estimation: the median wrist
+height across dead-hang frames, with its spread as the uncertainty — the
+hands are on the bar, so the wrists *are* the bar, and no object detection
+is needed to prototype. A future independent bar detector replaces the
+provider without touching the rep engine, and every analysis records which
+provider produced its reference.
 
 ```
 DEAD_HANG      elbow angle ≥ extensionAngle (default 160°), stable
@@ -128,11 +173,27 @@ Verification starts before the first rep. Two stages:
   still frame, uploads it (~100 KB, seconds), and a server check runs the
   pose extractor on that single frame: full body visible, wrists (bar
   grip) in frame, adequate landmark visibility, frame brightness, phone
-  stability (gyro). The candidate gets GO or a plain command — `MOVE
-  CAMERA BACK · BAR NOT VISIBLE · TOO DARK`. The verified event cannot open
-  until the gate passes; the setup frame is retained as evidence context.
-  Single-frame inference is cheap enough for Edge-class compute, so this
-  ships without the full worker.
+  stability (gyro). The verified event cannot open until the gate passes;
+  the setup frame is retained as evidence context. Single-frame inference
+  is cheap enough for Edge-class compute, so this ships without the full
+  worker.
+
+  **Candidate UX (per owner decision 2):** the check renders as a visible
+  checklist resolving item by item — never an unexplained spinner:
+
+  ```
+  CAMERA CHECK
+  ✓ Whole body visible
+  ✓ Bar visible
+  ✓ Lighting good
+  ✓ Phone stable
+  ● Checking framing…
+  ```
+
+  A failed item turns into its fix as a plain command — `MOVE CAMERA
+  BACK · FEET NOT VISIBLE · BAR NOT FULLY VISIBLE · TOO DARK` — and the
+  candidate retakes the setup shot. Pass or fix, the candidate always
+  knows exactly what was checked and why.
 - **Dev-build path — live gating:** continuous on-device pose preflight
   (impossible in Expo Go; the capture screen keeps the guided framing
   overlay there). Recorded either way: the gate result and its version
@@ -178,24 +239,60 @@ Identical to the Run Engine's promotion path, decided up front:
   Extraction quality itself is benchmarked separately (extractor version A
   vs B on the same videos) so sensor and engine regressions never blur.
 
-## 7. Metrics and proposed promotion gates (v1, owner-approved before use)
+## 7. Metrics and gates — two stages, per owner decision 5
 
 Versioned in `calisthenicsEngine/promotionGates.ts`, same shape as the run
 gates. **Event-level false credit — accepted count above ground truth — is
-the primary safety metric.**
+the primary safety metric at both stages.**
 
-| Gate | Threshold (proposed) |
+### Stage 1 — prototype/shadow gates (what M3C measures against)
+
+These govern whether the analyzer is *worth shadowing broadly*, nothing
+more. They confer no authority.
+
+| Gate | Threshold |
 |---|---|
 | Valid-rep precision (benchmark + corpus) | ≥ 0.97 |
 | Invalid-rep detection rate | ≥ 0.90 |
 | Exact count agreement | ≥ 90% events exact; ≥ 99% within ±1 |
-| Event false credit (accepted > truth) | 0 on benchmark/adversarial; ≤ 0.5% with 0 confirmed on real shadow |
+| Event false credit (accepted > truth) | 0 on benchmark/adversarial |
 | False failure rate | ≤ 1% |
 | Unable-to-verify rate | tracked; target ≤ 25% initially |
 | Adversarial suite | 100% pass per release, no regressions |
-| Real corpus size before promotion | ≥ 40 labeled videos across diversity axes |
-| Real-world shadow before promotion | ≥ 200 pull-up events vs ground truth |
-| Mechanics | server worker execution (parity-pinned) · audited policy insert · immediate demotion |
+| Seed corpus | ≥ 40 labeled videos meeting the §6b diversity floors |
+
+### Stage 2 — authoritative promotion (separate, later, harder)
+
+Authority requires substantially stronger real-world evidence than the
+prototype stage, with final thresholds **empirically calibrated from
+shadow data, never arbitrarily chosen**. The target is near-zero false
+verification. Fixed now as *requirements-of-form* rather than numbers:
+
+- A real-world shadow population large enough that the false-credit rate's
+  upper confidence bound is credibly near zero — hundreds of events
+  minimum, sized from the measured disagreement distribution, not picked
+  in advance.
+- Diversity floors (§6b) satisfied at the athlete/session level.
+- Zero confirmed engine false credits across the entire promotion window;
+  any confirmed false credit restarts the window after root-cause fix.
+- Calibration verified: confidence dimensions behave as probabilities on
+  held-out real data.
+- Server-worker execution (parity-pinned), audited policy insert,
+  immediate demotion on live degradation — unchanged from the Run Engine.
+- Owner approval of the calibrated numbers before the policy flips.
+
+### 6b. Dataset diversity — measured at the athlete/session level (decision 6)
+
+The corpus ledger tracks, per sample: athlete id (pseudonymous), session,
+device/camera model, camera angle and distance class, lighting class,
+environment (gym/home/outdoor), clothing/background contrast class, body
+proportion class, movement style, and per-rep label counts
+(valid/invalid/uncertain) with failure modes. Diversity floors are
+expressed over athletes and conditions — e.g. no single athlete
+contributing more than 15% of labeled reps, minimum athlete counts per
+angle/lighting/environment class — so clip volume can never masquerade as
+diversity. The benchmark report prints the ledger summary beside the
+metrics.
 
 ## 8. Adversarial testing
 
