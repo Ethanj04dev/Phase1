@@ -347,12 +347,13 @@ priorities (§20) are covered by M0–M4.
 - **M3 — Verification (automated-first; design approved separately).**
   Server enters: Edge Functions for challenges, evidence upload (private
   storage, hashed), status transitions, server-side score compute — and
-  automated verification as the target authority. Split into M3A
-  (sessions + deterministic engines: integrity + run), M3B (calisthenics
-  pose analysis + quality gate, shadow mode), M3C (calibration +
-  per-event authority promotion), M3D (swim). Human review is ground
-  truth/QA/appeals, not the product path. See
-  docs/M3-VERIFICATION-DESIGN.md.
+  automated verification as the target authority. Sequence per owner
+  approval: M3A verification foundation *(complete — approved)*, M3B run
+  engine in shadow *(complete — awaiting owner review)*, M3C pull-up
+  prototype, M3D calisthenics productionization, M3E candidate
+  continuity, M3F swim. Human review is ground truth/QA/appeals, not the
+  product path. Standing launch gate: the physical-device end-to-end
+  verification test. See docs/M3-VERIFICATION-DESIGN.md.
 - **M4 — Rankings.** Materialised leaderboards + public views; Rankings tab
   (national/state/pipeline); rank on Home; ranking_history recording from
   day one so movement (§8) has data the moment there are two snapshots.
