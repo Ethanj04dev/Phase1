@@ -1,3 +1,4 @@
+import * as Clipboard from 'expo-clipboard';
 import { useCallback, useEffect, useState } from 'react';
 import { View } from 'react-native';
 import { unstable_createElement } from 'react-native-web';
@@ -24,6 +25,7 @@ import type {
 import { useTheme } from '@/theme';
 
 import {
+  EXTRACTION_FPS,
   EXTRACTOR_VERSION,
   MODEL_FILE_SHA256,
 } from './extraction/constants';
@@ -69,6 +71,136 @@ export interface PoseAnalysisPanelProps {
     | { kind: 'local' };
 }
 
+/** The real-footage calibration checklist (owner-defined, M3C-2 review). */
+const CALIBRATION_SCENARIOS = [
+  'ideal_side_angle',
+  'camera_too_low',
+  'camera_too_high',
+  'camera_too_close',
+  'camera_far',
+  'bright_lighting',
+  'dim_lighting',
+  'low_contrast_clothing',
+  'fast_reps',
+  'slow_reps',
+  'mild_sway',
+  'deliberate_kipping',
+  'chin_short_reps',
+  'incomplete_lockout',
+  'partial_final_rep',
+  'brief_occlusion',
+] as const;
+
+type CalibrationScenario = (typeof CALIBRATION_SCENARIOS)[number];
+
+/** One video's compact calibration record — copyable, comparable. */
+interface CalibrationSummary {
+  scenario: CalibrationScenario | null;
+  fileName: string | null;
+  analyzedAt: string;
+  versions: {
+    extractor: string;
+    extractorVersion: string;
+    modelSha256: string;
+    engineVersion: string;
+    rulesetVersion: number;
+    extractionFps: number;
+  };
+  recommendation: string;
+  reasonCodes: readonly string[];
+  detectedReps: number;
+  acceptedReps: number;
+  uncertainReps: number;
+  invalidReps: number;
+  elapsedMs: number;
+  bar: { provider: string; lineY: number; uncertainty: number } | null;
+  visibility: { meanCore: number; minCore: number | null; framing: number };
+  confidences: Record<string, number>;
+  anomalies: readonly { code: string; severity: string }[];
+  reps: readonly {
+    n: number;
+    startMs: number;
+    endMs: number;
+    verdict: string;
+    reasons: readonly string[];
+    chinClearance: number;
+    lockoutDeg: number;
+    bottomDeg: number;
+    hipSwing: number;
+    meanVis: number;
+    seconds: number;
+  }[];
+}
+
+function buildSummary(
+  analysis: CalisthenicsAnalysis,
+  diagnostics: PullUpDiagnostics | null,
+  scenario: CalibrationScenario | null,
+  fileName: string | null,
+): CalibrationSummary {
+  const minCore =
+    diagnostics && diagnostics.frames.length > 0
+      ? Math.min(...diagnostics.frames.map((frame) => frame.coreVisibility))
+      : null;
+  return {
+    scenario,
+    fileName,
+    analyzedAt: new Date().toISOString(),
+    versions: {
+      extractor: analysis.extractorName,
+      extractorVersion: analysis.extractorVersion,
+      modelSha256: MODEL_FILE_SHA256,
+      engineVersion: analysis.engineVersion,
+      rulesetVersion: analysis.rulesetVersion,
+      extractionFps: EXTRACTION_FPS,
+    },
+    recommendation: analysis.recommendation,
+    reasonCodes: analysis.reasonCodes,
+    detectedReps: analysis.detectedReps,
+    acceptedReps: analysis.acceptedReps,
+    uncertainReps: analysis.uncertainReps,
+    invalidReps: analysis.invalidReps,
+    elapsedMs: analysis.elapsedMs,
+    bar: analysis.barReference
+      ? {
+          provider: analysis.barReference.provider,
+          lineY: Math.round(analysis.barReference.lineY * 1000) / 1000,
+          uncertainty: Math.round(analysis.barReference.uncertainty * 10000) / 10000,
+        }
+      : null,
+    visibility: {
+      meanCore: analysis.confidences.landmarkVisibility,
+      minCore: minCore === null ? null : Math.round(minCore * 1000) / 1000,
+      framing: analysis.confidences.framing,
+    },
+    confidences: analysis.confidences,
+    anomalies: analysis.anomalies.map((a) => ({ code: a.code, severity: a.severity })),
+    reps: analysis.reps.map((rep) => ({
+      n: rep.repNumber,
+      startMs: rep.startMs,
+      endMs: rep.endMs,
+      verdict: rep.verdict,
+      reasons: rep.reasonCodes,
+      chinClearance: rep.metrics.chinClearance,
+      lockoutDeg: rep.metrics.lockoutAngleDeg,
+      bottomDeg: rep.metrics.bottomAngleDeg,
+      hipSwing: rep.metrics.hipSwingAmplitude,
+      meanVis: rep.metrics.meanVisibility,
+      seconds: rep.metrics.durationSeconds,
+    })),
+  };
+}
+
+function downloadJson(fileName: string, payload: unknown): void {
+  const blob = new Blob([JSON.stringify(payload, null, 1)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement('a');
+  anchor.href = url;
+  anchor.download = fileName;
+  anchor.click();
+  URL.revokeObjectURL(url);
+}
+
 export function PoseAnalysisPanel({ mode }: PoseAnalysisPanelProps) {
   const theme = useTheme();
   const { verification } = useRepositories();
@@ -82,6 +214,12 @@ export function PoseAnalysisPanel({ mode }: PoseAnalysisPanelProps) {
   const [analysis, setAnalysis] = useState<CalisthenicsAnalysis | null>(null);
   const [diagnostics, setDiagnostics] = useState<PullUpDiagnostics | null>(null);
   const [labels, setLabels] = useState<readonly RepLabel[]>([]);
+
+  // Calibration workflow (local mode): scenario tagging + session log.
+  const [scenario, setScenario] = useState<CalibrationScenario | null>(null);
+  const [fileName, setFileName] = useState<string | null>(null);
+  const [sessionLog, setSessionLog] = useState<CalibrationSummary[]>([]);
+  const [copied, setCopied] = useState<string | null>(null);
 
   const isEvidence = mode.kind === 'evidence';
 
@@ -100,7 +238,7 @@ export function PoseAnalysisPanel({ mode }: PoseAnalysisPanelProps) {
   }, [loadLabels]);
 
   const runOnUrl = useCallback(
-    async (url: string, evidenceId: string | null) => {
+    async (url: string, evidenceId: string | null, pickedFileName?: string) => {
       setBusy(true);
       setError(null);
       setStatus('Extracting landmarks…');
@@ -115,6 +253,14 @@ export function PoseAnalysisPanel({ mode }: PoseAnalysisPanelProps) {
         setAnalysis(result);
         setDiagnostics(sink);
         setVideoUrl(url);
+        if (pickedFileName !== undefined) {
+          setFileName(pickedFileName);
+          // Auto-log every calibration run under the selected scenario.
+          setSessionLog((current) => [
+            ...current,
+            buildSummary(result, sink, scenario, pickedFileName),
+          ]);
+        }
 
         if (mode.kind === 'evidence' && evidenceId) {
           setStatus('Storing artifact…');
@@ -179,7 +325,7 @@ export function PoseAnalysisPanel({ mode }: PoseAnalysisPanelProps) {
         setBusy(false);
       }
     },
-    [mode, verification],
+    [mode, scenario, verification],
   );
 
   const runOnEvidence = useCallback(async () => {
@@ -213,22 +359,65 @@ export function PoseAnalysisPanel({ mode }: PoseAnalysisPanelProps) {
           testID="run-pose-analysis"
         />
       ) : (
-        <View style={{ gap: theme.spacing.sm }}>
+        <View style={{ gap: theme.spacing.md }}>
           <Text variant="bodySm" color="textSecondary">
             Pick a local pull-up video (phone footage) to run the full extraction and
             analysis pipeline with diagnostics. Nothing is uploaded or recorded.
           </Text>
+
+          {/* Calibration checklist: tag each video with the scenario it
+              deliberately tests. Checked = at least one run logged. */}
+          <View style={{ gap: theme.spacing.xxs }}>
+            <Text variant="labelSm" color="textTertiary">
+              CALIBRATION SCENARIO (select before picking the video)
+            </Text>
+            <ChoiceRow
+              groupLabel="Calibration scenario"
+              options={CALIBRATION_SCENARIOS}
+              selected={scenario}
+              onSelect={(value) => setScenario(scenario === value ? null : value)}
+              labelFor={(value) =>
+                `${sessionLog.some((entry) => entry.scenario === value) ? '✓ ' : ''}${value}`
+              }
+            />
+            <Text variant="caption" color="textTertiary">
+              {`${new Set(sessionLog.map((entry) => entry.scenario).filter(Boolean)).size}/${CALIBRATION_SCENARIOS.length} scenarios logged this session · ${sessionLog.length} run(s) total`}
+            </Text>
+          </View>
+
           {unstable_createElement('input', {
             type: 'file',
             accept: 'video/*',
             disabled: busy,
-            onChange: (event: { target: { files?: FileList } }) => {
+            onChange: (event: { target: { files?: FileList; value: string } }) => {
               const file = event.target.files?.[0];
               if (file) {
-                void runOnUrl(URL.createObjectURL(file), null);
+                void runOnUrl(URL.createObjectURL(file), null, file.name);
               }
+              // Allow re-picking the same file for repeat runs.
+              event.target.value = '';
             },
           })}
+
+          {sessionLog.length > 0 ? (
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: theme.spacing.sm }}>
+              <Button
+                label={`Copy all ${sessionLog.length} result(s)`}
+                variant="secondary"
+                onPress={async () => {
+                  await Clipboard.setStringAsync(JSON.stringify(sessionLog));
+                  setCopied('session log');
+                }}
+              />
+              <Button
+                label="Download session log"
+                variant="secondary"
+                onPress={() =>
+                  downloadJson(`pose-lab-session-${Date.now()}.json`, sessionLog)
+                }
+              />
+            </View>
+          ) : null}
         </View>
       )}
 
@@ -257,6 +446,80 @@ export function PoseAnalysisPanel({ mode }: PoseAnalysisPanelProps) {
             {analysis.barReference ? (
               <Text variant="caption" color="textTertiary">
                 {`Bar: ${analysis.barReference.provider} y=${analysis.barReference.lineY.toFixed(3)} ±${analysis.barReference.uncertainty.toFixed(3)} · visibility ${analysis.confidences.landmarkVisibility} · framing ${analysis.confidences.framing} · judgment ${analysis.confidences.repJudgment}`}
+              </Text>
+            ) : null}
+          </View>
+
+          {/* One clear calibration summary per video, exportable. */}
+          <View
+            style={{
+              gap: theme.spacing.xxs,
+              padding: theme.spacing.md,
+              borderRadius: theme.radii.sm,
+              backgroundColor: theme.colors.backgroundSunken,
+            }}
+          >
+            <Text variant="labelSm" color="textTertiary">
+              {`CALIBRATION SUMMARY${scenario ? ` — ${scenario}` : ''}${fileName ? ` — ${fileName}` : ''}`}
+            </Text>
+            <Text variant="caption" color="textSecondary">
+              {`verdict ${analysis.recommendation}${analysis.reasonCodes.length > 0 ? ` (${analysis.reasonCodes.join(', ')})` : ''} · bar ±${analysis.barReference ? analysis.barReference.uncertainty.toFixed(4) : '—'} · vis mean ${analysis.confidences.landmarkVisibility}${
+                diagnostics && diagnostics.frames.length > 0
+                  ? ` / min ${Math.min(...diagnostics.frames.map((f) => f.coreVisibility)).toFixed(3)}`
+                  : ''
+              } · ${(analysis.elapsedMs / 1000).toFixed(1)}s @ ${EXTRACTION_FPS}fps`}
+            </Text>
+            {analysis.reps.map((rep) => (
+              <Text key={rep.repNumber} variant="caption" color="textTertiary">
+                {`#${rep.repNumber} ${(rep.startMs / 1000).toFixed(1)}–${(rep.endMs / 1000).toFixed(1)}s ${rep.verdict}` +
+                  ` · chin ${rep.metrics.chinClearance >= 0 ? '+' : ''}${rep.metrics.chinClearance}` +
+                  ` · lock ${rep.metrics.lockoutAngleDeg}° · bottom ${rep.metrics.bottomAngleDeg}°` +
+                  ` · swing ${rep.metrics.hipSwingAmplitude} · vis ${rep.metrics.meanVisibility}` +
+                  (rep.reasonCodes.length > 0 ? ` · ${rep.reasonCodes.join(',')}` : '')}
+              </Text>
+            ))}
+            <View
+              style={{
+                flexDirection: 'row',
+                flexWrap: 'wrap',
+                gap: theme.spacing.sm,
+                marginTop: theme.spacing.sm,
+              }}
+            >
+              <Button
+                label="Copy summary JSON"
+                variant="secondary"
+                onPress={async () => {
+                  await Clipboard.setStringAsync(
+                    JSON.stringify(buildSummary(analysis, diagnostics, scenario, fileName)),
+                  );
+                  setCopied('summary');
+                }}
+              />
+              <Button
+                label="Download summary"
+                variant="secondary"
+                onPress={() =>
+                  downloadJson(
+                    `pose-summary-${scenario ?? 'untagged'}-${Date.now()}.json`,
+                    buildSummary(analysis, diagnostics, scenario, fileName),
+                  )
+                }
+              />
+              <Button
+                label="Download raw stream"
+                variant="secondary"
+                onPress={() =>
+                  downloadJson(
+                    `landmarks-${scenario ?? 'untagged'}-${Date.now()}.json`,
+                    stream,
+                  )
+                }
+              />
+            </View>
+            {copied ? (
+              <Text variant="caption" color="statusOnTarget">
+                {`Copied ${copied} to clipboard.`}
               </Text>
             ) : null}
           </View>
