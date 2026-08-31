@@ -299,6 +299,13 @@ export default function SettingsScreen() {
                 hint="Engine calibration tooling"
                 onPress={() => router.push('/verify/run-lab')}
               />
+              <Divider />
+              <DetailRow
+                label="Pose lab (internal, web)"
+                value="Open"
+                hint="Analyze local pull-up footage with diagnostics"
+                onPress={() => router.push('/review/pose-lab')}
+              />
             </Card>
           ) : null}
         </View>

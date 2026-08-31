@@ -507,5 +507,102 @@ export function createVerificationRepository(client: SupabaseClient): Verificati
       }
       return ok(data as string);
     },
+
+    // --- Shadow dataset tooling (M3C-2) --------------------------------------
+
+    uploadDerivedArtifact: async (storagePath, json) => {
+      const uploaded = await client.storage
+        .from('evidence')
+        .upload(storagePath, new Blob([json], { type: 'application/json' }), {
+          contentType: 'application/json',
+          upsert: true,
+        });
+      return uploaded.error
+        ? failure('The landmark artifact could not be stored.', uploaded.error)
+        : ok(undefined);
+    },
+
+    registerLandmarkArtifact: async (
+      evidenceId,
+      storagePath,
+      extractorName,
+      extractorVersion,
+      modelFileHash,
+      frameCount,
+      fps,
+    ) => {
+      const { error } = await client.rpc('register_landmark_artifact', {
+        p_evidence_id: evidenceId,
+        p_storage_path: storagePath,
+        p_extractor_name: extractorName,
+        p_extractor_version: extractorVersion,
+        p_model_file_hash: modelFileHash,
+        p_frame_count: frameCount,
+        p_fps: fps,
+      });
+      return error
+        ? rpcFailure('The landmark artifact could not be registered.', error)
+        : ok(undefined);
+    },
+
+    saveRepLabel: async (attemptId, eventId, repIndex, startMs, endMs, label, reasonCodes, notes) => {
+      const { error } = await client.rpc('save_rep_label', {
+        p_attempt_id: attemptId,
+        p_event_id: eventId,
+        p_rep_index: repIndex,
+        p_start_ms: startMs,
+        p_end_ms: endMs,
+        p_label: label,
+        p_reason_codes: reasonCodes,
+        p_notes: notes,
+      });
+      return error ? rpcFailure('The label could not be saved.', error) : ok(undefined);
+    },
+
+    getRepLabels: async (attemptId, eventId) => {
+      const { data, error } = await client
+        .from('rep_labels')
+        .select('rep_index, start_ms, end_ms, label, reason_codes, notes')
+        .eq('attempt_id', attemptId)
+        .eq('event_id', eventId)
+        .order('rep_index');
+      if (error) {
+        return failure('Labels could not be loaded.', error);
+      }
+      return ok(
+        (data as {
+          rep_index: number;
+          start_ms: number | null;
+          end_ms: number | null;
+          label: string;
+          reason_codes: string[];
+          notes: string | null;
+        }[]).map((row) => ({
+          repIndex: row.rep_index,
+          startMs: row.start_ms,
+          endMs: row.end_ms,
+          label: row.label as 'valid' | 'invalid' | 'uncertain',
+          reasonCodes: row.reason_codes ?? [],
+          notes: row.notes,
+        })),
+      );
+    },
+
+    saveCorpusSample: async (attemptId, eventId, sample) => {
+      const { error } = await client.rpc('save_corpus_sample', {
+        p_attempt_id: attemptId,
+        p_event_id: eventId,
+        p_device_class: sample.deviceClass,
+        p_camera_angle_class: sample.cameraAngleClass,
+        p_camera_distance_class: sample.cameraDistanceClass,
+        p_lighting_class: sample.lightingClass,
+        p_environment_class: sample.environmentClass,
+        p_clothing_contrast_class: sample.clothingContrastClass,
+        p_body_proportion_class: sample.bodyProportionClass,
+        p_movement_style: sample.movementStyle,
+        p_notes: sample.notes,
+      });
+      return error ? rpcFailure('The corpus entry could not be saved.', error) : ok(undefined);
+    },
   };
 }

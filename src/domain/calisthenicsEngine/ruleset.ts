@@ -27,6 +27,22 @@ export const CALISTHENICS_RULESET = {
   minDurationSeconds: 5,
   minFps: 10,
 
+  // --- Arm observation policy (owner adjustment, M3C-1 review) ---------------
+  /**
+   * How elbow extension is measured from the visible arms. Explicitly a
+   * versioned policy, NOT an engine assumption: real camera angles may only
+   * give one reliably visible arm, and changing this is a ruleset decision.
+   *
+   *  'min_visible_sides'  — strictest angle among whichever sides are
+   *                         visible; one visible arm judges alone. (v1)
+   *  'both_sides_required'— frames with only one visible arm are blind.
+   *  'single_best_side'   — the most visible arm judges alone.
+   */
+  elbowAnglePolicy: 'min_visible_sides' as
+    | 'min_visible_sides'
+    | 'both_sides_required'
+    | 'single_best_side',
+
   // --- Extension / hang geometry (degrees at the elbow) ----------------------
   /** Elbow angle at or above which the arm counts as extended (lockout). */
   extensionAngleDeg: 160,

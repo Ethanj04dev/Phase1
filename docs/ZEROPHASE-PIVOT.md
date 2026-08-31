@@ -351,7 +351,8 @@ priorities (§20) are covered by M0–M4.
   approval: M3A verification foundation *(complete — approved)*, M3B run
   engine in shadow + M3B.1 hardening *(complete — approved; shadow-only
   until promotion gates are satisfied, gates must not be relaxed)*, M3C
-  pull-up prototype *(design awaiting review —
+  pull-up prototype *(M3C-1 rep analyzer approved; M3C-2 real-video
+  extraction + labeling complete — awaiting owner review; see
   docs/M3C-CALISTHENICS-DESIGN.md)*, M3D calisthenics productionization,
   M3E candidate continuity, M3F swim. Human review is ground truth/QA/appeals, not the
   product path. Standing launch gate: the physical-device end-to-end

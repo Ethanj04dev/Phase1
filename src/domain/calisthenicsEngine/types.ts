@@ -120,6 +120,26 @@ export interface RepRecord {
   };
 }
 
+/**
+ * Optional diagnostics the analyzer can fill while it works — the raw
+ * material for overlay and signal views, so a human can look at any
+ * decision and see exactly why the machine made it. Populating this changes
+ * nothing about the analysis itself.
+ */
+export interface PullUpDiagnosticsFrame {
+  tMs: number;
+  phase: 'seeking' | 'hang' | 'pull' | 'return' | 'blind';
+  angleDeg: number | null;
+  chinY: number | null;
+  hipX: number | null;
+  coreVisibility: number;
+}
+
+export interface PullUpDiagnostics {
+  frames: PullUpDiagnosticsFrame[];
+  observationGaps: { startMs: number; endMs: number }[];
+}
+
 export interface CalisthenicsAnomaly {
   code: string;
   severity: 'info' | 'suspicious' | 'high_risk';

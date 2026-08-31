@@ -38,4 +38,9 @@ export const verificationUnavailable: VerificationRepository = {
   getEvidenceUrl: () => refuse(),
   reviewEvent: () => refuse(),
   finalize: () => refuse(),
+  uploadDerivedArtifact: () => refuse(),
+  registerLandmarkArtifact: () => refuse(),
+  saveRepLabel: () => refuse(),
+  getRepLabels: () => refuse(),
+  saveCorpusSample: () => refuse(),
 };

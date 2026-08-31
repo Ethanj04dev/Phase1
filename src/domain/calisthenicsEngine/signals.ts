@@ -79,7 +79,21 @@ export function deriveSignals(
     const left = elbowAngleDeg(l.leftShoulder, l.leftElbow, l.leftWrist, floor);
     const right = elbowAngleDeg(l.rightShoulder, l.rightElbow, l.rightWrist, floor);
     const angles = [left, right].filter((value): value is number => value !== null);
-    const rawAngle = angles.length > 0 ? Math.min(...angles) : null;
+    let rawAngle: number | null;
+    switch (rules.elbowAnglePolicy) {
+      case 'both_sides_required':
+        rawAngle = left !== null && right !== null ? Math.min(left, right) : null;
+        break;
+      case 'single_best_side': {
+        const leftVis = Math.min(l.leftShoulder.visibility, l.leftElbow.visibility, l.leftWrist.visibility);
+        const rightVis = Math.min(l.rightShoulder.visibility, l.rightElbow.visibility, l.rightWrist.visibility);
+        rawAngle = leftVis >= rightVis ? (left ?? right) : (right ?? left);
+        break;
+      }
+      case 'min_visible_sides':
+        rawAngle = angles.length > 0 ? Math.min(...angles) : null;
+        break;
+    }
 
     const chinVisible = l.chin.visibility >= floor;
     const rawChin = chinVisible ? l.chin.y : null;

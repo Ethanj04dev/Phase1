@@ -6,7 +6,7 @@ module.exports = defineConfig([
   expoConfig,
   prettierConfig,
   {
-    ignores: ['node_modules/**', '.expo/**', '.expo-verify/**', 'dist/**', 'coverage/**', 'supabase/functions/**'],
+    ignores: ['node_modules/**', '.expo/**', '.expo-verify/**', 'dist/**', 'coverage/**', 'supabase/functions/**', 'public/**'],
   },
   {
     // Scoped to TypeScript files: the typescript-eslint plugin is only

@@ -9,6 +9,7 @@ import type {
   CalisthenicsAnalysis,
   CalisthenicsAnalysisInput,
   CalisthenicsAnomaly,
+  PullUpDiagnostics,
   RepRecord,
   RepVerdict,
 } from './types';
@@ -37,6 +38,8 @@ const REDESCENT_HYSTERESIS_DEG = 8;
 interface Attempt {
   startMs: number;
   endMs: number;
+  /** Closed by stream end rather than by lockout or re-descent. */
+  truncated: boolean;
   peakChinY: number | null;
   chinVisibilityAtPeak: number;
   bottomAngleDeg: number;
@@ -53,6 +56,7 @@ function newAttempt(tMs: number, angle: number): Attempt {
   return {
     startMs: tMs,
     endMs: tMs,
+    truncated: false,
     peakChinY: null,
     chinVisibilityAtPeak: 0,
     bottomAngleDeg: angle,
@@ -66,7 +70,10 @@ function newAttempt(tMs: number, angle: number): Attempt {
   };
 }
 
-export function analyzePullUps(input: CalisthenicsAnalysisInput): CalisthenicsAnalysis {
+export function analyzePullUps(
+  input: CalisthenicsAnalysisInput,
+  diagnostics?: PullUpDiagnostics,
+): CalisthenicsAnalysis {
   const rules = CALISTHENICS_RULESET;
   const { stream } = input;
   const frames = stream.frames;
@@ -213,6 +220,14 @@ export function analyzePullUps(input: CalisthenicsAnalysisInput): CalisthenicsAn
     const angle = frame.minElbowAngleDeg;
     if (angle === null) {
       blindSince = blindSince ?? frame.tMs;
+      diagnostics?.frames.push({
+        tMs: frame.tMs,
+        phase: 'blind',
+        angleDeg: null,
+        chinY: frame.chinY,
+        hipX: frame.hipX,
+        coreVisibility: round3(frame.coreVisibility),
+      });
       continue;
     }
     if (blindSince !== null) {
@@ -276,9 +291,25 @@ export function analyzePullUps(input: CalisthenicsAnalysisInput): CalisthenicsAn
         break;
       }
     }
+
+    diagnostics?.frames.push({
+      tMs: frame.tMs,
+      phase,
+      angleDeg: Math.round(angle * 10) / 10,
+      chinY: frame.chinY,
+      hipX: frame.hipX,
+      coreVisibility: round3(frame.coreVisibility),
+    });
   }
-  // Stream ended mid-attempt: it still happened; judge what was seen.
+  // Stream ended mid-attempt: it still happened, but it never completed —
+  // it can be noted, never confidently failed (owner adjustment, M3C-1).
+  if (attempt) {
+    (attempt as Attempt).truncated = true;
+  }
   closeAttempt(signals[signals.length - 1]!.tMs);
+  if (diagnostics) {
+    diagnostics.observationGaps.push(...observationGaps);
+  }
 
   // --- Judge each attempt. ----------------------------------------------------
   const reps: RepRecord[] = [];
@@ -347,13 +378,23 @@ export function analyzePullUps(input: CalisthenicsAnalysisInput): CalisthenicsAn
       uncertain('observation_gap');
     }
 
-    // A partially observed attempt cannot be confidently judged in EITHER
-    // direction: hidden frames could contain the clearance or lockout the
-    // visible ones lack. Occlusion downgrades invalid findings to
-    // uncertainty — the reasons stay, the confidence does not.
+    // A trailing attempt cut off by the end of the stream never completed:
+    // dropping off the bar mid-pull is not a confident failure (owner
+    // adjustment, M3C-1 review).
+    if (item.truncated) {
+      uncertain('set_ended_mid_attempt');
+    }
+
+    // A partially observed or never-completed attempt cannot be confidently
+    // judged in EITHER direction: hidden or unrecorded frames could contain
+    // the clearance or lockout the visible ones lack. These downgrade
+    // invalid findings to uncertainty — the reasons stay, the confidence
+    // does not.
     if (
       judgment.verdict === 'invalid' &&
-      (reasons.includes('observation_gap') || reasons.includes('landmarks_occluded'))
+      (reasons.includes('observation_gap') ||
+        reasons.includes('landmarks_occluded') ||
+        reasons.includes('set_ended_mid_attempt'))
     ) {
       judgment.verdict = 'uncertain';
     }

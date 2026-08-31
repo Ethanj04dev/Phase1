@@ -19,6 +19,7 @@ import {
   VERDICT_LABELS,
   type VerificationVerdict,
 } from '@/domain/verification/types';
+import { PoseAnalysisPanel } from '@/features/verification/PoseAnalysisPanel';
 import { useReviewActions, useReviewDetail } from '@/features/verification/useReviewConsole';
 import { parseDurationInput, parseRepsInput, toDurationInput } from '@/lib/parse';
 import { formatDuration } from '@/lib/format';
@@ -94,6 +95,8 @@ function EventReviewCard({
   const integrityFailed = integrity?.verdict === 'failed';
   const evidence = detail.evidence.filter((item) => item.eventId === event.eventId);
   const shadow = detail.shadow.find((finding) => finding.eventId === event.eventId);
+  const videoEvidence =
+    evidence.find((item) => item.kind === 'video' && item.storagePath) ?? null;
 
   const acceptedValue = isTime ? parseDurationInput(acceptedText) : parseRepsInput(acceptedText);
   const adjusted = acceptedValue !== null && acceptedValue !== event.claimedValue;
@@ -207,6 +210,18 @@ function EventReviewCard({
           </Text>
         ),
       )}
+
+      {/* M3C-2: shadow pose analysis + per-rep labeling for pull-ups. */}
+      {event.eventId === 'pull_ups' && videoEvidence ? (
+        <PoseAnalysisPanel
+          mode={{
+            kind: 'evidence',
+            attemptId: detail.attemptId,
+            eventId: 'pull_ups',
+            evidence: videoEvidence,
+          }}
+        />
+      ) : null}
 
       {!integrityFailed ? (
         <>

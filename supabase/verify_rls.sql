@@ -26,6 +26,9 @@ with expected as (
     'verification_policies',
     'scoring_configs',
     'reviewers',
+    'landmark_artifacts',
+    'rep_labels',
+    'corpus_samples',
     'proficiency_ratings',
     'milestone_completions',
     'readiness_scores',
@@ -89,7 +92,8 @@ select
       'verification_sessions','session_timeline_entries','session_event_claims',
       'evidence','analysis_runs','analysis_events','analysis_flags',
       'verification_event_reviews','verification_actions',
-      'verification_policies','scoring_configs','reviewers'
+      'verification_policies','scoring_configs','reviewers',
+      'landmark_artifacts','rep_labels','corpus_samples'
     ) then case
       when pc.select_policies > 0 and pc.insert_policies = 0 then 'PASS'
       when pc.insert_policies > 0 then 'FAIL — client write policy on definer-only table'

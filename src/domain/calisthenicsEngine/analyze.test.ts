@@ -243,6 +243,22 @@ describe('cadence and manipulation', () => {
     expect(analysis.anomalies.some((a) => a.code === 'implausible_cadence')).toBe(true);
   });
 
+  it('a trailing partial rep at stream end is uncertain, never a confident failure', () => {
+    // The candidate drops off the bar mid-attempt: the stream ends during a
+    // pull that would otherwise judge as chin-short.
+    const reps = specs(75, [
+      {},
+      {},
+      { peakClearance: -0.05, descentSeconds: 0, hangAfterSeconds: 0, topHoldSeconds: 0 },
+    ]);
+    const analysis = analyzePullUps({ stream: makePullUpStream(reps, { seed: 75 }) });
+    const last = analysis.reps[analysis.reps.length - 1]!;
+    expect(last.reasonCodes).toContain('set_ended_mid_attempt');
+    expect(last.verdict).toBe('uncertain');
+    expect(analysis.acceptedReps).toBe(2);
+    expect(analysis.invalidReps).toBe(0);
+  });
+
   it('abstains rather than judging a stub stream', () => {
     const analysis = analyzePullUps({
       stream: makePullUpStream(specs(72, [{}]), { seed: 72, leadInHangSeconds: 0 }),

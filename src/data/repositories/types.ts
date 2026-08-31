@@ -398,6 +398,60 @@ export interface VerificationRepository {
     reasonText: string | null,
   ): Promise<Result<void>>;
   finalize(attemptId: Uuid): Promise<Result<string>>;
+
+  // --- Shadow dataset tooling (M3C-2; reviewer-gated server-side) ----------
+  /** Stores a derived artifact (e.g. a landmark stream) under derived/. */
+  uploadDerivedArtifact(storagePath: string, json: string): Promise<Result<void>>;
+  registerLandmarkArtifact(
+    evidenceId: Uuid,
+    storagePath: string,
+    extractorName: string,
+    extractorVersion: string,
+    modelFileHash: string,
+    frameCount: number,
+    fps: number,
+  ): Promise<Result<void>>;
+  saveRepLabel(
+    attemptId: Uuid,
+    eventId: AssessmentEventId,
+    repIndex: number,
+    startMs: number | null,
+    endMs: number | null,
+    label: 'valid' | 'invalid' | 'uncertain',
+    reasonCodes: readonly string[],
+    notes: string | null,
+  ): Promise<Result<void>>;
+  getRepLabels(
+    attemptId: Uuid,
+    eventId: AssessmentEventId,
+  ): Promise<Result<readonly RepLabel[]>>;
+  saveCorpusSample(
+    attemptId: Uuid,
+    eventId: AssessmentEventId,
+    sample: CorpusSampleInput,
+  ): Promise<Result<void>>;
+}
+
+export interface RepLabel {
+  repIndex: number;
+  startMs: number | null;
+  endMs: number | null;
+  label: 'valid' | 'invalid' | 'uncertain';
+  reasonCodes: readonly string[];
+  notes: string | null;
+}
+
+/** The diversity ledger entry — athlete/session-level, per owner decision. */
+export interface CorpusSampleInput {
+  deviceClass: string | null;
+  cameraAngleClass: string | null;
+  cameraDistanceClass: string | null;
+  lightingClass: string | null;
+  environmentClass: string | null;
+  clothingContrastClass: string | null;
+  bodyProportionClass: string | null;
+  movementStyle: string | null;
+  notes: string | null;
 }
 
 export interface Repositories {

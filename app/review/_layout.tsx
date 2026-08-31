@@ -18,6 +18,7 @@ export default function ReviewLayout() {
       }}
     >
       <Stack.Screen name="index" options={{ title: 'Ground truth' }} />
+      <Stack.Screen name="pose-lab" options={{ title: 'Pose lab' }} />
       <Stack.Screen name="[attemptId]" options={{ title: 'Review' }} />
     </Stack>
   );
