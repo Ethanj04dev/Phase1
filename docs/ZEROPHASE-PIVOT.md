@@ -349,9 +349,11 @@ priorities (§20) are covered by M0–M4.
   storage, hashed), status transitions, server-side score compute — and
   automated verification as the target authority. Sequence per owner
   approval: M3A verification foundation *(complete — approved)*, M3B run
-  engine in shadow *(complete — awaiting owner review)*, M3C pull-up
-  prototype, M3D calisthenics productionization, M3E candidate
-  continuity, M3F swim. Human review is ground truth/QA/appeals, not the
+  engine in shadow + M3B.1 hardening *(complete — approved; shadow-only
+  until promotion gates are satisfied, gates must not be relaxed)*, M3C
+  pull-up prototype *(design awaiting review —
+  docs/M3C-CALISTHENICS-DESIGN.md)*, M3D calisthenics productionization,
+  M3E candidate continuity, M3F swim. Human review is ground truth/QA/appeals, not the
   product path. Standing launch gate: the physical-device end-to-end
   verification test. See docs/M3-VERIFICATION-DESIGN.md.
 - **M4 — Rankings.** Materialised leaderboards + public views; Rankings tab

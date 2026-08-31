@@ -1,0 +1,248 @@
+# M3C — Automated Calisthenics Verification (Pull-ups first)
+
+**Status: DESIGN FOR REVIEW. Nothing implemented.**
+
+The Run Engine's philosophy, applied to camera events: deterministic
+measurement wherever possible, ML used to *observe* rather than to issue
+verdicts, explicit uncertainty with mandatory abstention, immutable
+evidence, server-side authoritative analysis, versioned models and rules,
+adversarial testing, shadow-mode validation, and numeric promotion gates.
+
+The critical architectural insight — and the whole design follows from it:
+
+> **Pose estimation is the sensor. The rep analyzer is the engine.**
+
+A pose model turns video into body-landmark streams; that is its entire
+job, and it is an established component we version and swap, never train
+from scratch. Everything Zero Phase actually decides — what a rep is,
+whether the chin cleared the bar, whether extension was reached, whether
+the evidence supports a count at all — is a **deterministic state machine
+over landmark streams**: pure TypeScript, exhaustively testable, ruleset-
+versioned, exactly like the Run Engine over GPS samples. No multimodal
+model ever "watches a video and decides."
+
+---
+
+## 1. Pipeline
+
+```
+VIDEO EVIDENCE (immutable, hashed, in the private bucket — M3A)
+   ↓
+EXTRACTOR                 pose model → landmark stream artifact
+   ↓                      (established component, version-pinned)
+LANDMARK STREAM           derived artifact, stored BESIDE evidence
+   ↓
+REP ANALYZER              deterministic: state machine → rep segmentation
+   ↓                      → per-rep ROM judgment → per-rep verdicts
+STRUCTURED ANALYSIS       counts, rep records, confidences, reasons
+   ↓
+SERVER VERIFICATION POLICY (versioned; shadow until promoted)
+   ↓
+EVENT VERDICT             verified | failed | unable_to_verify
+```
+
+- **The extractor** (v1: MediaPipe Pose Landmarker-class, 33 landmarks with
+  per-landmark visibility scores) is chosen for maturity, upper-body detail
+  (mouth/nose landmarks for the chin line, wrists/elbows/shoulders for the
+  hang), and availability in both browser JS and server runtimes — the same
+  extractor family runs in the console during shadow development and in the
+  server worker on the promotion path. Its name and version stamp every
+  analysis row. Custom training or fine-tuning happens only if the measured
+  data proves the established component insufficient (M3 rule 11).
+- **The landmark stream** is a derived artifact: per-frame timestamps,
+  normalized landmark positions, visibility scores, extractor version, and
+  the source evidence id + hash. Stored in the private bucket beside the
+  video (~1–2 MB for a 2-minute clip). The raw video is never modified or
+  replaced; streams can always be re-extracted from it by a newer extractor
+  as an explicit, audited reprocess.
+- **The rep analyzer** is dependency-free pure TS in
+  `src/domain/calisthenicsEngine/`, synced byte-for-byte to the server
+  exactly as the Run Engine is (`scripts/sync-*` + parity test).
+
+## 2. The pull-up state machine (ruleset v1, versioned with the protocol)
+
+Landmarks used: wrists, elbows, shoulders, mouth/nose (chin proxy), hips,
+knees, ankles. Derived per frame: elbow angle (shoulder–elbow–wrist), chin
+line vs bar line, hip horizontal displacement, per-landmark visibility.
+
+**Bar-line estimation (deterministic):** the median wrist height across
+dead-hang frames establishes the bar line in image space, with its own
+spread as uncertainty. No object detection needed in v1; the hands are on
+the bar, so the wrists *are* the bar.
+
+```
+DEAD_HANG      elbow angle ≥ extensionAngle (default 160°), stable
+   ↓ ascent    chin line rising toward bar line
+TOP            chin above bar line by ≥ clearanceMargin  → else no rep
+   ↓ descent
+RETURN         elbow angle ≥ extensionAngle again        → rep complete
+   ↓
+DEAD_HANG      … next rep
+```
+
+Every threshold — extension angle, clearance margin, minimum hang
+stability, maximum hip-swing amplitude — lives in a versioned
+`CALISTHENICS_RULESET` keyed to the assessment protocol version, mirroring
+`RUN_RULESET`. A protocol change is a new ruleset version; historical
+analyses keep the rules they were judged under.
+
+**Per-rep record** (the `analysis_reps` schema from M3A, now populated):
+rep number, start/end timestamps, verdict `valid | invalid | uncertain`,
+reason codes (`chin_below_bar`, `incomplete_extension`,
+`landmarks_occluded`, `excessive_swing`, `left_frame`), confidence, and
+per-rep metrics (min elbow angle at lockout, chin–bar clearance in
+normalized units, hip-swing amplitude, mean landmark visibility).
+
+**Kipping:** measured (hip oscillation amplitude/frequency) and flagged
+from day one; whether excessive swing *invalidates* a rep is a protocol
+question. Conservative v1 default: flag + mark the rep `uncertain`, never
+auto-invalidate, until real labeled data calibrates the threshold.
+
+## 3. Uncertainty and abstention
+
+Three-outcome discipline at both rep and event level:
+
+- **Rep-level:** low landmark visibility through a rep, chin/bar separation
+  inside the clearance uncertainty, or occlusion → the rep is `uncertain`,
+  never rounded in either direction.
+- **Counting rule (conservative):** `acceptedReps = valid reps only`.
+  Uncertain reps are not credited — and if uncertain reps exceed a ruleset
+  fraction (default 15%) or visibility collapses at any point, the whole
+  event is `unable_to_verify` with reasons ("camera could not judge reps
+  9–12"). Failure requires positive evidence (e.g., a full set of clearly
+  judged reps below the claim by more than the uncertain count).
+- **Event confidences** (deterministic formulas, ruleset-governed):
+  `landmarkVisibility`, `framing` (full body + bar in frame throughout),
+  `repJudgment` (fraction of reps judged confidently), feeding the same
+  policy shape the Run Engine uses.
+- Claimed vs detected vs accepted stays fully separated:
+  `CLAIMED 21 · DETECTED 22 · ACCEPTED 20 — rep 8 chin below bar, rep 17
+  incomplete extension`, traceable to per-rep records with timestamps —
+  eventually shown to the candidate with no human annotator involved.
+
+## 4. Camera quality gate (the accuracy lever)
+
+Verification starts before the first rep. Two stages:
+
+- **M3C v1 — setup-photo check:** at event setup the app captures one
+  still frame, uploads it (~100 KB, seconds), and a server check runs the
+  pose extractor on that single frame: full body visible, wrists (bar
+  grip) in frame, adequate landmark visibility, frame brightness, phone
+  stability (gyro). The candidate gets GO or a plain command — `MOVE
+  CAMERA BACK · BAR NOT VISIBLE · TOO DARK`. The verified event cannot open
+  until the gate passes; the setup frame is retained as evidence context.
+  Single-frame inference is cheap enough for Edge-class compute, so this
+  ships without the full worker.
+- **Dev-build path — live gating:** continuous on-device pose preflight
+  (impossible in Expo Go; the capture screen keeps the guided framing
+  overlay there). Recorded either way: the gate result and its version
+  land in the analysis metadata.
+
+## 5. Server-side authority, shadow-first execution
+
+Identical to the Run Engine's promotion path, decided up front:
+
+- **Shadow development (M3C):** the extractor runs in the **review
+  console's browser** against the committed evidence video (same bytes a
+  server would read — the download already flows through signed URLs).
+  The analyzer runs on the extracted stream; results are recorded through
+  `record_shadow_analysis` (engine `calisthenics_pose`, which the policy
+  gate already refuses to accept for any promoted engine). Reviewers see
+  the machine's count and per-rep opinions beside their own ground truth;
+  every disagreement is queryable via `shadow_disagreements`.
+- **Promotion path:** a containerized analysis worker (queue-polling,
+  service-role) downloads evidence, extracts, analyzes, writes system
+  rows — the only execution that can ever hold authority. The analyzer it
+  runs is parity-pinned to the benchmarked source. Console-side and any
+  client-side extraction remain measurement forever.
+- Compute cost: pose extraction runs near realtime on CPU — a 2-minute
+  clip costs roughly a CPU-minute; three calisthenics events per
+  assessment ≈ cents. Landmark artifacts add ~2 MB/event.
+
+## 6. Datasets, ground truth, benchmark
+
+- **Synthetic landmark streams first** — the analyzer's equivalent of
+  `testTraces`: generated trajectories for clean reps, partial ROM, missed
+  lockouts, chin-short reps, kipping, occlusion windows, frame exits,
+  noise on landmarks, slow/fast cadence. These exhaustively test the state
+  machine before any video exists, exactly as synthetic GPS traces did.
+- **Real corpus:** the console's labeling mode (per-rep annotation:
+  valid/invalid/uncertain + reason at timestamp) produces ground truth
+  from every shadow review; a seed corpus is self-recorded across the
+  diversity axes in M3 §12 (bodies, bars, gyms, phones, lighting,
+  clothing, fatigue, deliberate cheating). Double-labeling on a sample
+  measures human agreement itself.
+- **Benchmark harness** mirrors the Run Engine's: fixtures of
+  landmark-stream + per-rep ground truth, metrics computed on every test
+  run, report regenerated into `docs/benchmarks/calisthenics-v1.md`.
+  Extraction quality itself is benchmarked separately (extractor version A
+  vs B on the same videos) so sensor and engine regressions never blur.
+
+## 7. Metrics and proposed promotion gates (v1, owner-approved before use)
+
+Versioned in `calisthenicsEngine/promotionGates.ts`, same shape as the run
+gates. **Event-level false credit — accepted count above ground truth — is
+the primary safety metric.**
+
+| Gate | Threshold (proposed) |
+|---|---|
+| Valid-rep precision (benchmark + corpus) | ≥ 0.97 |
+| Invalid-rep detection rate | ≥ 0.90 |
+| Exact count agreement | ≥ 90% events exact; ≥ 99% within ±1 |
+| Event false credit (accepted > truth) | 0 on benchmark/adversarial; ≤ 0.5% with 0 confirmed on real shadow |
+| False failure rate | ≤ 1% |
+| Unable-to-verify rate | tracked; target ≤ 25% initially |
+| Adversarial suite | 100% pass per release, no regressions |
+| Real corpus size before promotion | ≥ 40 labeled videos across diversity axes |
+| Real-world shadow before promotion | ≥ 200 pull-up events vs ground truth |
+| Mechanics | server worker execution (parity-pinned) · audited policy insert · immediate demotion |
+
+## 8. Adversarial testing
+
+The suite, with expected outcomes fixed per case: partial reps (no top /
+no lockout) → reps invalid; chin-tuck reach-overs → invalid or uncertain;
+kipping → flagged, uncertain; leaving frame mid-set → event UTV; second
+person entering frame → continuity flag + UTV; obstruction/low light →
+UTV; **speed-ramped playback** → caught upstream by the integrity engine
+(clip duration vs server-clocked window) plus cadence implausibility
+(reps/second beyond human) in the analyzer; **video-of-video replays** →
+honestly categorized NOT CURRENTLY SOLVED at the analyzer level — held off
+by the session challenge (spoken, in-audio), hash-at-capture, and in-app
+capture, with screen-detection signals listed as a future engine, not a
+claim.
+
+## 9. What M3C does NOT do
+
+No custom model training. No authority for any camera event. No swim work.
+No gallery uploads. No biometric identity database (continuity remains
+M3E, session-scoped). No silent relaxation of Run Engine gates — the two
+engines promote independently, each through its own measured gates.
+
+---
+
+## 10. Implementation plan (phased, review stop after each)
+
+- **M3C-1 — Rep Analyzer core.** `src/domain/calisthenicsEngine/`:
+  landmark-stream types, versioned ruleset, bar-line estimation, pull-up
+  state machine, per-rep records, event verdict logic with abstention,
+  synthetic-stream builders, adversarial + invariant test suites
+  (determinism, stream immutability, accepted ≤ detected, no claim input,
+  version stamps). Pure TS; zero infrastructure; the milestone's testable
+  heart.
+- **M3C-2 — Console extraction + shadow.** MediaPipe-JS extraction in the
+  review console against evidence videos; landmark artifacts stored;
+  shadow rows recorded (`calisthenics_pose`); reviewer UI shows machine
+  count + per-rep opinions beside ground truth; per-rep labeling mode
+  ships here and every review becomes a dataset sample.
+- **M3C-3 — Setup-photo quality gate.** Single-frame server check + GO/FIX
+  candidate guidance wired into the verified session flow for pull-ups.
+- **M3C-4 — Benchmark + corpus.** Fixture format, metrics suite, report
+  generation, seed corpus recorded via Run-Lab-style tooling
+  (`Calisthenics Lab`), extractor A/B harness.
+- **M3C-5 — Server worker.** Containerized extract+analyze worker on the
+  promotion path, parity-pinned; policy stays shadow until §7 gates are
+  measured and you flip them.
+
+Push-ups and sit-ups (M3D) reuse every layer — extractor, artifacts,
+records, console, gates machinery — swapping only the exercise state
+machine and its ruleset entries.
