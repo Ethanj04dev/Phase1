@@ -31,6 +31,7 @@ export const verificationUnavailable: VerificationRepository = {
   submit: () => refuse(),
   abandon: () => refuse(),
   getClaims: () => refuse(),
+  recordShadowAnalysis: () => refuse(),
   isReviewer: () => refuse(),
   listReviewQueue: () => refuse(),
   getReviewDetail: () => refuse(),

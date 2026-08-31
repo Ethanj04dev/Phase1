@@ -10,6 +10,7 @@ import { Text } from '@/components/primitives/Text';
 import { findAssessmentEvent } from '@/domain/assessment/types';
 import { AssessmentField } from '@/features/assessment/AssessmentField';
 import { EvidenceCamera } from '@/features/verification/EvidenceCamera';
+import { RunTracker } from '@/features/verification/RunTracker';
 import { useVerifiedSession } from '@/features/verification/useVerifiedSession';
 import { formatDuration } from '@/lib/format';
 import { useTheme } from '@/theme';
@@ -22,8 +23,10 @@ import { useTheme } from '@/theme';
  */
 export default function VerifiedSessionScreen() {
   const theme = useTheme();
-  const { state, captureClip, openEvent, closeEvent, submit, abandon } = useVerifiedSession();
+  const { state, captureClip, captureRunTrace, openEvent, closeEvent, submit, abandon } =
+    useVerifiedSession();
   const [eventCaptured, setEventCaptured] = useState(false);
+  const [runBookendDone, setRunBookendDone] = useState(false);
   const [claimValue, setClaimValue] = useState<number | undefined>(undefined);
 
   const { session, phase, claims, nextEvent, busy, error } = state;
@@ -138,6 +141,7 @@ export default function VerifiedSessionScreen() {
                 loading={busy}
                 onPress={async () => {
                   setEventCaptured(false);
+                  setRunBookendDone(false);
                   setClaimValue(undefined);
                   await openEvent(nextEvent);
                 }}
@@ -166,17 +170,66 @@ export default function VerifiedSessionScreen() {
               </View>
 
               {!eventCaptured ? (
-                <EvidenceCamera
-                  challengeCode={session.challengeCode}
-                  contextLabel={`Event ${position} of ${session.eventOrder.length} — ${event.name}`}
-                  disabled={busy}
-                  onCaptured={async (uri, seconds) => {
-                    const committed = await captureClip(session.openEvent, uri, seconds);
-                    if (committed) {
-                      setEventCaptured(true);
-                    }
-                  }}
-                />
+                event.distanceMeters !== undefined &&
+                (event.category === 'running' || event.category === 'rucking') ? (
+                  // Distance events: a short video bookend ties the candidate
+                  // and place to the session, then the GPS trace is the
+                  // performance evidence.
+                  !runBookendDone ? (
+                    <>
+                      <Card style={{ gap: theme.spacing.xxs }}>
+                        <Text variant="labelSm" color="textTertiary">
+                          START BOOKEND
+                        </Text>
+                        <Text variant="bodySm" color="textSecondary">
+                          A few seconds before you run: say the session code, show yourself
+                          and your surroundings at the start point.
+                        </Text>
+                      </Card>
+                      <EvidenceCamera
+                        challengeCode={session.challengeCode}
+                        contextLabel={`Start bookend — ${event.name}`}
+                        disabled={busy}
+                        onCaptured={async (uri, seconds) => {
+                          const committed = await captureClip(session.openEvent, uri, seconds);
+                          if (committed) {
+                            setRunBookendDone(true);
+                          }
+                        }}
+                      />
+                    </>
+                  ) : (
+                    <RunTracker
+                      challengeCode={session.challengeCode}
+                      requiredDistanceMeters={event.distanceMeters}
+                      disabled={busy}
+                      onCaptured={async (result) => {
+                        const committed = await captureRunTrace(
+                          session.openEvent as NonNullable<typeof session.openEvent>,
+                          result.fileUri,
+                          result.trace,
+                          result.durationSeconds,
+                        );
+                        if (committed) {
+                          setClaimValue(result.durationSeconds);
+                          setEventCaptured(true);
+                        }
+                      }}
+                    />
+                  )
+                ) : (
+                  <EvidenceCamera
+                    challengeCode={session.challengeCode}
+                    contextLabel={`Event ${position} of ${session.eventOrder.length} — ${event.name}`}
+                    disabled={busy}
+                    onCaptured={async (uri, seconds) => {
+                      const committed = await captureClip(session.openEvent, uri, seconds);
+                      if (committed) {
+                        setEventCaptured(true);
+                      }
+                    }}
+                  />
+                )
               ) : (
                 <>
                   <Card style={{ gap: theme.spacing.sm }}>

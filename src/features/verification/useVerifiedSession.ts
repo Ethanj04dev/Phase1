@@ -1,8 +1,15 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { useRepositories } from '@/data/repositoryContext';
-import type { AssessmentEventId } from '@/domain/assessment/types';
+import { findAssessmentEvent, type AssessmentEventId } from '@/domain/assessment/types';
 import type { AssessmentDefinition } from '@/domain/attempt/definition';
+import { analyzeRun } from '@/domain/runEngine/analyze';
+import {
+  RUN_ENGINE_NAME,
+  RUN_ENGINE_VERSION,
+  RUN_RULESET_VERSION,
+} from '@/domain/runEngine/ruleset';
+import type { RunTrace } from '@/domain/runEngine/types';
 import type { SessionEventClaim, VerificationSession } from '@/domain/verification/types';
 import { hashFileSha256 } from '@/lib/hashFile';
 
@@ -125,9 +132,18 @@ export function useVerifiedSession() {
     [run, verification],
   );
 
-  /** Hash → commit → upload, for the identity clip or an open event. */
-  const captureClip = useCallback(
-    (eventId: AssessmentEventId | null, localUri: string, durationSeconds: number) =>
+  /** Raw traces kept in memory for shadow analysis after submission. */
+  const tracesRef = useRef<Map<AssessmentEventId, RunTrace>>(new Map());
+
+  /** Hash → commit → upload, for any piece of evidence. */
+  const captureFile = useCallback(
+    (
+      eventId: AssessmentEventId | null,
+      kind: 'video' | 'gps_trace',
+      localUri: string,
+      durationSeconds: number,
+      mimeType: string,
+    ) =>
       run(async () => {
         if (!session) {
           return 'No active session.';
@@ -136,12 +152,12 @@ export function useVerifiedSession() {
         const committed = await verification.commitEvidence(
           session.id,
           eventId,
-          'video',
+          kind,
           hash,
           new Date().toISOString(),
           durationSeconds,
           byteSize,
-          'video/mp4',
+          mimeType,
         );
         if (!committed.ok) {
           return committed.error.message;
@@ -150,7 +166,7 @@ export function useVerifiedSession() {
           committed.value.evidenceId,
           session.id,
           localUri,
-          'video/mp4',
+          mimeType,
         );
         if (!uploaded.ok) {
           return uploaded.error.message;
@@ -164,6 +180,34 @@ export function useVerifiedSession() {
         return null;
       }),
     [run, session, verification],
+  );
+
+  const captureClip = useCallback(
+    (eventId: AssessmentEventId | null, localUri: string, durationSeconds: number) =>
+      captureFile(eventId, 'video', localUri, durationSeconds, 'video/mp4'),
+    [captureFile],
+  );
+
+  const captureRunTrace = useCallback(
+    async (
+      eventId: AssessmentEventId,
+      fileUri: string,
+      trace: RunTrace,
+      durationSeconds: number,
+    ): Promise<boolean> => {
+      const committed = await captureFile(
+        eventId,
+        'gps_trace',
+        fileUri,
+        durationSeconds,
+        'application/json',
+      );
+      if (committed) {
+        tracesRef.current.set(eventId, trace);
+      }
+      return committed;
+    },
+    [captureFile],
   );
 
   const openEvent = useCallback(
@@ -214,9 +258,57 @@ export function useVerifiedSession() {
         }
         setAttemptId(submitted.value);
         setSession((current) => (current ? { ...current, status: 'submitted' } : current));
+
+        // Shadow analysis: the Run Engine analyses each captured trace and
+        // records its structured result beside the ground-truth path. Shadow
+        // failures never fail a submission — they are measurement, and the
+        // server refuses shadow rows for any engine holding authority.
+        const currentClaims = await verification.getClaims(session.id);
+        const claimByEvent = new Map(
+          (currentClaims.ok ? currentClaims.value : claims).map((claim) => [
+            claim.eventId,
+            claim,
+          ]),
+        );
+        for (const [eventId, trace] of tracesRef.current) {
+          const event = findAssessmentEvent(eventId);
+          const claim = claimByEvent.get(eventId);
+          if (!event?.distanceMeters || !claim) {
+            continue;
+          }
+          const analysis = analyzeRun({
+            trace,
+            requiredDistanceMeters: event.distanceMeters,
+            sessionWindow: {
+              openedAtMs: Date.parse(claim.openedAt),
+              closedAtMs: Date.parse(claim.closedAt),
+            },
+          });
+          await verification.recordShadowAnalysis(submitted.value, eventId, {
+            engine: RUN_ENGINE_NAME,
+            modelName: 'deterministic',
+            modelVersion: RUN_ENGINE_VERSION,
+            rulesetVersion: RUN_RULESET_VERSION,
+            claimedValue: claim.claimedValue,
+            detectedValue: analysis.computedDistanceMeters,
+            acceptedValue: analysis.acceptedTimeSeconds,
+            verdict: analysis.verdict,
+            confidences: analysis.confidences,
+            reasonCodes: analysis.reasonCodes,
+            metrics: {
+              rawDistanceMeters: analysis.rawDistanceMeters,
+              computedDistanceMeters: analysis.computedDistanceMeters,
+              elapsedSeconds: analysis.elapsedSeconds,
+              quality: analysis.quality,
+              pace: analysis.pace,
+              continuity: analysis.continuity,
+              anomalies: analysis.anomalies,
+            },
+          });
+        }
         return null;
       }),
-    [run, session, verification],
+    [claims, run, session, verification],
   );
 
   const abandon = useCallback(
@@ -248,5 +340,15 @@ export function useVerifiedSession() {
     error,
   };
 
-  return { state, begin, captureClip, openEvent, closeEvent, submit, abandon, refresh };
+  return {
+    state,
+    begin,
+    captureClip,
+    captureRunTrace,
+    openEvent,
+    closeEvent,
+    submit,
+    abandon,
+    refresh,
+  };
 }

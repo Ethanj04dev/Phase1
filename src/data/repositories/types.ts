@@ -277,6 +277,35 @@ export interface ReviewIntegrityFinding {
   reasonCodes: readonly string[];
 }
 
+/** A shadow-mode engine's structured output, shown beside ground truth. */
+export interface ReviewShadowFinding {
+  eventId: AssessmentEventId | null;
+  engine: string;
+  modelVersion: string;
+  rulesetVersion: number;
+  verdict: VerificationVerdict | 'uncertain';
+  detectedValue: number | null;
+  acceptedValue: number | null;
+  reasonCodes: readonly string[];
+  confidences: Record<string, number>;
+  metrics: Record<string, unknown>;
+}
+
+/** What a shadow engine reports about one event. */
+export interface ShadowAnalysisInput {
+  engine: string;
+  modelName: string;
+  modelVersion: string;
+  rulesetVersion: number;
+  claimedValue: number | null;
+  detectedValue: number | null;
+  acceptedValue: number | null;
+  verdict: VerificationVerdict | 'uncertain';
+  confidences: Record<string, number>;
+  reasonCodes: readonly string[];
+  metrics: Record<string, unknown>;
+}
+
 export interface ReviewEventState {
   eventId: AssessmentEventId;
   claimedValue: number;
@@ -296,6 +325,7 @@ export interface ReviewDetail {
   claims: readonly SessionEventClaim[];
   evidence: readonly ReviewEvidenceItem[];
   integrity: readonly ReviewIntegrityFinding[];
+  shadow: readonly ReviewShadowFinding[];
   events: readonly ReviewEventState[];
 }
 
@@ -342,6 +372,17 @@ export interface VerificationRepository {
   submit(sessionId: Uuid): Promise<Result<Uuid>>;
   abandon(sessionId: Uuid): Promise<Result<void>>;
   getClaims(sessionId: Uuid): Promise<Result<readonly SessionEventClaim[]>>;
+  /**
+   * Records a shadow engine's analysis of one event. The server refuses any
+   * engine the current policy does not hold in shadow, so this path can
+   * never write for an authoritative engine — shadow rows are measurement,
+   * invisible to every verdict.
+   */
+  recordShadowAnalysis(
+    attemptId: Uuid,
+    eventId: AssessmentEventId,
+    analysis: ShadowAnalysisInput,
+  ): Promise<Result<void>>;
 
   // --- Ground-truth console (reviewer-gated server-side) -------------------
   isReviewer(): Promise<Result<boolean>>;

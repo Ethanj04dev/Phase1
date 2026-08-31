@@ -34,6 +34,13 @@ export interface AssessmentEvent {
   category: PerformanceCategory;
   unit: MeasureUnit;
   direction: ScoreDirection;
+  /**
+   * The distance this event requires, in metres, for distance-based events.
+   * This is what verification engines measure against: the protocol declares
+   * what is required, the engine determines what actually occurred. Absent
+   * for rep events.
+   */
+  distanceMeters?: number;
   /** Test conditions. Shown at entry so results stay comparable over time. */
   protocol: string;
 }
@@ -76,6 +83,7 @@ export const ASSESSMENT_EVENTS: readonly AssessmentEvent[] = [
     category: 'running',
     unit: 'seconds',
     direction: 'lower_is_better',
+    distanceMeters: 1609.344,
     protocol: 'One mile for time on a flat course or track.',
   },
   {
@@ -85,6 +93,7 @@ export const ASSESSMENT_EVENTS: readonly AssessmentEvent[] = [
     category: 'running',
     unit: 'seconds',
     direction: 'lower_is_better',
+    distanceMeters: 2414.016,
     protocol: 'One and a half miles for time on a flat course or track.',
   },
   {
@@ -94,6 +103,7 @@ export const ASSESSMENT_EVENTS: readonly AssessmentEvent[] = [
     category: 'swimming',
     unit: 'seconds',
     direction: 'lower_is_better',
+    distanceMeters: 500,
     protocol: 'Continuous 500 metres for time, any stroke, no fins.',
   },
   {
@@ -103,6 +113,7 @@ export const ASSESSMENT_EVENTS: readonly AssessmentEvent[] = [
     category: 'rucking',
     unit: 'seconds',
     direction: 'lower_is_better',
+    distanceMeters: 4828.032,
     protocol: `Three miles for time carrying ${RUCK_ASSESSMENT_LOAD_POUNDS} lb on a flat course.`,
   },
 ] as const;

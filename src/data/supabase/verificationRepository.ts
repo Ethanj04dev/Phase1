@@ -256,6 +256,25 @@ export function createVerificationRepository(client: SupabaseClient): Verificati
       return ok((data as ClaimRow[]).map(toClaim));
     },
 
+    recordShadowAnalysis: async (attemptId, eventId, analysis) => {
+      const { error } = await client.rpc('record_shadow_analysis', {
+        p_attempt_id: attemptId,
+        p_event_id: eventId,
+        p_engine: analysis.engine,
+        p_model_name: analysis.modelName,
+        p_model_version: analysis.modelVersion,
+        p_ruleset_version: analysis.rulesetVersion,
+        p_claimed_value: analysis.claimedValue,
+        p_detected_value: analysis.detectedValue,
+        p_accepted_value: analysis.acceptedValue,
+        p_verdict: analysis.verdict,
+        p_confidences: analysis.confidences,
+        p_reason_codes: analysis.reasonCodes,
+        p_metrics: analysis.metrics,
+      });
+      return error ? rpcFailure('The analysis could not be recorded.', error) : ok(undefined);
+    },
+
     // --- Console -------------------------------------------------------------
 
     isReviewer: async () => {
@@ -316,7 +335,8 @@ export function createVerificationRepository(client: SupabaseClient): Verificati
         .maybeSingle();
       const sessionRow = (session.data as SessionRow | null) ?? null;
 
-      const [timeline, claims, evidence, results, reviews, analysis] = await Promise.all([
+      const [timeline, claims, evidence, results, reviews, analysis, shadow] =
+        await Promise.all([
         sessionRow
           ? client
               .from('session_timeline_entries')
@@ -352,6 +372,14 @@ export function createVerificationRepository(client: SupabaseClient): Verificati
           .select('event_id, verdict, reason_codes, analysis_runs!inner(attempt_id)')
           .eq('engine', 'evidence_integrity')
           .eq('analysis_runs.attempt_id', attemptId),
+        client
+          .from('analysis_events')
+          .select(
+            'event_id, engine, model_version, ruleset_version, verdict, detected_value, accepted_value, reason_codes, confidences, metrics, analysis_runs!inner(attempt_id, trigger)',
+          )
+          .neq('engine', 'evidence_integrity')
+          .eq('analysis_runs.attempt_id', attemptId)
+          .eq('analysis_runs.trigger', 'shadow'),
       ]);
 
       const reviewByEvent = new Map(
@@ -419,6 +447,29 @@ export function createVerificationRepository(client: SupabaseClient): Verificati
           eventId: (row.event_id as AssessmentEventId | null) ?? null,
           verdict: row.verdict as VerificationVerdict | 'uncertain',
           reasonCodes: row.reason_codes ?? [],
+        })),
+        shadow: ((shadow.data ?? []) as {
+          event_id: string | null;
+          engine: string;
+          model_version: string;
+          ruleset_version: number;
+          verdict: string;
+          detected_value: number | null;
+          accepted_value: number | null;
+          reason_codes: string[];
+          confidences: Record<string, number>;
+          metrics: Record<string, unknown>;
+        }[]).map((row) => ({
+          eventId: (row.event_id as AssessmentEventId | null) ?? null,
+          engine: row.engine,
+          modelVersion: row.model_version,
+          rulesetVersion: row.ruleset_version,
+          verdict: row.verdict as VerificationVerdict | 'uncertain',
+          detectedValue: row.detected_value == null ? null : Number(row.detected_value),
+          acceptedValue: row.accepted_value == null ? null : Number(row.accepted_value),
+          reasonCodes: row.reason_codes ?? [],
+          confidences: row.confidences ?? {},
+          metrics: row.metrics ?? {},
         })),
         events,
       };

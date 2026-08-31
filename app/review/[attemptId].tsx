@@ -93,6 +93,7 @@ function EventReviewCard({
   const integrity = detail.integrity.find((finding) => finding.eventId === event.eventId);
   const integrityFailed = integrity?.verdict === 'failed';
   const evidence = detail.evidence.filter((item) => item.eventId === event.eventId);
+  const shadow = detail.shadow.find((finding) => finding.eventId === event.eventId);
 
   const acceptedValue = isTime ? parseDurationInput(acceptedText) : parseRepsInput(acceptedText);
   const adjusted = acceptedValue !== null && acceptedValue !== event.claimedValue;
@@ -142,6 +143,37 @@ function EventReviewCard({
           <Text variant="caption" color="textTertiary">
             Integrity is authoritative: this event will compose as failed regardless of the
             performance verdict below.
+          </Text>
+        </Card>
+      ) : null}
+
+      {shadow ? (
+        <Card style={{ gap: theme.spacing.xxs, backgroundColor: theme.colors.backgroundSunken }}>
+          <Text variant="labelSm" color="accent">
+            {`${shadow.engine.toUpperCase()} — SHADOW (v${shadow.modelVersion}/r${shadow.rulesetVersion})`}
+          </Text>
+          <Text variant="bodySm" color="textSecondary">
+            {`Engine verdict: ${VERDICT_LABELS[shadow.verdict as VerificationVerdict] ?? shadow.verdict}`}
+            {shadow.detectedValue !== null
+              ? ` · measured ${Math.round(shadow.detectedValue)}m`
+              : ''}
+            {shadow.acceptedValue !== null
+              ? ` · accepted time ${formatDuration(shadow.acceptedValue)}`
+              : ''}
+          </Text>
+          {shadow.reasonCodes.length > 0 ? (
+            <Text variant="caption" color="textTertiary">
+              {`Reasons: ${shadow.reasonCodes.join(', ')}`}
+            </Text>
+          ) : null}
+          <Text variant="caption" color="textTertiary">
+            {`Confidence — ${Object.entries(shadow.confidences)
+              .map(([key, value]) => `${key} ${value}`)
+              .join(' · ')}`}
+          </Text>
+          <Text variant="caption" color="textTertiary">
+            Shadow output influences nothing. Your ground-truth verdict below is the
+            authority, and disagreement between the two is recorded.
           </Text>
         </Card>
       ) : null}
